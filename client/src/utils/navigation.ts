@@ -10,22 +10,19 @@ export const navigateToRoleLogin = () => {
   const deliveryBoyRole = state?.deliveryBoy?.deliveryBoy?.role;
   const userRole = state?.auth?.user?.role;
 
-  // Determine which role is active (based on your login system)
   const role = adminRole || deliveryBoyRole || userRole;
-
-  console.log("Detected role:", role);
 
   switch (role) {
     case "admin":
-        store.dispatch(adminLogout());
+      store.dispatch(adminLogout());
       window.location.href = "/admin/login";
       break;
     case "deliveryBoy":
-        store.dispatch(logoutDeliveryboy())
+      store.dispatch(logoutDeliveryboy());
       window.location.href = "/delivery/sign-up";
       break;
     case "user":
-        store.dispatch(userLogout());
+      store.dispatch(userLogout());
       window.location.href = "/sign-up";
       break;
     default:

@@ -12,6 +12,8 @@ export class MongoUserRepository implements IUserRepository {
 
   async createUser(user: User): Promise<User> {
     const hashed = await PasswordService.hash(user.password || '');
+    console.log('user',user);
+    
     const createdUser = new UserModel({
       ...user,
       password: hashed,
@@ -46,5 +48,12 @@ export class MongoUserRepository implements IUserRepository {
       ...customer,
       _id: customer._id.toString(),
     }));
+  }
+  async getAllDeliveryBoys(): Promise<User[]> {
+    const deliveryBoys = await UserModel.find({ role: 'deliveryBoy' }).lean();
+    return deliveryBoys.map(deliveryBoy => ({
+      ...deliveryBoy,
+      _id: deliveryBoy._id.toString(),
+    }))
   }
 }

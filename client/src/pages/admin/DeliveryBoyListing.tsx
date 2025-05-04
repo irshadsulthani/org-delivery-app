@@ -1,16 +1,15 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Search,  
+  Search, 
   Filter, 
   Download, 
   RefreshCw,
   MoreHorizontal,
   ChevronDown,
-  Users,
+  UserCheck,
   UserPlus,
   Trash2,
   Edit,
-  Mail,
   Phone,
   Calendar,
   CheckCircle,
@@ -18,75 +17,80 @@ import {
   AlertCircle,
   ArrowUpDown,
   Eye,
-  ShoppingBag,
-  Clock
+  MapPin,
+  Bike,
+  Star,
+  Clock,
+  Briefcase,
+  Users
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import AdminHeader from '../../components/AdminComponents/AdminHeader';
-import { getAllCustomers } from '../../api/adminApi';
-import { useDispatch } from 'react-redux';
 import AdminSidebar from '../../components/AdminComponents/AdminSidebar';
+import AdminHeader from '../../components/AdminComponents/AdminHeader';
+import { toast } from 'react-toastify';
+import { getAllDeliveryBoys } from '../../api/adminApi';
 
 // TypeScript interfaces
-interface Customer {
+interface DeliveryPerson {
+  createdAt: string | number | Date;
   _id: string;
   name: string;
   email: string;
   phone: string;
-  status: 'Active' | 'Inactive' | 'Pending';
-  createdAt: string;
-  orders: number;
-  lastOrder: string;
-  totalSpent: string;
+  status: 'Active' | 'Inactive' | 'On Delivery' | 'Off Duty';
+  joinDate: string;
+  deliveries: number;
+  rating: number;
+  lastDelivery: string;
+  area: string;
+  vehicleType: 'Bike' | 'Scooter' | 'Car' | 'Van';
   avatar?: string;
 }
 
-const CustomerListing = () => {
+const DeliveryBoyListing = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [areaFilter, setAreaFilter] = useState('All');
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
-  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [selectedPersonnel, setSelectedPersonnel] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [deliveryPersonnel, setDeliveryPersonnel] = useState<DeliveryPerson[]>();
   const [error, setError] = useState<string | null>(null);
-  const dispatch = useDispatch();
-  
-  const navigate = useNavigate();
 
   const toggleMobileSidebar = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const fetchCustomers = async () => {
+  const fetchDeliveryPersonnel = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getAllCustomers();
-      setCustomers(response || []);
+        const response = await getAllDeliveryBoys();
+        console.log("Fetched delivery personnel:", response);
+        
+      setTimeout(() => {
+        setDeliveryPersonnel(response);
+        setLoading(false);
+      }, 800);
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to fetch customers";
-  
-      console.log("Error fetching customers:", errorMessage);
+      const errorMessage = error.message || "Failed to fetch delivery personnel";
+      console.log("Error fetching delivery personnel:", errorMessage);
       setError(errorMessage);
       toast.error(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
 
   const refreshData = () => {
-    fetchCustomers();
-    toast.success('Customer data refreshed!');
+    fetchDeliveryPersonnel();
+    toast.success('Delivery personnel data refreshed!');
   };
 
   useEffect(() => {
-    fetchCustomers();
+    fetchDeliveryPersonnel();
   }, []);
 
   // Sort functionality
@@ -99,39 +103,41 @@ const CustomerListing = () => {
     }
   };
 
-  // Filter customers based on search and status filter
-  const filteredCustomers = customers.filter(customer => {
+  // Filter delivery personnel based on search, status, and area filters
+  const filteredPersonnel = (deliveryPersonnel || []).filter(person => {
     const matchesSearch = 
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer._id.toLowerCase().includes(searchTerm.toLowerCase());
+      person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      person.phone.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'All' || customer.status === statusFilter;
+    const matchesStatus = statusFilter === 'All' || person.status === statusFilter;
+    const matchesArea = areaFilter === 'All' || person.area === areaFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesArea;
   });
 
-  // Sort customers
-  const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+  // Sort personnel
+  const sortedPersonnel = [...filteredPersonnel].sort((a, b) => {
     let comparison = 0;
     
     if (sortField === 'name') {
       comparison = a.name.localeCompare(b.name);
-    } else if (sortField === 'createdAt') {
-      comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    } else if (sortField === 'orders') {
-      comparison = a.orders - b.orders;
-    } else if (sortField === 'totalSpent') {
-      const aValue = parseFloat(a.totalSpent.replace('$', '').replace(',', ''));
-      const bValue = parseFloat(b.totalSpent.replace('$', '').replace(',', ''));
-      comparison = aValue - bValue;
+    } else if (sortField === 'joinDate') {
+      comparison = new Date(a.joinDate).getTime() - new Date(b.joinDate).getTime();
+    } else if (sortField === 'deliveries') {
+      comparison = a.deliveries - b.deliveries;
+    } else if (sortField === 'rating') {
+      comparison = a.rating - b.rating;
     }
     
     return sortDirection === 'asc' ? comparison : -comparison;
   });
 
+  // Get all unique areas for the filter
+  const areas = ['All', ...Array.from(new Set((deliveryPersonnel ?? []).map(person => person.area)))];
+
   // Status badge component
-  const StatusBadge = ({ status }: { status: 'Active' | 'Inactive' | 'Pending' }) => {
+  const StatusBadge = ({ status }: { status: 'Active' | 'Inactive' | 'On Delivery' | 'Off Duty' }) => {
     let colorClasses = '';
     let Icon = CheckCircle;
     
@@ -144,9 +150,13 @@ const CustomerListing = () => {
         colorClasses = 'bg-red-100 text-red-800 border border-red-200';
         Icon = XCircle;
         break;
-      case 'Pending':
-        colorClasses = 'bg-amber-100 text-amber-800 border border-amber-200';
-        Icon = AlertCircle;
+      case 'On Delivery':
+        colorClasses = 'bg-blue-100 text-blue-800 border border-blue-200';
+        Icon = Bike;
+        break;
+      case 'Off Duty':
+        colorClasses = 'bg-gray-100 text-gray-800 border border-gray-200';
+        Icon = Clock;
         break;
     }
     
@@ -158,17 +168,49 @@ const CustomerListing = () => {
     );
   };
 
-  // Generate avatar placeholder for a customer
+  // Vehicle type badge component
+  const VehicleBadge = ({ type }: { type: 'Bike' | 'Scooter' | 'Car' | 'Van' }) => {
+    let colorClasses = '';
+    let Icon = Bike;
+    
+    switch (type) {
+      case 'Bike':
+        colorClasses = 'bg-indigo-100 text-indigo-800 border border-indigo-200';
+        Icon = Bike;
+        break;
+      case 'Scooter':
+        colorClasses = 'bg-purple-100 text-purple-800 border border-purple-200';
+        Icon = Bike;
+        break;
+      case 'Car':
+        colorClasses = 'bg-amber-100 text-amber-800 border border-amber-200';
+        Icon = Briefcase;
+        break;
+      case 'Van':
+        colorClasses = 'bg-blue-100 text-blue-800 border border-blue-200';
+        Icon = Briefcase;
+        break;
+    }
+    
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}>
+        <Icon size={12} className="mr-1" />
+        {type}
+      </span>
+    );
+  };
+
+  // Generate avatar placeholder
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  // Customer avatar component
-  const CustomerAvatar = ({ customer }: { customer: Customer }) => {
-    const initials = getInitials(customer.name);
+  // Personnel avatar component
+  const PersonnelAvatar = ({ person }: { person: DeliveryPerson }) => {
+    const initials = getInitials(person.name);
     
-    // Generate a consistent color based on the customer id
-    const colorIndex = parseInt(customer._id.replace(/\D/g, '')) % 5;
+    // Generate a consistent color based on the id
+    const colorIndex = parseInt(person._id.replace(/\D/g, '')) % 5;
     const bgColors = [
       'from-blue-500 to-blue-600',
       'from-purple-500 to-purple-600',
@@ -182,6 +224,12 @@ const CustomerListing = () => {
         {initials}
       </div>
     );
+  };
+
+  // Rating component
+  const RatingDisplay = ({ rating }: { rating: number | undefined }) => {
+    const displayRating = typeof rating === 'number' ? rating.toFixed(1) : 'N/A';
+    return <span>{displayRating}</span>;
   };
 
   return (
@@ -204,14 +252,22 @@ const CustomerListing = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Navigation */}
         <AdminHeader />
-        {/* Customer Listing Content */}
+        
+        {/* Delivery Personnel Listing Content */}
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Customers</h2>
-              <p className="text-gray-500 text-sm mt-1">Manage all your registered customers</p>
+              <h2 className="text-2xl font-bold text-gray-800">Delivery Personnel</h2>
+              <p className="text-gray-500 text-sm mt-1">Manage all your delivery staff members</p>
             </div>
+            <button 
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              onClick={() => toast.info('Add Personnel form would open here')}
+            >
+              <UserPlus size={16} className="mr-2" />
+              Add Personnel
+            </button>
           </div>
 
           {/* Filters and Actions */}
@@ -221,7 +277,7 @@ const CustomerListing = () => {
                 <div className="relative w-full sm:w-72">
                   <input
                     type="text"
-                    placeholder="Search customers..."
+                    placeholder="Search personnel..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full py-2 pl-10 pr-4 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
@@ -237,8 +293,24 @@ const CustomerListing = () => {
                   >
                     <option value="All">All Status</option>
                     <option value="Active">Active</option>
+                    <option value="On Delivery">On Delivery</option>
+                    <option value="Off Duty">Off Duty</option>
                     <option value="Inactive">Inactive</option>
-                    <option value="Pending">Pending</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <ChevronDown size={16} className="text-gray-500" />
+                  </div>
+                </div>
+
+                <div className="relative w-full sm:w-44">
+                  <select 
+                    className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg py-2 pl-4 pr-10 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer"
+                    value={areaFilter}
+                    onChange={(e) => setAreaFilter(e.target.value)}
+                  >
+                    {areas.map(area => (
+                      <option key={area} value={area}>{area} Area</option>
+                    ))}
                   </select>
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <ChevronDown size={16} className="text-gray-500" />
@@ -246,7 +318,7 @@ const CustomerListing = () => {
                 </div>
 
                 <div className="flex items-center space-x-2 w-full sm:w-auto">
-                  <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                  <button className="inline-flex items-center px-1 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     <Filter size={16} className="mr-2" />
                     More Filters
                   </button>
@@ -293,16 +365,16 @@ const CustomerListing = () => {
             </div>
             
             {/* Selected actions (show when items are selected) */}
-            {selectedCustomers.length > 0 && (
+            {selectedPersonnel.length > 0 && (
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-700">
-                    <span className="font-medium">{selectedCustomers.length} customers</span> selected
+                    <span className="font-medium">{selectedPersonnel.length} personnel</span> selected
                   </div>
                   <div className="flex items-center space-x-3">
                     <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                      <Mail size={14} className="mr-1.5" />
-                      Email
+                      <Phone size={14} className="mr-1.5" />
+                      Contact
                     </button>
                     <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                       <Edit size={14} className="mr-1.5" />
@@ -331,14 +403,14 @@ const CustomerListing = () => {
               <div className="flex">
                 <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error loading customers</h3>
+                  <h3 className="text-sm font-medium text-red-800">Error loading delivery personnel</h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p>{error}</p>
                   </div>
                   <div className="mt-4">
                     <button
                       type="button"
-                      onClick={fetchCustomers}
+                      onClick={fetchDeliveryPersonnel}
                       className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     >
                       Try again
@@ -356,10 +428,10 @@ const CustomerListing = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead>
                     <tr>
-                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Personnel</th>
                       <th 
                         className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
-                        onClick={() => handleSort('createdAt')}
+                        onClick={() => handleSort('joinDate')}
                       >
                         <div className="flex items-center">
                           <span>Join Date</span>
@@ -368,85 +440,115 @@ const CustomerListing = () => {
                       </th>
                       <th 
                         className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
-                        onClick={() => handleSort('orders')}
+                        onClick={() => handleSort('deliveries')}
                       >
                         <div className="flex items-center">
-                          <span>Orders</span>
+                          <span>Deliveries</span>
                           <ArrowUpDown size={14} className="ml-1" />
                         </div>
                       </th>
-                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Order</th>
+                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Area</th>
                       <th 
                         className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
-                        onClick={() => handleSort('totalSpent')}
+                        onClick={() => handleSort('rating')}
                       >
                         <div className="flex items-center">
-                          <span>Total Spent</span>
+                          <span>Rating</span>
                           <ArrowUpDown size={14} className="ml-1" />
                         </div>
                       </th>
+                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Vehicle</th>
                       <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 bg-gray-50 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {sortedCustomers.map((customer) => (
-                      <tr key={customer._id} className="hover:bg-gray-50 transition-colors duration-150">
+                    {sortedPersonnel.map((person) => (
+                      <tr key={person._id} className="hover:bg-gray-50 transition-colors duration-150">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <CustomerAvatar customer={customer} />
+                            <PersonnelAvatar person={person} />
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                              <div className="text-sm text-gray-500">{customer.email}</div>
+                              <div className="text-sm font-medium text-gray-900">{person.name}</div>
+                              <div className="text-sm text-gray-500">{person.email}</div>
                               <div className="text-xs text-gray-400 flex items-center mt-1">
                                 <Phone size={12} className="mr-1" />
-                                {customer.phone}
+                                {person.phone}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500 flex items-center">
+                          <div className="text-sm text-gray-500 flex items-center">
                             <Calendar size={14} className="mr-2 text-gray-400" />
-                            {new Date(customer.createdAt).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
+                            {new Date(person?.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
                             })}
-                        </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 flex items-center">
-                            <ShoppingBag size={14} className="mr-2 text-gray-400" />
-                            {customer.orders}
+                            <Bike size={14} className="mr-2 text-gray-400" />
+                            {person.deliveries}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500 flex items-center">
-                            <Clock size={14} className="mr-2 text-gray-400" />
-                            {customer.lastOrder}
+                            <MapPin size={14} className="mr-2 text-gray-400" />
+                            {person.area}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{customer.totalSpent}</div>
+                          <RatingDisplay rating={person.rating} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={customer.status} />
+                          <VehicleBadge type={person.vehicleType} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <StatusBadge status={person.status} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
-                              <Eye size={16} />
-                            </button>
-                            <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
-                              <Edit size={16} />
-                            </button>
-                            <button className="text-gray-500 hover:text-red-600 transition-colors duration-200">
-                              <Trash2 size={16} />
-                            </button>
-                            <button className="text-gray-500 hover:text-gray-700 transition-colors duration-200">
-                              <MoreHorizontal size={16} />
-                            </button>
+                          <button 
+                            className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1"
+                            onClick={() => {
+                              setSelectedPersonnel((prev) => 
+                                prev.includes(person._id) 
+                                  ? prev.filter(id => id !== person._id) 
+                                  : [...prev, person._id]
+                              );
+                            }}
+                          >
+                            <MoreHorizontal size={16} />
+                          </button>
+                          <div className={`absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ${selectedPersonnel.includes(person._id) ? 'block' : 'hidden'}`}>
+                            <div className="py-1">
+                              <button 
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                                onClick={() => toast.info(`Viewing details for ${person.name}`)}
+                              >
+                                <Eye size={16} className="mr-2" />
+                                View Details
+                              </button>
+                              <button 
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                                onClick={() => toast.info(`Editing ${person.name}`)}
+                              >
+                                <Edit size={16} className="mr-2" />
+                                Edit
+                              </button>
+                              <button 
+                                className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-100 w-full"
+                                onClick={() => {
+                                  setSelectedPersonnel((prev) => prev.filter(id => id !== person._id));
+                                  toast.error(`${person.name} has been removed`);
+                                }}
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                Remove
+                              </button>
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -454,97 +556,60 @@ const CustomerListing = () => {
                   </tbody>
                 </table>
               </div>
-              
-              {/* Empty state */}
-              {!loading && sortedCustomers.length === 0 && (
+              {!loading && selectedPersonnel.length === 0 && (
                 <div className="text-center py-12">
                   <Users size={48} className="mx-auto text-gray-400" />
-                  <h3 className="mt-2 text-lg font-medium text-gray-900">No customers found</h3>
+                  <h3 className="mt-2 text-lg font-medium text-gray-900">No Delivery Boys found</h3>
                   <p className="mt-1 text-sm text-gray-500">
                     {searchTerm || statusFilter !== 'All' 
                       ? 'Try adjusting your search or filter criteria'
-                      : 'Get started by adding a new customer'}
+                      : 'No Delivery Boys available Joined'}
                   </p>
-                  <div className="mt-6">
-                    <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                      <UserPlus size={16} className="mr-2" />
-                      Add Customer
-                    </button>
-                  </div>
                 </div>
               )}
-              
-              {/* Pagination */}
-              {!loading && sortedCustomers.length > 0 && (
-                <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
-                  <div className="flex-1 flex justify-between sm:hidden">
-                    <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                      Previous
-                    </button>
-                    <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                      Next
-                    </button>
-                  </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        Showing <span className="font-medium">1</span> to <span className="font-medium">{sortedCustomers.length}</span> of{' '}
-                        <span className="font-medium">{sortedCustomers.length}</span> customers
-                      </p>
-                    </div>
-                    <div>
-                      <nav className="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination">
-                        <button className="relative inline-flex items-center px-2 py-2 rounded-l-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                          <span className="sr-only">Previous</span>
-                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        <button aria-current="page" className="z-10 bg-indigo-50 border-indigo-500 text-indigo-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                          1
-                        </button>
-                        <button className="relative inline-flex items-center px-2 py-2 rounded-r-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                          <span className="sr-only">Next</span>
-                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                      </nav>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="px-6 py-4">
+                <button 
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  onClick={() => toast.info('Pagination would be implemented here')}
+                >
+                  Load More
+                </button>
+              </div>
             </div>
           )}
           {/* Grid View */}
           {!loading && !error && viewMode === 'grid' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedCustomers.map((customer) => (
-                <div key={customer._id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col">
+              {sortedPersonnel.map((person) => (
+                <div key={person._id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col">
                   <div className="flex items-center mb-4">
-                    <CustomerAvatar customer={customer} />
+                    <PersonnelAvatar person={person} />
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                      <div className="text-sm text-gray-500">{customer.email}</div>
+                      <div className="text-sm font-medium text-gray-900">{person.name}</div>
+                      <div className="text-sm text-gray-500">{person.email}</div>
+                      <div className="text-xs text-gray-400 flex items-center mt-1">
+                        <Phone size={12} className="mr-1" />
+                        {person.phone}
+                      </div>
                     </div>
                   </div>
                   <div className="flex-grow">
-                    <p className="text-sm text-gray-500 mb-2">Phone: {customer.phone}</p>
-                    <p className="text-sm text-gray-500 mb-2">Join Date: {customer.createdAt}</p>
-                    <p className="text-sm text-gray-500 mb-2">Orders: {customer.orders}</p>
-                    <p className="text-sm text-gray-500 mb-2">Last Order: {customer.lastOrder}</p>
-                    <p className="text-sm font-medium text-gray-900">Total Spent: {customer.totalSpent}</p>
+                    <StatusBadge status={person.status} />
+                    <VehicleBadge type={person.vehicleType} />
                   </div>
-                  <StatusBadge status={customer.status} />
-                  <div className="mt-4 flex justify-end space-x-2">
-                    <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
-                      <Eye size={16} />
-                    </button>
-                    <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
-                      <Edit size={16} />
-                    </button>
-                    <button className="text-gray-500 hover:text-red-600 transition-colors duration-200">
-                      <Trash2 size={16} />
+                  <div className="mt-4 flex items-center justify-between">
+                    <RatingDisplay rating={person.rating} />
+                    <button 
+                      className="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1"
+                      onClick={() => {
+                        setSelectedPersonnel((prev) => 
+                          prev.includes(person._id) 
+                            ? prev.filter(id => id !== person._id) 
+                            : [...prev, person._id]
+                        );
+                      }}
+                    >
+                      <MoreHorizontal size={16} />
                     </button>
                   </div>
                 </div>
@@ -556,4 +621,4 @@ const CustomerListing = () => {
     </div>
   );
 }
-export default CustomerListing;
+export default DeliveryBoyListing;

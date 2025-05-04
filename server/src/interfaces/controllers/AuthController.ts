@@ -1,4 +1,3 @@
-
 import { resetPassword } from './../../application/use-cases/auth/resetPasswordUseCase';
 import { Request, Response } from 'express';
 import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/verifyOtpAndRegisterUser';
@@ -24,6 +23,8 @@ export class AuthController {
 
   static login = async (req: Request, res: Response) => {
     try {
+      console.log(req.body);
+      
       const useCase = new LoginUser(userRepo);
       const result = await useCase.execute(req.body.email, req.body.password,['customer']);
 
@@ -187,6 +188,27 @@ export class AuthController {
       res.status(200).json({ message: 'Logged out successfully' });
     } catch (err: any) {
       res.status(500).json({ message: 'Failed to logout' });
+    }
+  }
+  static reatilerLogin = async (req: Request, res:Response) =>{
+    try {
+      const useCase = new LoginUser(userRepo)
+      const result = await useCase.execute(req.body.email, req.body.password,['retailer'])
+      const {accessToken, refreshToken, ...userData} = result
+
+    res.cookie('accessToken', accessToken, {
+        httpOnly: true,
+        sameSite: 'strict',
+        maxAge: config.accessTokenExpiration,
+      });
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        sameSite: 'strict',
+        maxAge: config.refreshTokenExpiration,
+      });
+      res.status(200).json({success:true,userData}); 
+    } catch (err: any) {
+      res.status(401).json({ success:false,message: err.message });
     }
   }
 }

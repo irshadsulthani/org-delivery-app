@@ -4,6 +4,8 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminPublicRoute from '../protectedRoutes/admin/AdminPublicRoute';
 import AdminProtectedRoutes from '../protectedRoutes/admin/AdminProtectedRoutes';
 import CustomerListing from '../pages/admin/CustomerListing';
+import DeliveryBoyListing from '../pages/admin/DeliveryBoyListing';
+
 
 function AdminRoutes() {
   return (
@@ -11,6 +13,7 @@ function AdminRoutes() {
       <Route element={<AdminProtectedRoutes />}>
         <Route path='/dashboard' element={ <AdminDashboard /> } />
         <Route path='/customers' element={ <CustomerListing />} />
+        <Route path='/delivery-boy' element={ <DeliveryBoyListing />} />
       </Route>
       <Route element={<AdminPublicRoute />}>
         <Route path="/login" element={<AdminLogin />} />

@@ -1,3 +1,4 @@
+import { getAllDeliveryBoys } from './../../../../client/src/api/adminApi';
 import { User } from "../entities/User";
 
 export interface IUserRepository {
@@ -6,4 +7,5 @@ export interface IUserRepository {
     comparePassword(inputPassword: string, storedHash: string): Promise<boolean>;
     getAllUsers(): Promise<User[]>;
     getAllCustomers(): Promise<User[]>;
+    getAllDeliveryBoys(): Promise<User[]>;
 }

@@ -7,8 +7,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Importing images
-import loginImage from '../../../public/customer/login/Sign In.png';
-import logicIcon from '../../../public/customer/login/4137516.webp';
+import loginImage from '../../../src/public/customer/login/Sign In.png';
+import logicIcon from '../../../src/public/customer/login/4137516.webp';
 import { loginUser, sendSignupOtp, sendLoginOtp, verifyOtp, sendPasswordResetEmail, verifyOtpForgetPass, resetPassword,  } from '../../api/userApi';
 
 interface IUserLogin {
@@ -107,7 +107,7 @@ function CustomerAuth() {
         return;
       }
       
-      const response = await sendLoginOtp(signupData.email); 
+       await sendLoginOtp(signupData.email); 
       
       setOtpEmail(signupData.email);
       setPendingAuthData({
@@ -208,7 +208,7 @@ function CustomerAuth() {
     const otpValue = otp.join('');
     
     try {
-      const response = await verifyOtp(otpValue, pendingAuthData);
+      await verifyOtp(otpValue, pendingAuthData);
       setShowOtpModal(false);
       
       setSignupData({ name: '', email: '', password: '' });

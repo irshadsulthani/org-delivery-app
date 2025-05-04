@@ -23,5 +23,16 @@ export class AdminController{
         } catch (err: any) {
           res.status(400).json({ message: err.message });
         }
-      }      
+    }
+    static getAllDeliveryBoys = async (req: Request, res: Response) =>{
+        try {
+          console.log('its here coming');
+          
+            const useCase = new GetUsers(userRepo);
+            const deliveryBoys = await useCase.excuteDeliveryBoys();
+            res.status(200).json(deliveryBoys);
+        } catch (err: any) {
+            res.status(400).json({ message: err.message });
+        }
+    }  
 }

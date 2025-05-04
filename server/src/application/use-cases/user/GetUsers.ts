@@ -18,4 +18,12 @@ export class GetUsers {
             throw new Error("Error fetching customers");
         }
     }
+    async excuteDeliveryBoys() {
+        try {
+            const deliveryBoys = await this.userRepo.getAllDeliveryBoys();
+            return deliveryBoys.map(({ password, ...user }) => user);
+        } catch (error) {
+            throw new Error("Error fetching delivery Boys");
+        }
+    }
 }

@@ -25,3 +25,8 @@ export const refreshToken = async () => {
     const response = await publicApi('post','/auth/refresh-token')
     return response
 }
+
+export const getAllDeliveryBoys = async () => {
+    const response = await privateApi('get','/admin/getalldeliveryboys')
+    return response
+}
