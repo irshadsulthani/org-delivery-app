@@ -9,6 +9,7 @@ import {
   User, 
   CheckCircle,
   Truck,
+  ShieldCheck
 } from 'lucide-react';
 import { loginDeliveryBoy, sendSignupOtp, verifyOtpApi } from '../../api/deliveryBoyApi';
 import { useDispatch } from 'react-redux';
@@ -28,6 +29,7 @@ const DeliveryBoySignup = () => {
   const [showOtpVerification, setShowOtpVerification] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '']);
   const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [showLoginTransition, setShowLoginTransition] = useState(false);
   const otpInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -83,7 +85,7 @@ const DeliveryBoySignup = () => {
           email: response.userData.email,
           role: response.userData.role,
         }))
-        if (response  && response.success) {
+        if (response && response.success) {
           setShowSuccessMessage(true);
 
           let countdown = 3;
@@ -131,11 +133,13 @@ const DeliveryBoySignup = () => {
       const response = await verifyOtpApi(otpString, formData);
       
       if (response?.success) {
+        // Show animated success screen
         setShowOtpVerification(false);
         setShowSuccessMessage(true);
-  
+        
         let countdown = 3;
         setTimeLeft(countdown);
+        
         const timer = setInterval(() => {
           countdown -= 1;
           setTimeLeft(countdown);
@@ -143,9 +147,14 @@ const DeliveryBoySignup = () => {
           if (countdown <= 0) {
             clearInterval(timer);
             setShowSuccessMessage(false);
-            setIsSignUp(false);
-            setRegistrationComplete(true);
-            toast.success("Sign up completed! Please log in with your credentials.");
+            setShowLoginTransition(true);
+            
+            // After animation, switch to login form with credentials pre-filled
+            setTimeout(() => {
+              setShowLoginTransition(false);
+              setIsSignUp(false);
+              setRegistrationComplete(true);
+            }, 1000);
           }
         }, 1000);
       } 
@@ -187,6 +196,7 @@ const DeliveryBoySignup = () => {
     });
     setShowOtpVerification(false);
     setOtp(['', '', '', '']);
+    setRegistrationComplete(false);
   };
 
   const handleKeyPress = (index: number, e: React.KeyboardEvent) => {
@@ -202,7 +212,7 @@ const DeliveryBoySignup = () => {
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6 relative overflow-hidden">
         {/* Header with logo */}
         <div className="text-center mb-6">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 mb-3">
@@ -234,16 +244,31 @@ const DeliveryBoySignup = () => {
           </div>
         )}
         
+        {/* Login transition animation */}
+        {showLoginTransition && (
+          <div className="absolute inset-0 bg-blue-50 flex flex-col items-center justify-center z-10 transition-all duration-500 animate-pulse">
+            <div className="mb-6 text-blue-600">
+              <ShieldCheck className="h-16 w-16 animate-bounce" />
+            </div>
+            <h3 className="text-xl font-bold text-blue-800">Registration Complete!</h3>
+            <p className="text-blue-600 mt-2">Preparing login form...</p>
+          </div>
+        )}
+        
         {/* Registration complete message */}
         {!isSignUp && registrationComplete && !showSuccessMessage && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded text-sm">
-            Registration successful! Please login with your credentials.
+          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded flex items-center">
+            <CheckCircle className="h-5 w-5 mr-2" />
+            <div>
+              <span className="font-medium">Registration successful!</span>
+              <p className="text-sm">Please login with your credentials.</p>
+            </div>
           </div>
         )}
 
         {/* OTP Verification View */}
         {showOtpVerification ? (
-          <div>
+          <div className="animate-fadeIn">
             <div className="text-center mb-4">
               <h3 className="text-lg font-medium text-gray-900">Verify Your Email</h3>
               <p className="text-gray-500 text-sm">
@@ -262,7 +287,7 @@ const DeliveryBoySignup = () => {
                   value={otp[index]}
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyPress(index, e)}
-                  className="w-12 h-12 text-center text-xl font-medium rounded border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-12 h-12 text-center text-xl font-medium rounded border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-150"
                 />
               ))}
             </div>
@@ -299,7 +324,7 @@ const DeliveryBoySignup = () => {
           </div>
         ) : (
           /* Sign up / Sign in Form */
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className={`transition-opacity duration-300 ${registrationComplete ? 'animate-fadeIn' : ''}`}>
             {/* Name field - only for signup */}
             {isSignUp && (
               <div className="mb-4">
@@ -391,7 +416,7 @@ const DeliveryBoySignup = () => {
             </button>
 
             {/* Social login options */}
-            <div className="mt-5">
+            {/* <div className="mt-5">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200"></div>
@@ -439,7 +464,7 @@ const DeliveryBoySignup = () => {
                   Facebook
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Toggle between signup and signin */}
             <div className="mt-5 text-center">

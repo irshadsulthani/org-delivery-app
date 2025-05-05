@@ -23,10 +23,10 @@ passport.use(new GoogleStrategy({
 
 passport.serializeUser((user: any, done) => {
     done(null, user.email);
-  });
+});
   
-  passport.deserializeUser(async (email: string, done) => {
+passport.deserializeUser(async (email: string, done) => {
     const user = await userRepo.findByEmail(email);
     done(null, user);
-  });
+});
   

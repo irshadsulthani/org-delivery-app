@@ -203,34 +203,6 @@ const AdminSidebar: React.FC<SidebarProps> = ({
       {/* Divider */}
       <div className="border-t border-indigo-700/30 my-2 mx-4"></div>
 
-      {/* Notification Bell - Enhanced */}
-      <div className="px-4 py-3 relative z-10">
-        <button className={`flex items-center py-2.5 px-4 text-white/80 hover:bg-indigo-700/60 hover:text-white rounded-xl transition-colors duration-200 w-full ${
-          collapsed && !isMobile ? "justify-center" : ""
-        }`}
-        onMouseEnter={() => setHoveredItem('notifications')}
-        onMouseLeave={() => setHoveredItem(null)}
-        >
-          <span className="relative">
-            <Bell size={20} />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </span>
-          {(!collapsed || isMobile) && (
-            <>
-              <span className="ml-3 font-medium">Notifications</span>
-              <span className="ml-auto bg-red-500 text-white text-xs font-medium px-2 py-0.5 rounded-full shadow-sm">2</span>
-            </>
-          )}
-          
-          {/* Tooltip for collapsed mode */}
-          {(collapsed && !isMobile && hoveredItem === 'notifications') && (
-            <div className="absolute left-16 bg-indigo-900 text-white px-3 py-1.5 rounded-md text-sm whitespace-nowrap z-20 shadow-xl before:content-[''] before:absolute before:top-1/2 before:-left-1 before:w-2 before:h-2 before:bg-indigo-900 before:transform before:rotate-45 before:-translate-y-1/2">
-              Notifications (2)
-            </div>
-          )}
-        </button>
-      </div>
-
       {/* Logout Button - Enhanced */}
       <div className="p-4 border-t border-indigo-700/50 relative z-10">
         <button 

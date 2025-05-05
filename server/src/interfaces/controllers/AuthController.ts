@@ -182,7 +182,6 @@ export class AuthController {
   }
   static deliveryBoyLogout = async (req: Request, res: Response) => {
     try {
-      console.log("deliveryBoyLogout");
       res.clearCookie('accessToken', { httpOnly: true, sameSite: 'strict' });
       res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict' });
       res.status(200).json({ message: 'Logged out successfully' });
@@ -209,6 +208,17 @@ export class AuthController {
       res.status(200).json({success:true,userData}); 
     } catch (err: any) {
       res.status(401).json({ success:false,message: err.message });
+    }
+  }
+  static reatilerLogout = async (req: Request , res: Response) => {
+    try {
+      console.log('its here coming reatiler lgoout');
+      
+      res.clearCookie('accessToken', {httpOnly:true, sameSite: 'strict'})
+      res.clearCookie('refreshToken', {httpOnly: true, sameSite : 'strict'})
+      res.status(200).json({success:true, message:'Logout Success'})
+    } catch (error) {
+      res.status(500).json({success:false, message: 'Failed to Logout'})
     }
   }
 }

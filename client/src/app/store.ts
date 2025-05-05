@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import userSlice from '../slice/userSlice';
 import adminSlice from '../slice/adminSlice';
 import deliveryBoySlice from '../slice/deliveryBoySlice';
+import reatilerSlice from '../slice/reatilerSlice'
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; 
 import { combineReducers } from 'redux';
@@ -15,6 +16,7 @@ const rootReducer = combineReducers({
   auth: userSlice,
   admin: adminSlice,
   deliveryBoy: deliveryBoySlice,
+  reatiler: reatilerSlice
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -33,5 +33,6 @@ router.post('/deliveryBoy-logout', AuthController.deliveryBoyLogout);
 router.post('/refresh-token', AuthController.refreshAccessToken);
 
 router.post('/retailer-login', AuthController.reatilerLogin)
+router.post('/reatiler-logout', AuthController.reatilerLogout)
 
 export default router;

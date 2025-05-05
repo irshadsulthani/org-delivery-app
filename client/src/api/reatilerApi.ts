@@ -21,3 +21,8 @@ export const loginReatiler = async (loginData:{email: string; password:string}) 
     const response = await publicApi('post', '/auth/retailer-login', loginData)
     return response
 }
+
+export const logoutReatiler = async () => {
+    const response = await publicApi('post', '/auth/reatiler-logout')
+    return response
+}

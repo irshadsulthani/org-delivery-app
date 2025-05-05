@@ -11,7 +11,7 @@ const otpSchema: Schema<OtpDocument> = new mongoose.Schema({
   otp: { type: Number, required: true },
   expiresAt: { type: Date, required: true }
 });
-
+otpSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 const OtpModel: Model<OtpDocument> = mongoose.model<OtpDocument>('Otp', otpSchema);
 
 export default OtpModel;

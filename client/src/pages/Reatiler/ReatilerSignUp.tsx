@@ -1,14 +1,17 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle, ArrowLeft, LogIn } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { loginReatiler, sendSignupOtp, verifySignupOtp } from '../../api/reatilerApi';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setReatiler } from '../../slice/reatilerSlice';
 
 const RetailerSignUp = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showOtp, setShowOtp] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch()
   
   // Form states
   const [formData, setFormData] = useState({
@@ -79,10 +82,15 @@ const RetailerSignUp = () => {
         const email = formData.email;
         const password = formData.password;
         const response = await loginReatiler({ email, password });
-        console.log(response);
+        console.log(response.data);
         
+        dispatch(setReatiler({
+          email : response.userData.email,
+          role : response.userData.role,
+          name : response.userData.name
+        }))
         toast.success('Login successful!');
-        navigate('/retailer/dashboard'); // Navigate to dashboard after login
+        navigate('/retailer/dashboard');
       } else {
         await handleSendOtp();
       }
