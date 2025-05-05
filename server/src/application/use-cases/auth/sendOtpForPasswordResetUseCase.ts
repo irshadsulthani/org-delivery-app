@@ -9,11 +9,8 @@ export const sendOtpForPasswordReset = async (
 ) => {
   const user = await userRepo.findByEmail(email);
   if (!user) throw new Error('User not found');
-  if (user.role !== 'customer') {
-    throw new Error('Only customers can reset their password');
-  }
   const { otp, expiresAt } = generateOtpWithExpiry();
   await sendOtpMail(email, otp);
   await saveOtp(email, otp, expiresAt);
-  return { otp, expiresAt }; // (Skip returning this in production)
+  return { otp, expiresAt };
 };

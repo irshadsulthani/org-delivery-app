@@ -36,26 +36,29 @@ export const otpEmailForForgetPass = async (req: Request, res: Response): Promis
 
   try {
     const { otp, expiresAt } = await sendOtpForPasswordReset(email, userRepo);
-    res.status(200).json({ message: 'OTP sent successfully', otp, expiresAt });
+    res.status(200).json({success:true, message: 'OTP sent successfully', otp, expiresAt });
 
   } catch (err: any) {
     if (err.message === 'User not found') {
       res.status(404).json({ message: err.message });
     } else if (err.message === 'Only customers can reset their password') {
-      res.status(403).json({ message: err.message });
+      res.status(403).json({success:true, message: err.message });
     } else {
-      res.status(500).json({ message: 'Failed to send OTP' });
+      res.status(500).json({success:false, message: 'Failed to send OTP' });
     }
   }
 };
 
 export const verifyOtp = async (req: Request, res: Response): Promise<void> => {  
   const { email, otp } = req.body;
-
+  console.log('its in verifyOtp');
+  
+  console.log(req.body);
+  
   try {
     await verifyOtpForPasswordReset(email, otp);
-    res.status(200).json({ message: 'OTP verified successfully' });
+    res.status(200).json({success:true, message: 'OTP verified successfully' });
   } catch (err: any) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({success:false, message: err.message });
   }
 }

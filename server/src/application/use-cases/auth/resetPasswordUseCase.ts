@@ -8,6 +8,8 @@ export const resetPassword = async (
   userRepo: IUserRepository
 ) => {
   const user = await userRepo.findByEmail(email);
+  console.log('user user', user);
+  
   if (!user) throw new Error('User not found');
 
   const hashedPassword = await PasswordService.hash(newPassword);

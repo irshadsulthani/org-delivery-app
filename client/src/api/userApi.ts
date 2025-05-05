@@ -38,11 +38,11 @@ export const verifyOtpForgetPass = (otpValue: string, resetEmail: string ) => {
 }
 
 export const resetPassword = async(email: string, password: string) => {     
-    await publicApi('post', '/auth/reset-password', { 
+    const response = await publicApi('post', '/auth/reset-password', { 
         email,
         password
     });
-    return
+    return response
 }
 
 export const userData = async ({ email }: { email: string }) => {

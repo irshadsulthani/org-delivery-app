@@ -130,9 +130,9 @@ export class AuthController {
     const { email, password } = req.body;
     try {
       await resetPassword(email, password, userRepo);
-      res.status(200).json({ message: 'Password reset successfully' });
+       res.status(200).json({ success: true, message: 'Password reset successfully' })
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(400).json({success:false, message: err.message });
     }
   }
   static googleCallback = async (req: Request, res: Response) => {
