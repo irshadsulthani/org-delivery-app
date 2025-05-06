@@ -23,7 +23,6 @@ export class AuthController {
 
   static login = async (req: Request, res: Response) => {
     try {
-      console.log(req.body);
       
       const useCase = new LoginUser(userRepo);
       const result = await useCase.execute(req.body.email, req.body.password,['customer']);
@@ -212,8 +211,6 @@ export class AuthController {
   }
   static reatilerLogout = async (req: Request , res: Response) => {
     try {
-      console.log('its here coming reatiler lgoout');
-      
       res.clearCookie('accessToken', {httpOnly:true, sameSite: 'strict'})
       res.clearCookie('refreshToken', {httpOnly: true, sameSite : 'strict'})
       res.status(200).json({success:true, message:'Logout Success'})

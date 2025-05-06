@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { 
   Search, 
   Filter, 
@@ -6,7 +6,6 @@ import {
   RefreshCw,
   MoreHorizontal,
   ChevronDown,
-  UserCheck,
   UserPlus,
   Trash2,
   Edit,
@@ -19,7 +18,6 @@ import {
   Eye,
   MapPin,
   Bike,
-  Star,
   Clock,
   Briefcase,
   Users
@@ -556,7 +554,7 @@ const DeliveryBoyListing = () => {
                   </tbody>
                 </table>
               </div>
-              {!loading && selectedPersonnel.length === 0 && (
+              {!loading && (deliveryPersonnel?.length ?? 0) === 0 && (
                 <div className="text-center py-12">
                   <Users size={48} className="mx-auto text-gray-400" />
                   <h3 className="mt-2 text-lg font-medium text-gray-900">No Delivery Boys found</h3>

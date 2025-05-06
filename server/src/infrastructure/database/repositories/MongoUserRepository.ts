@@ -56,4 +56,11 @@ export class MongoUserRepository implements IUserRepository {
       _id: deliveryBoy._id.toString(),
     }))
   }
+  async getAllReatilers():Promise<User[]>{
+    const reatilers = await UserModel.find({ role: 'retailer' }).lean();
+    return reatilers.map(reatilers => ({
+      ...reatilers,
+      _id : reatilers._id.toString()
+    }))
+  }
 }

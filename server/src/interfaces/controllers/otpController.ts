@@ -50,11 +50,7 @@ export const otpEmailForForgetPass = async (req: Request, res: Response): Promis
 };
 
 export const verifyOtp = async (req: Request, res: Response): Promise<void> => {  
-  const { email, otp } = req.body;
-  console.log('its in verifyOtp');
-  
-  console.log(req.body);
-  
+  const { email, otp } = req.body;  
   try {
     await verifyOtpForPasswordReset(email, otp);
     res.status(200).json({success:true, message: 'OTP verified successfully' });

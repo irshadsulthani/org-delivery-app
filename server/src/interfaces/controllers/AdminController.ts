@@ -26,13 +26,21 @@ export class AdminController{
     }
     static getAllDeliveryBoys = async (req: Request, res: Response) =>{
         try {
-          console.log('its here coming');
-          
             const useCase = new GetUsers(userRepo);
             const deliveryBoys = await useCase.excuteDeliveryBoys();
             res.status(200).json(deliveryBoys);
         } catch (err: any) {
             res.status(400).json({ message: err.message });
         }
-    }  
+    }
+    static getAllReatilers = async (req: Request, res: Response ) => {
+        try {
+            console.log('its here getting in reatilers');
+            const useCase = new GetUsers(userRepo);
+            const reatilers = await useCase.excuteReatilers();
+            res.status(200).json(reatilers)
+        } catch (err :any) {
+            res.status(400).json({ message: err.message });
+        }
+    }
 }

@@ -30,3 +30,8 @@ export const getAllDeliveryBoys = async () => {
     const response = await privateApi('get','/admin/getalldeliveryboys')
     return response
 }
+
+export const getAllReatilers =  async ()=>{
+    const response = await privateApi('get','/admin/get-allReatilers')
+    return response
+}

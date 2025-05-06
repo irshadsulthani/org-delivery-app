@@ -20,7 +20,7 @@ import { useDispatch } from 'react-redux';
 import { setDeliveryBoy } from '../../slice/deliveryBoySlice';
 import { resetPassword, sendPasswordResetEmail, verifyOtpForgetPass } from '../../api/userApi';
 
-const DeliveryBoyAuth = () => {
+const DeliveryBoySignUp = () => {
   // Auth mode states
   const [authMode, setAuthMode] = useState<'signup' | 'login' | 'forgotPassword' | 'resetPassword'>('login');
   const [isLoading, setIsLoading] = useState(false);
@@ -83,10 +83,28 @@ const DeliveryBoyAuth = () => {
   
     try {
       setIsLoading(true);
-      
+  
+      if (!formData.email) {
+        toast.error('Email is required');
+        setIsLoading(false);
+        return;
+      }
+  
       if (authMode === 'signup') {
+        if (!formData.name || formData.name.trim() === '') {
+          toast.error('Invalid Name');
+          setIsLoading(false);
+          return;
+        }
+  
+        // Password validation
+        if (!formData.password || formData.password.trim() === '' ) {
+          toast.error('Invalid Password');
+          setIsLoading(false);
+          return;
+        }
+  
         const response = await sendSignupOtp(formData.email);
-
         if (response.message === 'OTP sent successfully') {
           toast.success('OTP sent successfully. Please check your email.');
           setOtpPurpose('signup');
@@ -94,41 +112,46 @@ const DeliveryBoyAuth = () => {
         } else {
           toast.error(response.message || 'Failed to send OTP');
         }
-      } 
-      
+      }
+  
       else if (authMode === 'login') {
+        if (!formData.password) {
+          setError('Password is required');
+          setIsLoading(false);
+          return;
+        }
+  
         const response = await loginDeliveryBoy(formData);
-        console.log(response);
         dispatch(setDeliveryBoy({
           name: response.userData.name,
           email: response.userData.email,
           role: response.userData.role,
-        }))
+        }));
+  
         if (response && response.success) {
           setShowSuccessMessage(true);
-
           let countdown = 3;
           setTimeLeft(countdown);
-
+  
           const timer = setInterval(() => {
             countdown -= 1;
             setTimeLeft(countdown);
-
+  
             if (countdown <= 0) {
               clearInterval(timer);
               setShowSuccessMessage(false);
-              navigate('/delivery/dashboard')
+              navigate('/delivery/dashboard');
             }
           }, 1000);
         } else {
-          const errorMessage = response?.success || 'Sign in failed. Please try again.';
+          const errorMessage = response?.message || 'Sign in failed. Please try again.';
           toast.error(errorMessage);
         }
       }
-      
+  
       else if (authMode === 'forgotPassword') {
         const response = await sendPasswordResetEmail(formData.email);
-        
+  
         if (response.message === 'OTP sent successfully') {
           toast.success('OTP sent successfully. Please check your email.');
           setOtpPurpose('resetPassword');
@@ -137,22 +160,28 @@ const DeliveryBoyAuth = () => {
           toast.error(response.message || 'Failed to send OTP');
         }
       }
-      
+  
       else if (authMode === 'resetPassword') {
-        if (formData.newPassword !== formData.confirmPassword) {
-          setError('Passwords do not match');
+        if (!formData.newPassword || formData.newPassword.length < 6) {
+          setError('New password must be at least 6 characters');
+          setIsLoading(false);
           return;
         }
-        
+  
+        if (formData.newPassword !== formData.confirmPassword) {
+          setError('Passwords do not match');
+          setIsLoading(false);
+          return;
+        }
+  
         const response = await resetPassword(formData.email, formData.newPassword);
-        console.log('response response',response);
-        
+  
         if (response.success) {
           toast.success('Password reset successfully! Please login with your new password.');
           setAuthMode('login');
           setFormData({
             name: '',
-            email: formData.email, // Keep email filled for login
+            email: formData.email,
             password: '',
             newPassword: '',
             confirmPassword: ''
@@ -164,8 +193,6 @@ const DeliveryBoyAuth = () => {
   
     } catch (err: any) {
       console.error('Auth error:', err);
-    
-      // Extract backend message safely
       const message =
         err?.response?.data?.message ||
         'Something went wrong. Please try again.';
@@ -174,6 +201,7 @@ const DeliveryBoyAuth = () => {
       setIsLoading(false);
     }
   };
+  
     
   const handleVerifyOtp = async () => {
     const otpString = otp.join('');
@@ -663,4 +691,4 @@ const DeliveryBoyAuth = () => {
   );
 };
 
-export default DeliveryBoyAuth;
+export default DeliveryBoySignUp;

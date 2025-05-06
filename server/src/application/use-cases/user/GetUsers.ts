@@ -26,4 +26,12 @@ export class GetUsers {
             throw new Error("Error fetching delivery Boys");
         }
     }
+    async excuteReatilers(){
+        try {
+            const reatilers = await this.userRepo.getAllReatilers();
+            return reatilers.map(({password, ...user}) => user )
+        } catch (error) {
+            throw new Error("Error fetching Reatilers")
+        }
+    }
 }

@@ -5,7 +5,6 @@ export const verifyOtpForPasswordReset = async (
   enteredOtp: number
 ): Promise<void> => {
   const otpEntry = await OtpModel.findOne({ email });
-  console.log('otpEntry', otpEntry);
   
   if (!otpEntry) {
     throw new Error('OTP not found');

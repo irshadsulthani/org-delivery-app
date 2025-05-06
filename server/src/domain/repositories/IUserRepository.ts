@@ -8,4 +8,5 @@ export interface IUserRepository {
     getAllUsers(): Promise<User[]>;
     getAllCustomers(): Promise<User[]>;
     getAllDeliveryBoys(): Promise<User[]>;
+    getAllReatilers(): Promise<User[]>
 }

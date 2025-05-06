@@ -4,7 +4,6 @@ import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { adminLogin } from '../../api/adminApi';
 import { toast } from 'react-toastify';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../../slice/userSlice';
 import { setAdmin } from '../../slice/adminSlice';
 import { store } from '../../app/store';
 
@@ -22,7 +21,6 @@ const AdminLogin: React.FC = () => {
     
     try {
       const response = await adminLogin(email, password);
-      console.log(response);
       
       toast.success('Login successful');
       dispatch(setAdmin({
@@ -30,7 +28,6 @@ const AdminLogin: React.FC = () => {
         role:response.role,
         name:response.name,
       }))
-      console.log("After login:", store.getState());
       // navigate('/admin/dashboard');
     } catch (err) {
       toast.error('Login failed. Please check your credentials.');
