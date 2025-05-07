@@ -1,18 +1,18 @@
 import { User } from "../../../domain/entities/User";
-import { MongoUserRepository } from "../../../infrastructure/database/repositories/MongoUserRepository";
+import { UserRepository } from "../../../infrastructure/database/repositories/UserRepository";
 
 // application/use-cases/GoogleLoginUser.ts
 export class GoogleLoginUser {
-    constructor(private userRepo: MongoUserRepository) {}
+    constructor(private _userRepo: UserRepository) {}
   
     async execute(profile: any): Promise<User> {
       const email = profile.emails?.[0]?.value;
       const name = profile.displayName || 'Google User';
   
-      let user = await this.userRepo.findByEmail(email);
+      let user = await this._userRepo.findByEmail(email);
       
       if (!user) {
-        user = await this.userRepo.createUser({
+        user = await this._userRepo.createUser({
           name,
           email,
           isGoogleUser: true,

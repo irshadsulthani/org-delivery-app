@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Package,
-  Bell
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

@@ -1,11 +1,11 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { config } from '../../config';
-import { MongoUserRepository } from '../database/repositories/MongoUserRepository';
+import { UserRepository } from '../database/repositories/UserRepository';
 import { GoogleLoginUser } from '../../application/use-cases/auth/GoogleLoginUser';
 
 
-const userRepo = new MongoUserRepository();
+const userRepo = new UserRepository();
 const loginUseCase = new GoogleLoginUser(userRepo);
 
 passport.use(new GoogleStrategy({

@@ -6,7 +6,6 @@ import {
   RefreshCw,
   MoreHorizontal,
   ChevronDown,
-  UserPlus,
   Trash2,
   Edit,
   Phone,
@@ -20,7 +19,6 @@ import {
   Store,
   Clock,
   Briefcase,
-  Users,
   Package,
   DollarSign,
   Star,
@@ -416,13 +414,13 @@ const RetailerListing = () => {
               <h2 className="text-2xl font-bold text-gray-800">Retailers</h2>
               <p className="text-gray-500 text-sm mt-1">Manage all your partner stores and retailers</p>
             </div>
-            <button 
+            {/* <button 
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               onClick={() => toast.info('Add Retailer form would open here')}
             >
               <Store size={16} className="mr-2" />
               Add Retailer
-            </button>
+            </button> */}
           </div>
 
           {/* Filters and Actions */}
@@ -646,7 +644,11 @@ const RetailerListing = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {new Date(retailer.createdAt).toLocaleDateString()}
+                            {new Date(retailer.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            })}
                             </div>
                             <div className="text-xs text-gray-500">
                               {new Date(retailer.createdAt).toLocaleTimeString()}
@@ -745,7 +747,11 @@ const RetailerListing = () => {
                         <div className="flex items-center">
                           <Calendar size={14} className="text-gray-400 mr-2" />
                           <span className="text-gray-700">
-                            {new Date(retailer.joinDate).toLocaleDateString()}
+                            {new Date(retailer.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            })}
                           </span>
                         </div>
                         <div className="flex items-center">
@@ -766,7 +772,7 @@ const RetailerListing = () => {
                         <StoreTypeBadge type={retailer.storeType} />
                         <div className="text-sm font-medium text-gray-900 flex items-center">
                           <DollarSign size={14} className="text-gray-500 mr-1" />
-                          {retailer.balance.toFixed(2)}
+                          {(retailer.balance || 0).toFixed(2)}
                         </div>
                       </div>
                     </div>

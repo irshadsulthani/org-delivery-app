@@ -2,12 +2,14 @@ import { resetPassword } from './../../application/use-cases/auth/resetPasswordU
 import { Request, Response } from 'express';
 import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/verifyOtpAndRegisterUser';
 import { LoginUser } from '../../application/use-cases/user/LoginUser';
-import { MongoUserRepository } from '../../infrastructure/database/repositories/MongoUserRepository';
+import { UserRepository } from '../../infrastructure/database/repositories/UserRepository';
 import { User } from '../../domain/entities/User';
 import { AuthService } from '../../application/services/AuthService';
 import { config } from '../../config';
+import { StatusCode } from '../../utils/statusCode';
+import { stat } from 'fs';
 
-const userRepo = new MongoUserRepository();
+const userRepo = new UserRepository();
 
 export class AuthController {
   static register = async (req: Request, res: Response) => {
@@ -15,9 +17,9 @@ export class AuthController {
       const { otp, ...userData } = req.body as User & { otp: number };
       const useCase = new VerifyOtpAndRegisterUser(userRepo);
       const user = await useCase.execute(userData, otp);
-      res.status(201).json(user);
+      res.status(StatusCode.CREATED).json(user);
     } catch (err: any) {
-      res.status(400).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
     }
   };
 
@@ -45,9 +47,9 @@ export class AuthController {
       const { accessToken, refreshToken, ...userData } = result;
 
       // Send back the user data without tokens (since tokens are in cookies)
-      res.status(200).json(userData);
+      res.status(StatusCode.OK).json(userData);
     } catch (err: any) {
-      res.status(401).json({ message: err.message });
+      res.status(StatusCode.UNAUTHORIZED).json({ message: err.message });
     }
   };
 
@@ -67,9 +69,9 @@ export class AuthController {
         maxAge: config.refreshTokenExpiration,
       });
   
-      res.status(200).json(userData); 
+      res.status(StatusCode.OK).json(userData); 
     } catch (err: any) {
-      res.status(401).json({ message: err.message });
+      res.status(StatusCode.UNAUTHORIZED).json({ message: err.message });
     }
   };
 
@@ -78,9 +80,9 @@ export class AuthController {
       // Clear the cookies
       res.clearCookie('accessToken', { httpOnly: true, sameSite: 'strict' });
       res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict' });
-      res.status(200).json({ message: 'Logged out successfully' });
+      res.status(StatusCode.OK).json({ message: 'Logged out successfully' });
     } catch (err: any) {
-      res.status(500).json({ message: 'Failed to logout' });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: 'Failed to logout' });
     }
   };
 
@@ -88,9 +90,9 @@ export class AuthController {
     try {
       res.clearCookie('accessToken', { httpOnly: true, sameSite: 'strict' });
       res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict' });
-      res.status(200).json({ message: 'Logged out successfully' });
+      res.status(StatusCode.OK).json({ message: 'Logged out successfully' });
     } catch (err: any) {
-      res.status(500).json({ message: 'Failed to logout' });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: 'Failed to logout' });
     }
   };
 
@@ -99,7 +101,7 @@ export class AuthController {
       const refreshToken = req.cookies.refreshToken;
 
       if (!refreshToken) {
-         res.status(401).json({ message: 'No refresh token found' });
+         res.status(StatusCode.UNAUTHORIZED).json({ message: 'No refresh token found' });
          return
       }
   
@@ -119,9 +121,9 @@ export class AuthController {
         maxAge: config.accessTokenExpiration, // 1 hour
       });
   
-      res.status(200).json({ accessToken: newAccessToken });
+      res.status(StatusCode.OK).json({ accessToken: newAccessToken });
     } catch (err: any) {
-      res.status(401).json({ message: err.message });
+      res.status(StatusCode.UNAUTHORIZED).json({ message: err.message });
     }
   };
 
@@ -129,9 +131,9 @@ export class AuthController {
     const { email, password } = req.body;
     try {
       await resetPassword(email, password, userRepo);
-       res.status(200).json({ success: true, message: 'Password reset successfully' })
+       res.status(StatusCode.OK).json({ success: true, message: 'Password reset successfully' })
     } catch (err: any) {
-      res.status(400).json({success:false, message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({success:false, message: err.message });
     }
   }
   static googleCallback = async (req: Request, res: Response) => {
@@ -156,7 +158,7 @@ export class AuthController {
       res.redirect(`${config.frontendUrl}/?email=${encodeURIComponent(user.email)}`);
     } catch (err) {
       console.error('OAuth callback error:', err);
-      res.status(500).json({ error: 'OAuth login failed' });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ error: 'OAuth login failed' });
     }
   };
   static deliveryBoyLogin = async (req: Request, res: Response) => {
@@ -174,18 +176,18 @@ export class AuthController {
         sameSite: 'strict',
         maxAge: config.refreshTokenExpiration,
       });
-      res.status(200).json({success:true,userData}); 
+      res.status(StatusCode.OK).json({success:true,userData}); 
     } catch (err: any) {
-      res.status(401).json({ success:false,message: err.message });
+      res.status(StatusCode.UNAUTHORIZED).json({ success:false,message: err.message });
     }
   }
   static deliveryBoyLogout = async (req: Request, res: Response) => {
     try {
       res.clearCookie('accessToken', { httpOnly: true, sameSite: 'strict' });
       res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict' });
-      res.status(200).json({ message: 'Logged out successfully' });
+      res.status(StatusCode.OK).json({ message: 'Logged out successfully' });
     } catch (err: any) {
-      res.status(500).json({ message: 'Failed to logout' });
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: 'Failed to logout' });
     }
   }
   static reatilerLogin = async (req: Request, res:Response) =>{
@@ -204,18 +206,18 @@ export class AuthController {
         sameSite: 'strict',
         maxAge: config.refreshTokenExpiration,
       });
-      res.status(200).json({success:true,userData}); 
+      res.status(StatusCode.OK).json({success:true,userData}); 
     } catch (err: any) {
-      res.status(401).json({ success:false,message: err.message });
+      res.status(StatusCode.UNAUTHORIZED).json({ success:false,message: err.message });
     }
   }
   static reatilerLogout = async (req: Request , res: Response) => {
     try {
       res.clearCookie('accessToken', {httpOnly:true, sameSite: 'strict'})
       res.clearCookie('refreshToken', {httpOnly: true, sameSite : 'strict'})
-      res.status(200).json({success:true, message:'Logout Success'})
+      res.status(StatusCode.OK).json({success:true, message:'Logout Success'})
     } catch (error) {
-      res.status(500).json({success:false, message: 'Failed to Logout'})
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({success:false, message: 'Failed to Logout'})
     }
   }
 }

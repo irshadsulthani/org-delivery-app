@@ -1,16 +1,16 @@
-import { MongoUserRepository } from '../database/repositories/MongoUserRepository';
+import { UserRepository } from '../database/repositories/UserRepository';
 import { User } from '../../domain/entities/User';
 
 export class GoogleLoginUser {
-  constructor(private userRepo: MongoUserRepository) {}
+  constructor(private _userRepo: UserRepository) {}
 
   async execute(profile: any): Promise<User> {
     const email = profile.emails[0].value;
     const name = profile.displayName;
 
-    let user = await this.userRepo.findByEmail(email);
+    let user = await this._userRepo.findByEmail(email);
     if (!user) {
-      user = await this.userRepo.createUser({
+      user = await this._userRepo.createUser({
         name,
         email,
         isGoogleUser: true,
@@ -24,7 +24,6 @@ export class GoogleLoginUser {
         updatedAt: new Date(),
       });
     }
-
     return user;
   }
 }

@@ -1,4 +1,3 @@
-import { getAllDeliveryBoys } from './../../../../client/src/api/adminApi';
 import { User } from "../entities/User";
 
 export interface IUserRepository {

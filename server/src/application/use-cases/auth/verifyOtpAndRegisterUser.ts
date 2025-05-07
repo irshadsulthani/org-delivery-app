@@ -5,7 +5,7 @@ import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { User } from '../../../domain/entities/User';
 
 export class VerifyOtpAndRegisterUser {
-  constructor(private userRepo: IUserRepository) {}
+  constructor(private _userRepo: IUserRepository) {}
 
   async execute(user: User, enteredOtp: number, role?: User['role']): Promise<User> {
     const otpEntry = await OtpModel.findOne({ email: user.email });
@@ -14,13 +14,13 @@ export class VerifyOtpAndRegisterUser {
     if (otpEntry.otp != enteredOtp) throw new Error('Invalid OTP');
     if (otpEntry.expiresAt < new Date()) throw new Error('OTP expired');
   
-    const existing = await this.userRepo.findByEmail(user.email);
+    const existing = await this._userRepo.findByEmail(user.email);
     if (existing) throw new Error('Email already registered');
   
     // Set default role if not provided
     user.role = role || 'customer';
   
-    const newUser = await this.userRepo.createUser(user);
+    const newUser = await this._userRepo.createUser(user);
     await OtpModel.deleteOne({ email: user.email });
   
     return newUser;

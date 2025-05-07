@@ -1,10 +1,10 @@
 import { IUserRepository } from "../../../domain/repositories/IUserRepository";
 
 export class GetUsers {
-    constructor(private userRepo: IUserRepository) {}
+    constructor(private _userRepo: IUserRepository) {}
     async execute() {
         try {
-            const users = await this.userRepo.getAllUsers();
+            const users = await this._userRepo.getAllUsers();
             return users.map(({ password, ...user }) => user);
         } catch (error) {
             throw new Error("Error fetching users");
@@ -12,7 +12,7 @@ export class GetUsers {
     }
     async executeCustomers() {
         try {
-            const customers = await this.userRepo.getAllCustomers();
+            const customers = await this._userRepo.getAllCustomers();
             return customers.map(({ password, ...user }) => user);
         } catch (error) {
             throw new Error("Error fetching customers");
@@ -20,7 +20,7 @@ export class GetUsers {
     }
     async excuteDeliveryBoys() {
         try {
-            const deliveryBoys = await this.userRepo.getAllDeliveryBoys();
+            const deliveryBoys = await this._userRepo.getAllDeliveryBoys();
             return deliveryBoys.map(({ password, ...user }) => user);
         } catch (error) {
             throw new Error("Error fetching delivery Boys");
@@ -28,7 +28,7 @@ export class GetUsers {
     }
     async excuteReatilers(){
         try {
-            const reatilers = await this.userRepo.getAllReatilers();
+            const reatilers = await this._userRepo.getAllReatilers();
             return reatilers.map(({password, ...user}) => user )
         } catch (error) {
             throw new Error("Error fetching Reatilers")

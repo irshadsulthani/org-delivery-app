@@ -1,6 +1,6 @@
 import express from 'express';
 import { AuthController } from '../controllers/AuthController';
-import { handleOtpRequest, verifyOtpController, otpEmailForForgetPass, verifyOtp } from '../controllers/otpController';
+import { handleOtpRequest, verifyOtpController, otpEmailForForgetPass, verifyOtp } from '../controllers/OtpController';
 import passport from 'passport';
 const router = express.Router();
 
