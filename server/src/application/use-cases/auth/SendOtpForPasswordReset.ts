@@ -1,6 +1,6 @@
 import { IUserRepository } from '../../../domain/interface/repositories/IUserRepository';
-import { GenerateOtpWithExpiry } from '../../../infrastructure/services/GenerateOtp';
-import { SendOtpMail } from '../../../infrastructure/services/Nodemailer';
+import { GenerateOtpWithExpiry } from '../../../infrastructure/services/generateOtp';
+import { SendOtpMail } from '../../../infrastructure/services/nodemailer';
 import { saveOtp } from '../../../infrastructure/services/OtpStore';
 import { ISendOtpForPasswordReset } from '../../../domain/interface/use-case/ISendOtpForPasswordReset';
 

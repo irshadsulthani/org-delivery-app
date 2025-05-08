@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/VerifyOtpAndRegisterUser';
 import { LoginUser } from '../../application/use-cases/user/LoginUser';
 import { UserRepository } from '../../infrastructure/database/repositories/UserRepository';
 import { User } from '../../domain/entities/User';
@@ -7,6 +6,7 @@ import { AuthService } from '../../application/services/AuthService';
 import { config } from '../../config';
 import { StatusCode } from '../../utils/statusCode';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/ResetPasswordUseCase';
+import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/VerifyOtpAndRegisterUser';
 
 
 const userRepo = new UserRepository();

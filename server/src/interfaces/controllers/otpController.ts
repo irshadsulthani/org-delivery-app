@@ -3,8 +3,9 @@ import { UserRepository } from '../../infrastructure/database/repositories/UserR
 import { StatusCode } from '../../utils/statusCode';
 import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/VerifyOtpAndRegisterUser';
 import { VerifyOtpForPasswordReset } from '../../application/use-cases/auth/VerifyOtpForPasswordReset';
-import { SendOtpForPasswordReset } from '../../application/use-cases/auth/SendOtpForPasswordResetUseCase';
 import { SendOtpUseCase } from '../../application/use-cases/auth/SendOtpUseCase';
+import { SendOtpForPasswordReset } from '../../application/use-cases/auth/SendOtpForPasswordReset';
+
 
 export const handleOtpRequest = async (req: Request, res: Response): Promise<void> => {
   const { email } = req.body;

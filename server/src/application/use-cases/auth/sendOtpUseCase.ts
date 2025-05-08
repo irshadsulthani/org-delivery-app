@@ -1,6 +1,6 @@
-import { GenerateOtpWithExpiry } from './../../../infrastructure/services/GenerateOtp';
 import { ISendOtpUseCase } from '../../../domain/interface/use-case/ISendOtpUseCase';
-import { SendOtpMail } from '../../../infrastructure/services/Nodemailer';
+import { GenerateOtpWithExpiry } from '../../../infrastructure/services/generateOtp';
+import { SendOtpMail } from '../../../infrastructure/services/nodemailer';
 import { saveOtp } from '../../../infrastructure/services/OtpStore';
 
 export class SendOtpUseCase implements ISendOtpUseCase {
