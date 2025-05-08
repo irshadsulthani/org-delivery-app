@@ -1,15 +1,16 @@
 import { Request, Response } from 'express'; 
-import { sendOtpUseCase } from "../../application/use-cases/auth/sendOtpUseCase";
-import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/verifyOtpAndRegisterUser';
 import { UserRepository } from '../../infrastructure/database/repositories/UserRepository';
-import { sendOtpForPasswordReset } from '../../application/use-cases/auth/sendOtpForPasswordResetUseCase';
-import { verifyOtpForPasswordReset } from '../../application/use-cases/auth/verifyOtpForPasswordResetUseCase';
 import { StatusCode } from '../../utils/statusCode';
+import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/VerifyOtpAndRegisterUser';
+import { VerifyOtpForPasswordReset } from '../../application/use-cases/auth/VerifyOtpForPasswordReset';
+import { SendOtpForPasswordReset } from '../../application/use-cases/auth/SendOtpForPasswordResetUseCase';
+import { SendOtpUseCase } from '../../application/use-cases/auth/SendOtpUseCase';
 
 export const handleOtpRequest = async (req: Request, res: Response): Promise<void> => {
   const { email } = req.body;
   try {
-    const { otp, expiresAt } = await sendOtpUseCase(email);
+    const sendOtpUseCase = new SendOtpUseCase();
+    const { otp, expiresAt } = await sendOtpUseCase.execute(email);
     res.status(StatusCode.OK).json({ message: 'OTP sent successfully', otp, expiresAt });
   } catch (err) {
     console.error(err);
@@ -34,7 +35,10 @@ export const otpEmailForForgetPass = async (req: Request, res: Response): Promis
   const { email } = req.body;
 
   try {
-    const { otp, expiresAt } = await sendOtpForPasswordReset(email, userRepo);
+    
+    const sendOtpUseCase = new SendOtpForPasswordReset(userRepo);
+    const { otp, expiresAt } = await sendOtpUseCase.execute(email);
+
     res.status(StatusCode.OK).json({ success: true, message: 'OTP sent successfully', otp, expiresAt });
   } catch (err: any) {
     if (err.message === 'User not found') {
@@ -50,7 +54,8 @@ export const otpEmailForForgetPass = async (req: Request, res: Response): Promis
 export const verifyOtp = async (req: Request, res: Response): Promise<void> => {  
   const { email, otp } = req.body;  
   try {
-    await verifyOtpForPasswordReset(email, otp);
+    const verifyOtp = new VerifyOtpForPasswordReset();
+    await verifyOtp.execute(email,otp)
     res.status(StatusCode.OK).json({ success: true, message: 'OTP verified successfully' });
   } catch (err: any) {
     res.status(StatusCode.BAD_REQUEST).json({ success: false, message: err.message });

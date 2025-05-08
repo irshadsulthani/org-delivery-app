@@ -5,7 +5,7 @@ import { adminLogin } from '../../api/adminApi';
 import { toast } from 'react-toastify';
 import { useDispatch } from 'react-redux';
 import { setAdmin } from '../../slice/adminSlice';
-import { store } from '../../app/store';
+
 
 const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -21,6 +21,7 @@ const AdminLogin: React.FC = () => {
     
     try {
       const response = await adminLogin(email, password);
+      console.log('response',response);
       
       toast.success('Login successful');
       dispatch(setAdmin({

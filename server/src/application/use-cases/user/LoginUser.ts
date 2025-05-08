@@ -1,10 +1,12 @@
-// application/use-cases/user/LoginUser.ts
+import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
+import { IAuthService } from "../../../domain/interface/services/IAuthService";
 
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
-import { AuthService } from '../../services/AuthService';
 
 export class LoginUser {
-  constructor(private _userRepo: IUserRepository) {}
+  constructor(
+    private _userRepo: IUserRepository,
+    private _authService: IAuthService  // Injecting the IAuthService
+  ) {}
 
   async execute(email: string, password: string, allowedRoles: string[]): Promise<{
     name: string;
@@ -25,8 +27,9 @@ export class LoginUser {
     const isMatch = await this._userRepo.comparePassword(password, user.password);
     if (!isMatch) throw new Error("Invalid credentials");
 
-    const accessToken = AuthService.generateAccessToken(user);
-    const refreshToken = AuthService.generateRefreshToken(user);
+    // Using injected _authService to generate tokens
+    const accessToken = this._authService.generateAccessToken(user);
+    const refreshToken = this._authService.generateRefreshToken(user);
 
     return {
       name: user.name,

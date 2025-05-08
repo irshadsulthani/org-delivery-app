@@ -34,7 +34,7 @@ interface Customer {
   name: string;
   email: string;
   phone: string;
-  status: 'Active' | 'Inactive' | 'Pending';
+  isVerified: 'false' | 'Inactive' | 'Pending';
   createdAt: string;
   orders: number;
   lastOrder: string;
@@ -106,7 +106,7 @@ const CustomerListing = () => {
       customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer._id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'All' || customer.status === statusFilter;
+    const matchesStatus = statusFilter === 'All' || customer.isVerified === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
@@ -131,12 +131,12 @@ const CustomerListing = () => {
   });
 
   // Status badge component
-  const StatusBadge = ({ status }: { status: 'Active' | 'Inactive' | 'Pending' }) => {
+  const StatusBadge = ({ status }: { status: 'false' | 'Inactive' | 'Pending' }) => {
     let colorClasses = '';
     let Icon = CheckCircle;
     
     switch (status) {
-      case 'Active':
+      case 'false':
         colorClasses = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
         Icon = CheckCircle;
         break;
@@ -236,7 +236,7 @@ const CustomerListing = () => {
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
                     <option value="All">All Status</option>
-                    <option value="Active">Active</option>
+                    <option value="false">Active</option>
                     <option value="Inactive">Inactive</option>
                     <option value="Pending">Pending</option>
                   </select>
@@ -431,7 +431,7 @@ const CustomerListing = () => {
                           <div className="text-sm font-medium text-gray-900">{customer.totalSpent}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={customer.status} />
+                          <StatusBadge status={customer.isVerified} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
@@ -535,7 +535,7 @@ const CustomerListing = () => {
                     <p className="text-sm text-gray-500 mb-2">Last Order: {customer.lastOrder}</p>
                     <p className="text-sm font-medium text-gray-900">Total Spent: {customer.totalSpent}</p>
                   </div>
-                  <StatusBadge status={customer.status} />
+                  <StatusBadge status={customer?.isVerified} />
                   <div className="mt-4 flex justify-end space-x-2">
                     <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
                       <Eye size={16} />

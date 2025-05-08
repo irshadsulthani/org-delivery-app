@@ -1,16 +1,20 @@
-import { generateOtpWithExpiry } from '../../../infrastructure/services/generateOtp';
-import { sendOtpMail } from '../../../infrastructure/services/nodemailer';
-import { saveOtp } from '../../../infrastructure/services/otpStore';
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
+import { IUserRepository } from '../../../domain/interface/repositories/IUserRepository';
+import { GenerateOtpWithExpiry } from '../../../infrastructure/services/GenerateOtp';
+import { SendOtpMail } from '../../../infrastructure/services/Nodemailer';
+import { saveOtp } from '../../../infrastructure/services/OtpStore';
+import { ISendOtpForPasswordReset } from '../../../domain/interface/use-case/ISendOtpForPasswordReset';
 
-export const sendOtpForPasswordReset = async (
-  email: string,
-  userRepo: IUserRepository
-) => {
-  const user = await userRepo.findByEmail(email);
-  if (!user) throw new Error('User not found');
-  const { otp, expiresAt } = generateOtpWithExpiry();
-  await sendOtpMail(email, otp);
-  await saveOtp(email, otp, expiresAt);
-  return { otp, expiresAt };
-};
+export class SendOtpForPasswordReset implements ISendOtpForPasswordReset {
+  constructor(private userRepo: IUserRepository) {}
+
+  async execute(email: string): Promise<{ otp: string; expiresAt: Date }> {
+    const user = await this.userRepo.findByEmail(email);
+    if (!user) throw new Error('User not found');
+
+    const { otp, expiresAt } = GenerateOtpWithExpiry();
+    await SendOtpMail(email, otp);
+    await saveOtp(email, otp, expiresAt);
+
+    return { otp: otp.toString(), expiresAt };
+  }
+}

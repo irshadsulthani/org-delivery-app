@@ -1,4 +1,5 @@
-import { IUserRepository } from "../../../domain/repositories/IUserRepository";
+import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
+
 
 export class GetUsers {
     constructor(private _userRepo: IUserRepository) {}

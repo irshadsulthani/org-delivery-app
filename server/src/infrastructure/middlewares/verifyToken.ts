@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { config } from '../../config';
-import { StatusCode } from '../../utils/statusCode'; // Adjust import path if needed
+import { StatusCode } from '../../utils/statusCode';
 
 const ACCESS_SECRET = config.jwtAccessSecret;
 
@@ -14,7 +14,6 @@ declare module 'express-serve-static-core' {
 
 export const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const token = req.cookies?.accessToken;
-
   if (!token) {
     res.status(StatusCode.UNAUTHORIZED).json({ message: 'Unauthorized: No token provided' });
     return;
@@ -26,6 +25,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     }
 
     const decoded = jwt.verify(token, ACCESS_SECRET);
+
     req.user = decoded;
 
     next();

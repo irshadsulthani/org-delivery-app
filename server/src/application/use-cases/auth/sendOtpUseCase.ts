@@ -1,12 +1,13 @@
-import { verifyOtp } from './../../../../../client/src/api/userApi';
-import { generateOtpWithExpiry } from '../../../infrastructure/services/generateOtp';
-import { sendOtpMail } from '../../../infrastructure/services/nodemailer';
-import { saveOtp } from '../../../infrastructure/services/otpStore';
+import { GenerateOtpWithExpiry } from './../../../infrastructure/services/GenerateOtp';
+import { ISendOtpUseCase } from '../../../domain/interface/use-case/ISendOtpUseCase';
+import { SendOtpMail } from '../../../infrastructure/services/Nodemailer';
+import { saveOtp } from '../../../infrastructure/services/OtpStore';
 
-export const sendOtpUseCase = async (email: string) => {
-  const { otp, expiresAt } = generateOtpWithExpiry();
-  await sendOtpMail(email, otp);
-  saveOtp(email, otp, expiresAt);
-  return { otp, expiresAt }; // You can skip sending this in prod
-};
-
+export class SendOtpUseCase implements ISendOtpUseCase {
+  async execute(email: string): Promise<{ otp: string; expiresAt: Date }> {
+    const { otp, expiresAt } = GenerateOtpWithExpiry();
+    await SendOtpMail(email, otp);
+    await saveOtp(email, otp, expiresAt);
+    return { otp: otp.toString(), expiresAt };
+  }
+}

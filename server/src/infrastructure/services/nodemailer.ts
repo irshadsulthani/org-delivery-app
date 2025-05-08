@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendOtpMail = async (to: string, otp: number) => {
+export const SendOtpMail = async (to: string, otp: number) => {
   // Format OTP for display
   const formattedOTP = String(otp).split('').join(' ');
   

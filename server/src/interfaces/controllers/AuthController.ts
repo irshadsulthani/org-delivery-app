@@ -1,15 +1,16 @@
-import { resetPassword } from './../../application/use-cases/auth/resetPasswordUseCase';
 import { Request, Response } from 'express';
-import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/verifyOtpAndRegisterUser';
+import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/VerifyOtpAndRegisterUser';
 import { LoginUser } from '../../application/use-cases/user/LoginUser';
 import { UserRepository } from '../../infrastructure/database/repositories/UserRepository';
 import { User } from '../../domain/entities/User';
 import { AuthService } from '../../application/services/AuthService';
 import { config } from '../../config';
 import { StatusCode } from '../../utils/statusCode';
-import { stat } from 'fs';
+import { ResetPasswordUseCase } from '../../application/use-cases/auth/ResetPasswordUseCase';
+
 
 const userRepo = new UserRepository();
+const authService = new AuthService();
 
 export class AuthController {
   static register = async (req: Request, res: Response) => {
@@ -25,48 +26,53 @@ export class AuthController {
 
   static login = async (req: Request, res: Response) => {
     try {
-      
-      const useCase = new LoginUser(userRepo);
-      const result = await useCase.execute(req.body.email, req.body.password,['customer']);
+      const useCase = new LoginUser(userRepo, authService);
+
+      const result = await useCase.execute(req.body.email, req.body.password, ['customer']);
 
       // Set the access token cookie
       res.cookie('accessToken', result.accessToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.accessTokenExpiration , // 1 hour
+        maxAge: Number(config.accessTokenExpiration),
       });
-
+  
       // Set the refresh token cookie
       res.cookie('refreshToken', result.refreshToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.refreshTokenExpiration, // 7 days
+        maxAge: Number(config.refreshTokenExpiration),
       });
-
+  
       // Remove tokens from response body
       const { accessToken, refreshToken, ...userData } = result;
-
-      // Send back the user data without tokens (since tokens are in cookies)
+  
+      // Send back the user data without tokens
       res.status(StatusCode.OK).json(userData);
     } catch (err: any) {
+      console.error('Login Error: ', err); // Log the error for debugging
       res.status(StatusCode.UNAUTHORIZED).json({ message: err.message });
     }
   };
+  
 
   static adminLogin = async (req: Request, res: Response) => {
     try {
-      const useCase = new LoginUser(userRepo);
+      
+      const useCase = new LoginUser(userRepo , authService);
+      
       const result = await useCase.execute(req.body.email, req.body.password,['admin']);
+      
       const { accessToken, refreshToken, ...userData } = result;
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.accessTokenExpiration,
+        maxAge: Number(config.accessTokenExpiration),
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.refreshTokenExpiration,
+        maxAge: Number(config.refreshTokenExpiration),
       });
   
       res.status(StatusCode.OK).json(userData); 
@@ -99,26 +105,29 @@ export class AuthController {
   static refreshAccessToken = async (req: Request, res: Response) => {
     try {
       const refreshToken = req.cookies.refreshToken;
-
+      
       if (!refreshToken) {
-         res.status(StatusCode.UNAUTHORIZED).json({ message: 'No refresh token found' });
-         return
+        res.status(StatusCode.UNAUTHORIZED).json({ message: 'No refresh token found' });
+        return;
       }
   
-      const userData = AuthService.verifyRefreshToken(refreshToken);
-
+      // Using the verifyRefreshToken method
+      const userData = authService.verifyRefreshToken(refreshToken);
+      
       const user = await userRepo.findById(userData.id);
 
       if (!user) {
         throw new Error('User not found');
       }
   
-      const newAccessToken = AuthService.generateAccessToken(user);
+      // Generate new access token using the generateAccessToken method
+      const newAccessToken = authService.generateAccessToken(user);
       
+
       res.cookie('accessToken', newAccessToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.accessTokenExpiration, // 1 hour
+        maxAge: Number(config.accessTokenExpiration),
       });
   
       res.status(StatusCode.OK).json({ accessToken: newAccessToken });
@@ -126,11 +135,14 @@ export class AuthController {
       res.status(StatusCode.UNAUTHORIZED).json({ message: err.message });
     }
   };
+  
 
   static resetPassword = async (req: Request, res: Response) => {   
     const { email, password } = req.body;
     try {
-      await resetPassword(email, password, userRepo);
+      const resetPasswordInstance = new ResetPasswordUseCase(userRepo);
+       await resetPasswordInstance.execute(email, password);
+
        res.status(StatusCode.OK).json({ success: true, message: 'Password reset successfully' })
     } catch (err: any) {
       res.status(StatusCode.BAD_REQUEST).json({success:false, message: err.message });
@@ -140,20 +152,20 @@ export class AuthController {
     try {
       const user = req.user as User;
       
-      const accessToken = AuthService.generateAccessToken(user);
-      const refreshToken = AuthService.generateRefreshToken(user);
+      const accessToken = authService.generateAccessToken(user);
+      const refreshToken = authService.generateRefreshToken(user);
   
       // Set tokens as HTTP-only cookies
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.accessTokenExpiration,
+        maxAge: Number(config.accessTokenExpiration),
       });
   
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.refreshTokenExpiration,
+        maxAge: Number(config.refreshTokenExpiration),
       });
       res.redirect(`${config.frontendUrl}/?email=${encodeURIComponent(user.email)}`);
     } catch (err) {
@@ -163,18 +175,18 @@ export class AuthController {
   };
   static deliveryBoyLogin = async (req: Request, res: Response) => {
     try {
-      const useCase = new LoginUser(userRepo);
+      const useCase = new LoginUser(userRepo, authService);
       const result = await useCase.execute(req.body.email, req.body.password,['deliveryBoy']);
       const { accessToken, refreshToken, ...userData } = result;
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.accessTokenExpiration,
+        maxAge: Number(config.accessTokenExpiration),
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.refreshTokenExpiration,
+        maxAge: Number(config.refreshTokenExpiration),
       });
       res.status(StatusCode.OK).json({success:true,userData}); 
     } catch (err: any) {
@@ -192,19 +204,19 @@ export class AuthController {
   }
   static reatilerLogin = async (req: Request, res:Response) =>{
     try {
-      const useCase = new LoginUser(userRepo)
+      const useCase = new LoginUser(userRepo, authService)
       const result = await useCase.execute(req.body.email, req.body.password,['retailer'])
       const {accessToken, refreshToken, ...userData} = result
 
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.accessTokenExpiration,
+        maxAge: Number(config.accessTokenExpiration),
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: config.refreshTokenExpiration,
+        maxAge: Number(config.refreshTokenExpiration),
       });
       res.status(StatusCode.OK).json({success:true,userData}); 
     } catch (err: any) {

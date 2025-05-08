@@ -1,9 +1,9 @@
 // src/infrastructure/database/repositories/MongoUserRepository.ts
 
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { User } from '../../../domain/entities/User';
 import { UserModel } from '../schemas/userModel';
 import { PasswordService } from '../../../domain/services/PasswordService';
+import { IUserRepository } from '../../../domain/interface/repositories/IUserRepository';
 
 export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {

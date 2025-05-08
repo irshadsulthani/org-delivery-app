@@ -3,6 +3,7 @@ import DeliveryBoySignUp from "../pages/DeliveryBoy/DeliveryBoySignUp"
 import DeliveryBoyDashboard from "../pages/DeliveryBoy/DeliveryBoyDashboard"
 import DeliveryBoyProtectedRoute from "../protectedRoutes/deliveryBoy/DeliveryBoyProtectedRoute"
 import DeliveryBoyPublicRoute from "../protectedRoutes/deliveryBoy/DeliveryBoyPublicRoute"
+import RegisterForm from "../pages/DeliveryBoy/RegisterDeliveryBoy"
 
 function DeliveryBoyRoute() {
   return (
@@ -13,6 +14,7 @@ function DeliveryBoyRoute() {
         </Route>
         <Route element={<DeliveryBoyPublicRoute />}>
           <Route path="/sign-up" element={ <DeliveryBoySignUp /> } />
+          <Route path='/register-dev' element={<RegisterForm />} />
         </Route>
       </Routes>
     </div>

@@ -1,10 +1,11 @@
 // src/application/use-cases/auth/verifyOtpAndRegisterUser.ts
 
 import OtpModel from '../../../infrastructure/database/schemas/otpModel';
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { User } from '../../../domain/entities/User';
+import { IUserRepository } from '../../../domain/interface/repositories/IUserRepository';
+import { IVerifyOtpAndRegisterUser } from '../../../domain/interface/use-case/IVerifyOtpAndRegisterUser';
 
-export class VerifyOtpAndRegisterUser {
+export class VerifyOtpAndRegisterUser implements IVerifyOtpAndRegisterUser {
   constructor(private _userRepo: IUserRepository) {}
 
   async execute(user: User, enteredOtp: number, role?: User['role']): Promise<User> {
@@ -17,9 +18,8 @@ export class VerifyOtpAndRegisterUser {
     const existing = await this._userRepo.findByEmail(user.email);
     if (existing) throw new Error('Email already registered');
   
-    // Set default role if not provided
     user.role = role || 'customer';
-  
+
     const newUser = await this._userRepo.createUser(user);
     await OtpModel.deleteOne({ email: user.email });
   
