@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
 import { usePendingDeliveryBoys } from "../../customHooks/usePendingDeliveryBoys";
-
+import { useNavigate } from "react-router-dom";
+import { getDeliveryBoyById } from "../../api/adminApi";
+import { toast } from "react-toastify"; // Add this import for toast notifications
 
 interface AdminHeaderProps {
   toggleMobileSidebar?: () => void;
@@ -12,12 +14,41 @@ interface AdminHeaderProps {
 }
 
 function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeaderProps) {
-  const location = window.location.pathname;
-  const pageName = location.split("/").filter(Boolean).pop() || "dashboard";
-  const formattedPageName = pageName.charAt(0).toUpperCase() + pageName.slice(1).replace(/-/g, " ");
+  const navigate = useNavigate();
+  const routeNameMap: { [key: string]: string } = {
+  "dashboard": "Dashboard",
+  "users": "Users",
+  "orders": "Orders",
+  "products": "Products",
+  "categories": "Categories",
+  "brands": "Brands",
+  "delivery-boy": "Delivery Boy Details",
+  "add-product": "Add Product",
+  "edit-product": "Edit Product",
+  "search": "Search Results",
+};
+
+const location = window.location.pathname;
+const pathSegments = location.split("/").filter(Boolean);
+const lastSegment = pathSegments.pop() || "dashboard";
+
+// Check if the last segment is an ID (e.g., for detail pages)
+const isId = /^[0-9a-fA-F]{24}$/.test(lastSegment); // MongoDB ObjectId pattern
+const secondLastSegment = pathSegments.pop();
+
+const pageKey = isId ? secondLastSegment || "dashboard" : lastSegment;
+const formattedPageName = routeNameMap[pageKey] || pageKey.charAt(0).toUpperCase() + pageKey.slice(1).replace(/-/g, " ");
+
   const selector = useSelector((state: RootState) => state.admin.admin);
 
-  const { pendingDeliveryBoys, loading, refetch } = usePendingDeliveryBoys();
+  const { 
+    pendingDeliveryBoys, 
+    loading, 
+    error,
+    refetch,
+    handleApprove,
+    handleReject 
+  } = usePendingDeliveryBoys();
   
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,16 +56,10 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
   const [showNotifications, setShowNotifications] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 640);
 
-  // Monitor scroll position
+  // Monitor scroll position and screen size
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    // Monitor screen size
-    const handleResize = () => {
-      setIsSmallScreen(window.innerWidth < 640);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    const handleResize = () => setIsSmallScreen(window.innerWidth < 640);
 
     window.addEventListener("scroll", handleScroll);
     window.addEventListener("resize", handleResize);
@@ -45,7 +70,6 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
     };
   }, []);
 
-  // Format date to relative time (e.g., "2 hours ago")
   const formatRelativeTime = (date: Date) => {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
@@ -56,7 +80,6 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
 
-  // Get status icon and color
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'pending':
@@ -70,25 +93,23 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
     }
   };
 
-  const handleApprove = async (id: string) => {
+  const handleViewDetails = async (id: string) => {
     try {
-      // Call API to approve delivery boy
-      console.log(`Approving delivery boy with id: ${id}`);
-      // After successful approval, refetch the list
-      refetch();
+      await getDeliveryBoyById(id);
+      navigate(`/admin/delivery-boy/${id}`);
+      setShowNotifications(false);
     } catch (error) {
-      console.error('Error approving delivery boy:', error);
+      console.error("Error fetching delivery boy details:", error);
+      toast.error("Could not load delivery boy details");
     }
   };
 
-  const handleReject = async (id: string) => {
-    try {
-      // Call API to reject delivery boy
-      console.log(`Rejecting delivery boy with id: ${id}`);
-      // After successful rejection, refetch the list
-      refetch();
-    } catch (error) {
-      console.error('Error rejecting delivery boy:', error);
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/admin/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
+      setIsSearchFocused(false);
     }
   };
 
@@ -116,18 +137,22 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
               </span>
             </h1>
             <p className="text-xs text-gray-500 hidden sm:block">
-              Welcome back, manage your delivery operations
+              Welcome back, {selector?.name || 'Admin'}
             </p>
           </div>
         </div>
         
         <div className="flex items-center space-x-1 sm:space-x-4">
           {/* Search input with expanding animation */}
-          <div className={`relative transition-all duration-300 ${
-            isSmallScreen ? (isSearchFocused ? "w-full absolute right-0 top-0 bg-white z-30 p-4" : "hidden") : "block w-64"
-          }`}>
+          <form 
+            onSubmit={handleSearchSubmit}
+            className={`relative transition-all duration-300 ${
+              isSmallScreen ? (isSearchFocused ? "w-full absolute right-0 top-0 bg-white z-30 p-4" : "hidden") : "block w-64"
+            }`}
+          >
             {isSmallScreen && isSearchFocused && (
               <button 
+                type="button"
                 className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-500"
                 onClick={() => setIsSearchFocused(false)}
               >
@@ -155,13 +180,14 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
             
             {searchQuery && (
               <button 
+                type="button"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 onClick={() => setSearchQuery("")}
               >
                 <X size={16} />
               </button>
             )}
-          </div>
+          </form>
           
           {/* Search button for small screens */}
           {isSmallScreen && !isSearchFocused && (
@@ -180,22 +206,22 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
               className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
               onClick={() => {
                 setShowNotifications(!showNotifications);
-                refetch(); // Refresh pending delivery boys when opening notifications
+                if (!showNotifications) refetch();
               }}
               aria-label="Notifications"
+              aria-expanded={showNotifications}
             >
               <Bell size={20} />
-              {pendingDeliveryBoys && pendingDeliveryBoys.length > 0 && (
+              {pendingDeliveryBoys?.length > 0 && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
               )}
             </button>
             
-            {/* Notification dropdown */}
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-30">
                 <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
                   <h3 className="font-medium text-gray-700">Verification Requests</h3>
-                  {pendingDeliveryBoys && pendingDeliveryBoys.length > 0 && (
+                  {pendingDeliveryBoys?.length > 0 && (
                     <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-medium">
                       {pendingDeliveryBoys.length} pending
                     </span>
@@ -208,7 +234,18 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
                       <p className="text-sm text-gray-500 mt-2">Loading requests...</p>
                     </div>
-                  ) : pendingDeliveryBoys && pendingDeliveryBoys.length > 0 ? (
+                  ) : error ? (
+                    <div className="px-4 py-8 text-center">
+                      <XCircle className="mx-auto text-red-400" size={24} />
+                      <p className="text-sm text-gray-500 mt-2">Failed to load requests</p>
+                      <button 
+                        onClick={refetch}
+                        className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : pendingDeliveryBoys?.length > 0 ? (
                     pendingDeliveryBoys.map((deliveryBoy) => {
                       const statusInfo = getStatusInfo(deliveryBoy.status);
                       return (
@@ -225,6 +262,9 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
                                   src={deliveryBoy.profileImageUrl} 
                                   alt={deliveryBoy.name}
                                   className="w-10 h-10 rounded-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                                  }}
                                 />
                               ) : (
                                 <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -239,7 +279,7 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
                                 </p>
                                 <span className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.color} flex items-center`}>
                                   {statusInfo.icon}
-                                  <span className="ml-1">{deliveryBoy.status}</span>
+                                  <span className="ml-1 capitalize">{deliveryBoy.status}</span>
                                 </span>
                               </div>
                               <p className="text-xs text-gray-500 mt-1">{deliveryBoy.phone}</p>
@@ -265,10 +305,7 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
                               </button>
                               <button 
                                 className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded transition-colors duration-200"
-                                onClick={() => {
-                                  // Handle view details action
-                                  console.log(`View details ${deliveryBoy.id}`);
-                                }}
+                                onClick={() => handleViewDetails(deliveryBoy.id)}
                               >
                                 View
                               </button>
@@ -286,12 +323,15 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
                 </div>
                 
                 <div className="px-4 py-2 border-t border-gray-100">
-                  <a 
-                    href="/admin/delivery-boy" 
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center justify-center"
+                  <button
+                    onClick={() => {
+                      navigate('/admin/delivery-boys');
+                      setShowNotifications(false);
+                    }}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center justify-center w-full"
                   >
                     View all delivery boys
-                  </a>
+                  </button>
                 </div>
               </div>
             )}
@@ -304,18 +344,18 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
             </div>
             <div className="ml-2 hidden sm:block">
               <p className="text-sm font-medium text-gray-800">{selector?.name}</p>
-              <p className="text-xs text-gray-500">{selector?.email}</p>
+              <p className="text-xs text-gray-500 truncate max-w-[120px]">{selector?.email}</p>
             </div>
             <ChevronDown size={16} className="ml-1 text-gray-400 hidden sm:block" />
           </div>
         </div>
       </div>
       
-      {/* Breadcrumbs - optional */}
+      {/* Breadcrumbs */}
       <div className="px-6 pb-2 pt-0 text-xs text-gray-500 hidden sm:block">
         <nav className="flex">
           <a href="/admin/dashboard" className="hover:text-indigo-600 transition-colors duration-200">Dashboard</a>
-          {pageName !== "dashboard" && (
+          {pageKey !== "dashboard" && (
             <>
               <span className="mx-2">•</span>
               <span className="text-gray-700">{formattedPageName}</span>

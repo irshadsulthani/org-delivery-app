@@ -32,9 +32,10 @@ import {
   getAllDeliveryBoys,
   blockDeliveryBoy,
   unblockDeliveryBoy,
+  getDeliveryBoyById,
 } from "../../api/adminApi";
+import { useNavigate } from "react-router-dom";
 
-// TypeScript interfaces
 interface DeliveryPerson {
   _id: string;
   name: string;
@@ -51,6 +52,7 @@ interface DeliveryPerson {
   isBlocked: boolean;
   isVerified: boolean;
   createdAt: string;
+  userId: string;
 }
 
 const DeliveryBoyListing = () => {
@@ -74,13 +76,14 @@ const DeliveryBoyListing = () => {
   const [verificationFilter, setVerificationFilter] = useState<
     "All" | "Verified" | "Unverified" | "Blocked"
   >("All");
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const toggleMobileSidebar = () => {
     setMobileOpen(!mobileOpen);
-  };
+  };  
 
   const fetchDeliveryPersonnel = async () => {
     try {
@@ -128,7 +131,18 @@ const DeliveryBoyListing = () => {
     fetchDeliveryPersonnel();
   }, []);
 
-  // Sort functionality
+  const handleViewDetails = async (id: string) => {
+    try {
+      console.log('its here coming');
+      
+      await getDeliveryBoyById(id);
+      navigate(`/admin/delivery-boy/${id}`);
+    } catch (error) {
+      console.error("Error fetching delivery boy details:", error);
+      toast.error("Could not load delivery boy details");
+    }
+  };
+
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -140,11 +154,9 @@ const DeliveryBoyListing = () => {
   };
 
   const filteredPersonnel = (deliveryPersonnel || []).filter((person) => {
-    // Filter by active tab
     if (activeTab === "verified" && !person?.isVerified) return false;
     if (activeTab === "blocked" && !person?.isBlocked) return false;
 
-    // Filter by verification status
     if (verificationFilter === "Verified" && !person?.isVerified) return false;
     if (verificationFilter === "Unverified" && person?.isVerified) return false;
     if (verificationFilter === "Blocked" && !person?.isBlocked) return false;
@@ -161,7 +173,6 @@ const DeliveryBoyListing = () => {
     return matchesSearch && matchesStatus && matchesArea;
   });
 
-  // Sort personnel
   const sortedPersonnel = [...filteredPersonnel].sort((a, b) => {
     let comparison = 0;
 
@@ -179,13 +190,11 @@ const DeliveryBoyListing = () => {
     return sortDirection === "asc" ? comparison : -comparison;
   });
 
-  // Get all unique areas for the filter
   const areas = [
     "All",
     ...new Set(deliveryPersonnel.map((person) => person.area)),
   ];
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = sortedPersonnel.slice(indexOfFirstItem, indexOfLastItem);
@@ -193,7 +202,6 @@ const DeliveryBoyListing = () => {
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-  // Status badge component
   const StatusBadge = ({
     status,
   }: {
@@ -232,7 +240,6 @@ const DeliveryBoyListing = () => {
     );
   };
 
-  // Verification badge component
   const VerificationBadge = ({ isVerified }: { isVerified: boolean }) => {
     return isVerified ? (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
@@ -261,7 +268,6 @@ const DeliveryBoyListing = () => {
     );
   };
 
-  // Vehicle type badge component
   const VehicleBadge = ({
     type,
   }: {
@@ -299,7 +305,6 @@ const DeliveryBoyListing = () => {
     );
   };
 
-  // Generate avatar placeholder
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -308,11 +313,8 @@ const DeliveryBoyListing = () => {
       .toUpperCase();
   };
 
-  // Personnel avatar component
   const PersonnelAvatar = ({ person }: { person: DeliveryPerson }) => {
     const initials = getInitials(person.name);
-
-    // Generate a consistent color based on the id
     const colorIndex = parseInt(person._id.replace(/\D/g, "")) % 5;
     const bgColors = [
       "from-blue-500 to-blue-600",
@@ -331,7 +333,6 @@ const DeliveryBoyListing = () => {
     );
   };
 
-  // Rating component
   const RatingDisplay = ({ rating }: { rating: number | undefined }) => {
     const displayRating =
       typeof rating === "number" ? rating.toFixed(1) : "N/A";
@@ -340,12 +341,10 @@ const DeliveryBoyListing = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
-      {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -365,14 +364,10 @@ const DeliveryBoyListing = () => {
         </div>
       )}
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navigation */}
         <AdminHeader />
 
-        {/* Delivery Personnel Listing Content */}
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
-          {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
             <div>
               <h2 className="text-2xl font-bold text-gray-800">
@@ -394,7 +389,6 @@ const DeliveryBoyListing = () => {
             </button>
           </div>
 
-          {/* Tabs for All/Verified/Blocked */}
           <div className="border-b border-gray-200 mb-6">
             <nav className="-mb-px flex space-x-8">
               <button
@@ -461,7 +455,6 @@ const DeliveryBoyListing = () => {
             </nav>
           </div>
 
-          {/* Filters and Actions */}
           <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
               <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
@@ -622,7 +615,6 @@ const DeliveryBoyListing = () => {
               </div>
             </div>
 
-            {/* Selected actions (show when items are selected) */}
             {selectedPersonnel.length > 0 && (
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="flex items-center justify-between">
@@ -651,14 +643,12 @@ const DeliveryBoyListing = () => {
             )}
           </div>
 
-          {/* Loading State */}
           {loading && (
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
             </div>
           )}
 
-          {/* Error State */}
           {error && !loading && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
               <div className="flex">
@@ -687,7 +677,6 @@ const DeliveryBoyListing = () => {
             </div>
           )}
 
-          {/* Table View */}
           {!loading && !error && viewMode === "table" && (
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
@@ -749,6 +738,8 @@ const DeliveryBoyListing = () => {
                       <tr
                         key={person._id}
                         className="hover:bg-gray-50 transition-colors duration-150"
+                        onMouseEnter={() => setHoveredRow(person._id)}
+                        onMouseLeave={() => setHoveredRow(null)}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -811,43 +802,53 @@ const DeliveryBoyListing = () => {
                           <BlockedBadge isBlocked={person.isBlocked} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="relative group">
-                            <button className="text-gray-500 hover:text-gray-700 focus:outline-none rounded-lg p-1">
+                          <div className="relative inline-block">
+                            <button
+                              className="text-gray-500 hover:text-gray-700 focus:outline-none rounded-lg p-1"
+                              onClick={() => {
+                                setSelectedPersonnel((prev) =>
+                                  prev.includes(person._id)
+                                    ? prev.filter((id) => id !== person._id)
+                                    : [...prev, person._id]
+                                );
+                              }}
+                            >
                               <MoreHorizontal size={16} />
                             </button>
 
-                            <div className="absolute right-0 z-10 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 invisible group-hover:visible">
-                              <div className="py-1">
-                                <button
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
-                                  onClick={() =>
-                                    toast.info(
-                                      `Viewing details for ${person.name}`
-                                    )
-                                  }
-                                >
-                                  <Eye size={16} className="mr-2" />
-                                  View Details
-                                </button>
-                                {person.isBlocked ? (
+                            {(hoveredRow === person._id ||
+                              selectedPersonnel.includes(person._id)) && (
+                              <div className="absolute right-0 z-10 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
+                                <div className="py-1">
                                   <button
-                                    className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-100 w-full"
-                                    onClick={() => handleUnblock(person._id)}
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                                    onClick={() =>
+                                      handleViewDetails(person.userId)
+                                    }
                                   >
-                                    <Shield size={16} className="mr-2" />
-                                    Unblock
+                                    <Eye size={16} className="mr-2" />
+                                    View Details
                                   </button>
-                                ) : (
-                                  <button
-                                    className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-100 w-full"
-                                    onClick={() => handleBlock(person._id)}
-                                  >
-                                    <ShieldOff size={16} className="mr-2" />
-                                    Block
-                                  </button>
-                                )}
+                                  {person.isBlocked ? (
+                                    <button
+                                      className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-100 w-full"
+                                      onClick={() => handleUnblock(person.userId)}
+                                    >
+                                      <Shield size={16} className="mr-2" />
+                                      Unblock
+                                    </button>
+                                  ) : (
+                                    <button
+                                      className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-100 w-full"
+                                      onClick={() => handleBlock(person._id)}
+                                    >
+                                      <ShieldOff size={16} className="mr-2" />
+                                      Block
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -872,7 +873,6 @@ const DeliveryBoyListing = () => {
                 </div>
               )}
 
-              {/* Pagination */}
               {sortedPersonnel.length > itemsPerPage && (
                 <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
                   <div className="flex-1 flex justify-between sm:hidden">
@@ -881,16 +881,14 @@ const DeliveryBoyListing = () => {
                         paginate(currentPage > 1 ? currentPage - 1 : 1)
                       }
                       disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      className="relative inline-flex items-center px-4 py-2 border border-gray-300text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                     >
                       Previous
                     </button>
                     <button
                       onClick={() =>
                         paginate(
-                          currentPage < totalPages
-                            ? currentPage + 1
-                            : totalPages
+                          currentPage < totalPages ? currentPage + 1 : totalPages
                         )
                       }
                       disabled={currentPage === totalPages}
@@ -902,21 +900,11 @@ const DeliveryBoyListing = () => {
                   <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm text-gray-700">
-                        Showing{" "}
+                        Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
                         <span className="font-medium">
-                          {indexOfFirstItem + 1}
+                          {Math.min(indexOfLastItem, sortedPersonnel.length)}
                         </span>{" "}
-                        to{" "}
-                        <span className="font-medium">
-                          {indexOfLastItem > sortedPersonnel.length
-                            ? sortedPersonnel.length
-                            : indexOfLastItem}
-                        </span>{" "}
-                        of{" "}
-                        <span className="font-medium">
-                          {sortedPersonnel.length}
-                        </span>{" "}
-                        results
+                        of <span className="font-medium">{sortedPersonnel.length}</span> results
                       </p>
                     </div>
                     <div>
@@ -927,60 +915,90 @@ const DeliveryBoyListing = () => {
                         <button
                           onClick={() => paginate(1)}
                           disabled={currentPage === 1}
-                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">First</span>
-                          &laquo;
+                          <ChevronDown
+                            size={16}
+                            className="transform rotate-90"
+                          />
                         </button>
                         <button
                           onClick={() =>
                             paginate(currentPage > 1 ? currentPage - 1 : 1)
                           }
                           disabled={currentPage === 1}
-                          className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                          className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Previous</span>
-                          &lsaquo;
+                          <ChevronDown
+                            size={16}
+                            className="transform rotate-90"
+                          />
                         </button>
 
-                        {Array.from(
-                          { length: totalPages },
-                          (_, i) => i + 1
-                        ).map((number) => (
-                          <button
-                            key={number}
-                            onClick={() => paginate(number)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                              currentPage === number
-                                ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
-                                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                            }`}
-                          >
-                            {number}
-                          </button>
-                        ))}
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                          (page) => {
+                            if (
+                              page === 1 ||
+                              page === totalPages ||
+                              (page >= currentPage - 1 && page <= currentPage + 1)
+                            ) {
+                              return (
+                                <button
+                                  key={page}
+                                  onClick={() => paginate(page)}
+                                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                    currentPage === page
+                                      ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
+                                      : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              );
+                            } else if (
+                              (page === currentPage - 2 && currentPage > 3) ||
+                              (page === currentPage + 2 && currentPage < totalPages - 2)
+                            ) {
+                              return (
+                                <span
+                                  key={page}
+                                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                                >
+                                  ...
+                                </span>
+                              );
+                            }
+                            return null;
+                          }
+                        )}
 
                         <button
                           onClick={() =>
                             paginate(
-                              currentPage < totalPages
-                                ? currentPage + 1
-                                : totalPages
+                              currentPage < totalPages ? currentPage + 1 : totalPages
                             )
                           }
                           disabled={currentPage === totalPages}
-                          className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                          className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Next</span>
-                          &rsaquo;
+                          <ChevronDown
+                            size={16}
+                            className="transform -rotate-90"
+                          />
                         </button>
                         <button
                           onClick={() => paginate(totalPages)}
                           disabled={currentPage === totalPages}
-                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Last</span>
-                          &raquo;
+                          <ChevronDown
+                            size={16}
+                            className="transform -rotate-90"
+                          />
                         </button>
                       </nav>
                     </div>
@@ -990,199 +1008,133 @@ const DeliveryBoyListing = () => {
             </div>
           )}
 
-          {/* Empty State for Grid View */}
-          {!loading && viewMode === "grid" && currentItems.length === 0 && (
-            <div className="col-span-full text-center py-12">
-              <Users size={48} className="mx-auto text-gray-400" />
-              <h3 className="mt-2 text-lg font-medium text-gray-900">
-                No Delivery Boys found
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {searchTerm ||
-                statusFilter !== "All" ||
-                verificationFilter !== "All" ||
-                areaFilter !== "All"
-                  ? "No results match your search and filter criteria"
-                  : "No Delivery Boys available"}
-              </p>
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setStatusFilter("All");
-                  setVerificationFilter("All");
-                  setAreaFilter("All");
-                  setCurrentPage(1);
-                }}
-                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Clear all filters
-              </button>
+          {!loading && !error && viewMode === "grid" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {currentItems.map((person) => (
+                <div
+                  key={person._id}
+                  className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200"
+                >
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <PersonnelAvatar person={person} />
+                      <div className="ml-4">
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {person.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">{person.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Phone size={14} className="mr-2 text-gray-400" />
+                        {person.phone}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin size={14} className="mr-2 text-gray-400" />
+                        {person.area}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Bike size={14} className="mr-2 text-gray-400" />
+                        {person.deliveries} deliveries
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Calendar size={14} className="mr-2 text-gray-400" />
+                        Joined{" "}
+                        {new Date(person.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <StatusBadge status={person.status} />
+                      <VehicleBadge type={person.vehicleType} />
+                      <VerificationBadge isVerified={person.isVerified} />
+                      <BlockedBadge isBlocked={person.isBlocked} />
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 bg-gray-50 px-5 py-3 flex justify-between">
+                    <button
+                      onClick={() => handleViewDetails(person.userId)}
+                      className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      <Eye size={14} className="mr-1.5" />
+                      View
+                    </button>
+                    {person.isBlocked ? (
+                      <button
+                        onClick={() => handleUnblock(person.userId)}
+                        className="inline-flex items-center px-3 py-1.5 border border-green-300 shadow-sm text-sm font-medium rounded-lg text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      >
+                        <Shield size={14} className="mr-1.5" />
+                        Unblock
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleBlock(person._id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        <ShieldOff size={14} className="mr-1.5" />
+                        Block
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Grid View */}
           {!loading &&
             !error &&
             viewMode === "grid" &&
-            currentItems.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {currentItems.map((person) => (
-                  <div
-                    key={person._id}
-                    className="bg-white rounded-lg shadow-sm p-4 flex flex-col"
-                  >
-                    <div className="flex items-center mb-4">
-                      <PersonnelAvatar person={person} />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {person.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {person.email}
-                        </div>
-                        <div className="text-xs text-gray-400 flex items-center mt-1">
-                          <Phone size={12} className="mr-1" />
-                          {person.phone}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      <div>
-                        <p className="text-xs text-gray-500">Status</p>
-                        <StatusBadge status={person.status} />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Verification</p>
-                        <VerificationBadge isVerified={person.isVerified} />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Account Status</p>
-                        <BlockedBadge isBlocked={person.isBlocked} />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Vehicle</p>
-                        <VehicleBadge type={person.vehicleType} />
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Area</p>
-                        <div className="text-sm text-gray-700">
-                          {person.area}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Deliveries</p>
-                        <div className="text-sm font-medium">
-                          {person.deliveries}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-500">Rating</p>
-                        <RatingDisplay rating={person.rating} />
-                      </div>
-                      <div className="relative group">
-                        <button
-                          className="text-gray-500 hover:text-gray-700 focus:outline-none rounded-lg p-1"
-                          onClick={() => {
-                            setSelectedPersonnel((prev) =>
-                              prev.includes(person._id)
-                                ? prev.filter((id) => id !== person._id)
-                                : [...prev, person._id]
-                            );
-                          }}
-                        >
-                          <MoreHorizontal size={16} />
-                        </button>
-
-                        <div
-                          className={`absolute right-0 z-10 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 ${
-                            selectedPersonnel.includes(person._id) ||
-                            "invisible group-hover:visible"
-                          }`}
-                        >
-                          <div className="py-1">
-                            <button
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
-                              onClick={() =>
-                                toast.info(`Viewing details for ${person.name}`)
-                              }
-                            >
-                              <Eye size={16} className="mr-2" />
-                              View Details
-                            </button>
-                            {person.isBlocked ? (
-                              <button
-                                className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-100 w-full"
-                                onClick={() => handleUnblock(person._id)}
-                              >
-                                <Shield size={16} className="mr-2" />
-                                Unblock
-                              </button>
-                            ) : (
-                              <button
-                                className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-100 w-full"
-                                onClick={() => handleBlock(person._id)}
-                              >
-                                <ShieldOff size={16} className="mr-2" />
-                                Block
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            deliveryPersonnel.length === 0 && (
+              <div className="text-center py-12">
+                <Users size={48} className="mx-auto text-gray-400" />
+                <h3 className="mt-2 text-lg font-medium text-gray-900">
+                  No Delivery Boys found
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {searchTerm ||
+                  statusFilter !== "All" ||
+                  areaFilter !== "All"
+                    ? "Try adjusting your search or filter criteria"
+                    : "No Delivery Boys available"}
+                </p>
               </div>
             )}
 
-          {/* Pagination for Grid View */}
-          {viewMode === "grid" && sortedPersonnel.length > itemsPerPage && (
-            <div className="mt-6 flex items-center justify-between">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() =>
-                    paginate(currentPage > 1 ? currentPage - 1 : 1)
-                  }
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() =>
-                    paginate(
-                      currentPage < totalPages ? currentPage + 1 : totalPages
-                    )
-                  }
-                  disabled={currentPage === totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Next
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing{" "}
-                    <span className="font-medium">{indexOfFirstItem + 1}</span>{" "}
-                    to{" "}
-                    <span className="font-medium">
-                      {indexOfLastItem > sortedPersonnel.length
-                        ? sortedPersonnel.length
-                        : indexOfLastItem}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-medium">
-                      {sortedPersonnel.length}
-                    </span>{" "}
-                    results
-                  </p>
+          {!loading &&
+            !error &&
+            viewMode === "grid" &&
+            sortedPersonnel.length > itemsPerPage && (
+              <div className="mt-6 flex items-center justify-between">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() =>
+                      paginate(currentPage > 1 ? currentPage - 1 : 1)
+                    }
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() =>
+                      paginate(
+                        currentPage < totalPages ? currentPage + 1 : totalPages
+                      )
+                    }
+                    disabled={currentPage === totalPages}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
                 </div>
-                <div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-center">
                   <nav
                     className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
                     aria-label="Pagination"
@@ -1190,65 +1142,83 @@ const DeliveryBoyListing = () => {
                     <button
                       onClick={() => paginate(1)}
                       disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="sr-only">First</span>
-                      &laquo;
+                      <ChevronDown size={16} className="transform rotate-90" />
                     </button>
                     <button
                       onClick={() =>
                         paginate(currentPage > 1 ? currentPage - 1 : 1)
                       }
                       disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                      className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="sr-only">Previous</span>
-                      &lsaquo;
+                      <ChevronDown size={16} className="transform rotate-90" />
                     </button>
 
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (number) => (
-                        <button
-                          key={number}
-                          onClick={() => paginate(number)}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                            currentPage === number
-                              ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
-                              : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                          }`}
-                        >
-                          {number}
-                        </button>
-                      )
+                      (page) => {
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => paginate(page)}
+                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                currentPage === page
+                                  ? "z-10 bg-indigo-50 border-indigo-500 text-indigo-600"
+                                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        } else if (
+                          (page === currentPage - 2 && currentPage > 3) ||
+                          (page === currentPage + 2 && currentPage < totalPages - 2)
+                        ) {
+                          return (
+                            <span
+                              key={page}
+                              className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      }
                     )}
 
                     <button
                       onClick={() =>
                         paginate(
-                          currentPage < totalPages
-                            ? currentPage + 1
-                            : totalPages
+                          currentPage < totalPages ? currentPage + 1 : totalPages
                         )
                       }
                       disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                      className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="sr-only">Next</span>
-                      &rsaquo;
+                      <ChevronDown size={16} className="transform -rotate-90" />
                     </button>
                     <button
                       onClick={() => paginate(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="sr-only">Last</span>
-                      &raquo;
+                      <ChevronDown size={16} className="transform -rotate-90" />
                     </button>
                   </nav>
                 </div>
               </div>
-            </div>
-          )}
+            )}
         </main>
       </div>
     </div>

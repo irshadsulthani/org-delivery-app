@@ -339,7 +339,7 @@ const handleSubmit = async (e: FormEvent) => {
         { autoClose: 5000 }
       );
       
-      // navigate('/delivery/sign-up');
+      navigate('/delivery/sign-up');
       
     } catch (error: any) {
       console.error('Registration error:', error);

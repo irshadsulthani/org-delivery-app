@@ -49,13 +49,46 @@ export class UserRepository implements IUserRepository {
       _id: customer._id.toString(),
     }));
   }
-  async getAllDeliveryBoys(): Promise<User[]> {
-    const deliveryBoys = await UserModel.find({ role: 'deliveryBoy' }).lean();
-    return deliveryBoys.map(deliveryBoy => ({
-      ...deliveryBoy,
-      _id: deliveryBoy._id.toString(),
-    }))
+async getAllDeliveryBoys(): Promise<User[]> {
+    const deliveryBoys = await UserModel.aggregate([
+      { $match: { role: 'deliveryBoy' } },
+      {
+        $lookup: {
+          from: 'deliveryboys',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'deliveryBoyDetails',
+        },
+      },
+      { $unwind: { path: '$deliveryBoyDetails', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          email: 1,
+          phone: '$deliveryBoyDetails.phone',
+          role: 1,
+          isBlocked: 1,
+          isVerified: 1,
+          createdAt: 1,
+          status: '$deliveryBoyDetails.status',
+          totalDeliveredOrders: '$deliveryBoyDetails.totalDeliveredOrders',
+          vehicleType: '$deliveryBoyDetails.vehicleType',
+          city: '$deliveryBoyDetails.city',
+          state: '$deliveryBoyDetails.state',
+          verificationStatus: '$deliveryBoyDetails.verificationStatus',
+          currentlyAvailable: '$deliveryBoyDetails.currentlyAvailable',
+          userId: '$deliveryBoyDetails._id',
+        },
+      },
+    ]);
+
+    return deliveryBoys.map((boy) => ({
+      ...boy,
+      _id: boy._id.toString(),
+    }));
   }
+
   async getAllReatilers():Promise<User[]>{
     const reatilers = await UserModel.find({ role: 'retailer' }).lean();
     return reatilers.map(reatilers => ({

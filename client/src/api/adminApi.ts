@@ -60,3 +60,32 @@ export const getPendingDeliveryBoys = async () => {
     const response = await privateApi('get', '/admin/deliveryboy/pending');
     return response;
 };
+
+
+export const approveDeliveryBoy = async (id: string): Promise<void> => {
+  try {
+    await privateApi('put',`/admin/deliveryboy/${id}/approve`);
+  } catch (error) {
+    console.error('Error approving delivery boy:', error);
+    throw error;
+  }
+};
+
+export const rejectDeliveryBoy = async (id: string): Promise<void> => {
+  try {
+    await privateApi('put',`/admin/deliveryboy/${id}/reject`);
+  } catch (error) {
+    console.error('Error rejecting delivery boy:', error);
+    throw error;
+  }
+};
+
+export const getDeliveryBoyById = async (id: string) => {
+  try {
+    const response = await privateApi('get', `/admin/deliveryboy/${id}`);
+    return response;
+  } catch (error) {
+    console.error('Error fetching delivery boy details:', error);
+    throw error; // Re-throw to allow the calling function to handle it
+  }
+};

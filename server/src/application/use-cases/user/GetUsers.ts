@@ -22,6 +22,7 @@ export class GetUsers {
     async excuteDeliveryBoys() {
         try {
             const deliveryBoys = await this._userRepo.getAllDeliveryBoys();
+            
             return deliveryBoys.map(({ password, ...user }) => user);
         } catch (error) {
             throw new Error("Error fetching delivery Boys");

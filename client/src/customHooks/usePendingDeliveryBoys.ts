@@ -1,9 +1,10 @@
 // src/hooks/usePendingDeliveryBoys.ts
 import { useState, useEffect } from 'react';
-import { getPendingDeliveryBoys } from '../api/adminApi';
+import { getPendingDeliveryBoys, approveDeliveryBoy, rejectDeliveryBoy } from '../api/adminApi';
 
 interface VerificationNotification {
   id: string;
+  userId: string;
   name: string;
   email: string;
   phone: string;
@@ -23,12 +24,32 @@ export const usePendingDeliveryBoys = () => {
     setRefreshCount(prev => prev + 1);
   };
 
+  const handleApprove = async (id: string) => {
+    try {
+      await approveDeliveryBoy(id);
+      refetch();
+    } catch (err) {
+      setError('Failed to approve delivery boy');
+      console.error('Error approving delivery boy:', err);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await rejectDeliveryBoy(id);
+      refetch();
+    } catch (err) {
+      setError('Failed to reject delivery boy');
+      console.error('Error rejecting delivery boy:', err);
+    }
+  };
+
   useEffect(() => {
     const fetchPendingDeliveryBoys = async () => {
       try {
         setLoading(true);
-        const response = await getPendingDeliveryBoys();
-        setPendingDeliveryBoys(response.data);
+        const data = await getPendingDeliveryBoys();
+        setPendingDeliveryBoys(data);
         setError(null);
       } catch (err) {
         setError('Failed to fetch pending delivery boys');
@@ -41,5 +62,12 @@ export const usePendingDeliveryBoys = () => {
     fetchPendingDeliveryBoys();
   }, [refreshCount]);
 
-  return { pendingDeliveryBoys, loading, error, refetch };
+  return { 
+    pendingDeliveryBoys, 
+    loading, 
+    error, 
+    refetch,
+    handleApprove,
+    handleReject
+  };
 };
