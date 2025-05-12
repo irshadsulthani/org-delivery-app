@@ -1,4 +1,4 @@
-import { publicApi } from "./intreceptors/publicApi";
+import { fileUploadApi, publicApi } from "./intreceptors/publicApi";
 
 export const sendSignupOtp = async (email: string) => {
     const response = await publicApi('post', '/auth/send-otp', {
@@ -26,5 +26,10 @@ export const logoutDeliveryBoy = async () => {
     const response = await publicApi('post', '/auth/deliveryBoy-logout');
     return response;
 }
+
+export const registerDeliveryBoy = async (formData: FormData) => {
+    const response = await fileUploadApi('/delivery-boy/register', formData);
+    return response;
+};
   
   

@@ -1,11 +1,14 @@
+import { IDeliveryBoyRepository } from "../../../domain/interface/repositories/IDeliveryBoyRepository";
 import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
 import { IAuthService } from "../../../domain/interface/services/IAuthService";
-
+import { AppError } from "../../../utils/AppError";
+import { StatusCode } from "../../../utils/statusCode";
 
 export class LoginUser {
   constructor(
     private _userRepo: IUserRepository,
-    private _authService: IAuthService  // Injecting the IAuthService
+    private _authService: IAuthService,
+    private _deliveryBoyRepo: IDeliveryBoyRepository
   ) {}
 
   async execute(email: string, password: string, allowedRoles: string[]): Promise<{
@@ -16,18 +19,38 @@ export class LoginUser {
     refreshToken: string;
   }> {
     const user = await this._userRepo.findByEmail(email);
+    if (!user) throw new AppError("Invalid credentials", StatusCode.UNAUTHORIZED);
 
-    if (!user) throw new Error("Invalid credentials");
-
-    // Check if user's role is allowed
     if (!allowedRoles.includes(user.role)) {
-      throw new Error("Access denied");
+      throw new AppError("Access denied", StatusCode.FORBIDDEN);
     }
 
     const isMatch = await this._userRepo.comparePassword(password, user.password);
-    if (!isMatch) throw new Error("Invalid credentials");
+    if (!isMatch) throw new AppError("Invalid credentials", StatusCode.UNAUTHORIZED);
 
-    // Using injected _authService to generate tokens
+    if (user.role === 'deliveryBoy') {
+      if (!user._id) throw new AppError("User ID not found", StatusCode.BAD_REQUEST);
+
+      const deliveryBoy = await this._deliveryBoyRepo.findByUserId(user._id);
+      if (!deliveryBoy) throw new AppError("Delivery boy profile not found", StatusCode.NOT_FOUND);
+
+      if (deliveryBoy.verificationStatus === 'pending') {
+        throw new AppError(
+          "Your account is pending admin approval. Please wait.",
+          StatusCode.FORBIDDEN,
+          "info"
+        );
+      }
+
+      if (deliveryBoy.verificationStatus === 'rejected') {
+        throw new AppError(
+          "Your verification request was rejected. Please contact admin.",
+          StatusCode.FORBIDDEN,
+          "info"
+        );
+      }
+    }
+
     const accessToken = this._authService.generateAccessToken(user);
     const refreshToken = this._authService.generateRefreshToken(user);
 

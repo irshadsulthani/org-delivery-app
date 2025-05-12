@@ -5,6 +5,7 @@ import { connectDB } from './infrastructure/database/connection';
 import  AuthRoutes  from './interfaces/routes/AuthRoutes';
 import AdminRoutes from './interfaces/routes/AdminRoutes';
 import UserRoutes from './interfaces/routes/UserRoutes';
+import DeliveryBoyRoute from './interfaces/routes/DeliveryBoyRoute'
 import { config } from './config';
 import cookieParser from 'cookie-parser'
 import passport from 'passport';
@@ -14,16 +15,20 @@ const PORT = config.port;
 const app = express();
 const FRONT_END_URL = config.frontendUrl;
 
+app.use(express.urlencoded({ extended: true }))
+
 app.use(passport.initialize());
 app.use(cookieParser());
 app.use(cors({
   origin: FRONT_END_URL, 
-  credentials: true
+  credentials: true,
+  allowedHeaders:['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use('/api/auth', AuthRoutes);
 app.use('/api/admin', AdminRoutes);
 app.use('/api/user', UserRoutes);
+app.use('/api/delivery-boy', DeliveryBoyRoute);
 
 connectDB().then(() => {
   app.listen(PORT, () => {

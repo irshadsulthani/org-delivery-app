@@ -7,19 +7,19 @@ import {
   MoreHorizontal,
   ChevronDown,
   Users,
-  UserPlus,
-  Trash2,
   Edit,
-  Mail,
   Phone,
   Calendar,
-  CheckCircle,
-  XCircle,
   AlertCircle,
   ArrowUpDown,
   Eye,
   ShoppingBag,
-  Clock
+  Lock,
+  Unlock,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  ShieldX
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -34,7 +34,8 @@ interface Customer {
   name: string;
   email: string;
   phone: string;
-  isVerified: 'false' | 'Inactive' | 'Pending';
+  isBlocked: boolean;
+  isVerified: boolean; // Added isVerified field
   createdAt: string;
   orders: number;
   lastOrder: string;
@@ -48,14 +49,20 @@ const CustomerListing = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [verificationFilter, setVerificationFilter] = useState('All'); // Added filter for verification status
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
-  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const dispatch = useDispatch();
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const toggleMobileSidebar = () => {
@@ -99,16 +106,78 @@ const CustomerListing = () => {
     }
   };
 
-  // Filter customers based on search and status filter
+  // Update customer block status
+  const handleBlockStatusChange = async (customerId: string, isBlocked: boolean) => {
+    try {
+      setUpdatingStatus(customerId);
+      
+      // Call the API to update the customer status
+      // await updateCustomerBlockStatus(customerId, isBlocked);
+      
+      // Update the local state with the new status
+      setCustomers(prevCustomers => 
+        prevCustomers.map(customer => 
+          customer._id === customerId 
+            ? { ...customer, isBlocked } 
+            : customer
+        )
+      );
+      
+      toast.success(`Customer ${isBlocked ? 'blocked' : 'unblocked'} successfully`);
+    } catch (error: any) {
+      const errorMessage = 
+        error.response?.data?.message || "Failed to update customer status";
+      toast.error(errorMessage);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  // Update customer verification status
+  const handleVerificationStatusChange = async (customerId: string, isVerified: boolean) => {
+    try {
+      setUpdatingStatus(customerId);
+      
+      // Call the API to update the customer verification status
+      // await updateCustomerVerificationStatus(customerId, isVerified);
+      
+      // Update the local state with the new status
+      setCustomers(prevCustomers => 
+        prevCustomers.map(customer => 
+          customer._id === customerId 
+            ? { ...customer, isVerified } 
+            : customer
+        )
+      );
+      
+      toast.success(`Customer ${isVerified ? 'verified' : 'unverified'} successfully`);
+    } catch (error: any) {
+      const errorMessage = 
+        error.response?.data?.message || "Failed to update verification status";
+      toast.error(errorMessage);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  // Filter customers based on search, block status, and verification status
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = 
       customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer._id.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'All' || customer.isVerified === statusFilter;
+    const matchesBlockStatus = 
+      statusFilter === 'All' || 
+      (statusFilter === 'Blocked' && customer.isBlocked) ||
+      (statusFilter === 'Active' && !customer.isBlocked);
     
-    return matchesSearch && matchesStatus;
+    const matchesVerificationStatus =
+      verificationFilter === 'All' ||
+      (verificationFilter === 'Verified' && customer.isVerified) ||
+      (verificationFilter === 'Unverified' && !customer.isVerified);
+    
+    return matchesSearch && matchesBlockStatus && matchesVerificationStatus;
   });
 
   // Sort customers
@@ -130,31 +199,68 @@ const CustomerListing = () => {
     return sortDirection === 'asc' ? comparison : -comparison;
   });
 
-  // Status badge component
-  const StatusBadge = ({ status }: { status: 'false' | 'Inactive' | 'Pending' }) => {
-    let colorClasses = '';
-    let Icon = CheckCircle;
+  // Pagination calculation
+  useEffect(() => {
+    setTotalPages(Math.ceil(sortedCustomers.length / itemsPerPage));
+    // Reset to first page when filters change
+    setCurrentPage(1);
+  }, [sortedCustomers.length, itemsPerPage]);
+
+  // Get current page items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = sortedCustomers.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Change page
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+
+  // Status badge component for block/unblock
+  const BlockStatusBadge = ({ customer }: { customer: Customer }) => {
+    const isBlocked = customer.isBlocked;
     
-    switch (status) {
-      case 'false':
-        colorClasses = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-        Icon = CheckCircle;
-        break;
-      case 'Inactive':
-        colorClasses = 'bg-red-100 text-red-800 border border-red-200';
-        Icon = XCircle;
-        break;
-      case 'Pending':
-        colorClasses = 'bg-amber-100 text-amber-800 border border-amber-200';
-        Icon = AlertCircle;
-        break;
-    }
+    const colorClasses = isBlocked
+      ? 'bg-red-100 text-red-800 border border-red-200'
+      : 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+    
+    const Icon = isBlocked ? Lock : Unlock;
     
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}>
-        <Icon size={12} className="mr-1" />
-        {status}
-      </span>
+      <div className="relative">
+        <button 
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses} cursor-pointer`}
+          onClick={() => handleBlockStatusChange(customer._id, !isBlocked)}
+          disabled={updatingStatus === customer._id}
+        >
+          <Icon size={12} className="mr-1" />
+          {isBlocked ? 'Blocked' : 'Active'}
+        </button>
+      </div>
+    );
+  };
+
+  // Verification badge component
+  const VerificationBadge = ({ customer }: { customer: Customer }) => {
+    const isVerified = customer.isVerified;
+    
+    const colorClasses = isVerified
+      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+      : 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+    
+    const Icon = isVerified ? ShieldCheck : ShieldX;
+    
+    return (
+      <div className="relative">
+        <button 
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses} cursor-pointer`}
+          onClick={() => handleVerificationStatusChange(customer._id, !isVerified)}
+          disabled={updatingStatus === customer._id}
+        >
+          <Icon size={12} className="mr-1" />
+          {isVerified ? 'Verified' : 'Unverified'}
+        </button>
+      </div>
     );
   };
 
@@ -180,6 +286,110 @@ const CustomerListing = () => {
     return (
       <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${bgColors[colorIndex]} flex items-center justify-center text-white font-medium shadow-sm`}>
         {initials}
+      </div>
+    );
+  };
+
+  // Pagination component
+  const Pagination = () => {
+    return (
+      <div className="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+        <div className="flex flex-1 justify-between sm:hidden">
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className={`relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium ${currentPage === 1 ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'}`}
+          >
+            Previous
+          </button>
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className={`relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium ${currentPage === totalPages ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'}`}
+          >
+            Next
+          </button>
+        </div>
+        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-gray-700">
+              Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
+              <span className="font-medium">
+                {Math.min(indexOfLastItem, sortedCustomers.length)}
+              </span>{' '}
+              of <span className="font-medium">{sortedCustomers.length}</span> results
+            </p>
+          </div>
+          <div>
+            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+              <button
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                className={`relative inline-flex items-center rounded-l-md px-2 py-2 ${currentPage === 1 ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'} ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0`}
+              >
+                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+              </button>
+              
+              {/* Page numbers */}
+              {[...Array(totalPages).keys()].map((number) => {
+                // Show first page, last page, and pages around current page
+                const pageNumber = number + 1;
+                const isVisible = 
+                  pageNumber === 1 || 
+                  pageNumber === totalPages || 
+                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1);
+                
+                if (!isVisible && pageNumber === currentPage - 2) {
+                  return (
+                    <span
+                      key="ellipsis-prev"
+                      className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+                
+                if (!isVisible && pageNumber === currentPage + 2) {
+                  return (
+                    <span
+                      key="ellipsis-next"
+                      className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+                
+                if (isVisible) {
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => paginate(pageNumber)}
+                      aria-current={currentPage === pageNumber ? 'page' : undefined}
+                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${currentPage === pageNumber
+                        ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                        : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                }
+                
+                return null;
+              })}
+              
+              <button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                className={`relative inline-flex items-center rounded-r-md px-2 py-2 ${currentPage === totalPages ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'} ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0`}
+              >
+                <ChevronRight className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </nav>
+          </div>
+        </div>
       </div>
     );
   };
@@ -229,16 +439,32 @@ const CustomerListing = () => {
                   <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
                 </div>
                 
+                {/* Block Status Filter */}
                 <div className="relative w-full sm:w-44">
                   <select 
                     className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg py-2 pl-4 pr-10 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    <option value="All">All Status</option>
-                    <option value="false">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Pending">Pending</option>
+                    <option value="All">All Block Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Blocked">Blocked</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <ChevronDown size={16} className="text-gray-500" />
+                  </div>
+                </div>
+
+                {/* Verification Status Filter */}
+                <div className="relative w-full sm:w-44">
+                  <select 
+                    className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg py-2 pl-4 pr-10 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer"
+                    value={verificationFilter}
+                    onChange={(e) => setVerificationFilter(e.target.value)}
+                  >
+                    <option value="All">All Verification</option>
+                    <option value="Verified">Verified</option>
+                    <option value="Unverified">Unverified</option>
                   </select>
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <ChevronDown size={16} className="text-gray-500" />
@@ -276,6 +502,23 @@ const CustomerListing = () => {
                   </button>
                 </div>
                 
+                {/* Items per page selector */}
+                <div className="relative w-24">
+                  <select
+                    className="w-full appearance-none bg-white border border-gray-300 rounded-lg py-2 pl-3 pr-8 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer"
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <ChevronDown size={16} className="text-gray-500" />
+                  </div>
+                </div>
+                
                 <button 
                   className={`inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${loading ? 'opacity-80' : ''}`}
                   onClick={refreshData}
@@ -291,31 +534,6 @@ const CustomerListing = () => {
                 </button>
               </div>
             </div>
-            
-            {/* Selected actions (show when items are selected) */}
-            {selectedCustomers.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
-                    <span className="font-medium">{selectedCustomers.length} customers</span> selected
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                      <Mail size={14} className="mr-1.5" />
-                      Email
-                    </button>
-                    <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                      <Edit size={14} className="mr-1.5" />
-                      Edit
-                    </button>
-                    <button className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                      <Trash2 size={14} className="mr-1.5" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Loading State */}
@@ -386,174 +604,192 @@ const CustomerListing = () => {
                         </div>
                       </th>
                       <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Verification</th>
                       <th className="px-6 py-3 bg-gray-50 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {sortedCustomers.map((customer) => (
-                      <tr key={customer._id} className="hover:bg-gray-50 transition-colors duration-150">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <CustomerAvatar customer={customer} />
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                              <div className="text-sm text-gray-500">{customer.email}</div>
-                              <div className="text-xs text-gray-400 flex items-center mt-1">
-                                <Phone size={12} className="mr-1" />
-                                {customer.phone}
+                    {currentItems.length > 0 ? (
+                      currentItems.map((customer) => (
+                        <tr key={customer._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0">
+                                <CustomerAvatar customer={customer} />
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                                <div className="text-sm text-gray-500">{customer.email}</div>
+                                <div className="text-xs text-gray-400 mt-1">ID: {customer._id}</div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500 flex items-center">
-                            <Calendar size={14} className="mr-2 text-gray-400" />
-                            {new Date(customer.createdAt).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                            })}
-                        </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900 flex items-center">
-                            <ShoppingBag size={14} className="mr-2 text-gray-400" />
-                            {customer.orders}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500 flex items-center">
-                            <Clock size={14} className="mr-2 text-gray-400" />
-                            {customer.lastOrder}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{customer.totalSpent}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={customer.isVerified} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
-                              <Eye size={16} />
-                            </button>
-                            <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
-                              <Edit size={16} />
-                            </button>
-                            <button className="text-gray-500 hover:text-red-600 transition-colors duration-200">
-                              <Trash2 size={16} />
-                            </button>
-                            <button className="text-gray-500 hover:text-gray-700 transition-colors duration-200">
-                              <MoreHorizontal size={16} />
-                            </button>
-                          </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {new Date(customer.createdAt).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(customer.createdAt).toLocaleTimeString()}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{customer.orders}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {customer.lastOrder || 'No orders yet'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {customer.totalSpent || '$0.00'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <BlockStatusBadge customer={customer} />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <VerificationBadge customer={customer} />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex justify-end items-center space-x-2">
+                              <button
+                                onClick={() => navigate(`/admin/customers/${customer._id}`)}
+                                className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-indigo-50"
+                                title="View Details"
+                              >
+                                <Eye size={18} />
+                              </button>
+                              <button
+                                onClick={() => navigate(`/admin/customers/${customer._id}/edit`)}
+                                className="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-50"
+                                title="Edit"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleBlockStatusChange(customer._id, !customer.isBlocked)}
+                                className={customer.isBlocked ? "text-emerald-600 hover:text-emerald-900 p-1 rounded hover:bg-emerald-50" : "text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"}
+                                title={customer.isBlocked ? "Unblock" : "Block"}
+                                disabled={updatingStatus === customer._id}
+                              >
+                                {customer.isBlocked ? <Unlock size={18} /> : <Lock size={18} />}
+                              </button>
+                              <div className="relative inline-block text-left">
+                                <button
+                                  type="button"
+                                  className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-50"
+                                  id="options-menu"
+                                  aria-haspopup="true"
+                                  aria-expanded="true"
+                                >
+                                  <MoreHorizontal size={18} />
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500">
+                          No customers found matching your criteria
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
-              
-              {/* Empty state */}
-              {!loading && sortedCustomers.length === 0 && (
-                <div className="text-center py-12">
+              <Pagination />
+            </div>
+          )}
+
+          {/* Grid View */}
+          {!loading && !error && viewMode === 'grid' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {currentItems.length > 0 ? (
+                currentItems.map((customer) => (
+                  <div key={customer._id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                    <div className="p-4">
+                      <div className="flex items-center space-x-4">
+                        <CustomerAvatar customer={customer} />
+                        <div>
+                          <h3 className="font-medium text-gray-900">{customer.name}</h3>
+                          <p className="text-sm text-gray-500 truncate">{customer.email}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex items-center text-gray-500">
+                          <Phone size={14} className="mr-2" />
+                          <span>{customer.phone || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center text-gray-500">
+                          <ShoppingBag size={14} className="mr-2" />
+                          <span>{customer.orders} orders</span>
+                        </div>
+                        <div className="flex items-center text-gray-500">
+                          <Calendar size={14} className="mr-2" />
+                          <span>{new Date(customer.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center font-medium text-gray-900">
+                          <span>{customer.totalSpent || '$0.00'}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 flex items-center justify-between">
+                        <BlockStatusBadge customer={customer} />
+                        <VerificationBadge customer={customer} />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 px-4 py-3 flex justify-between items-center border-t border-gray-200">
+                      <button
+                        onClick={() => navigate(`/admin/customers/${customer._id}`)}
+                        className="text-sm font-medium text-indigo-600 hover:text-indigo-900"
+                      >
+                        View Details
+                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => navigate(`/admin/customers/${customer._id}/edit`)}
+                          className="text-gray-500 hover:text-gray-700 p-1 rounded hover:bg-gray-100"
+                          title="Edit"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleBlockStatusChange(customer._id, !customer.isBlocked)}
+                          className={customer.isBlocked ? "text-emerald-500 hover:text-emerald-700 p-1 rounded hover:bg-emerald-100" : "text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-100"}
+                          title={customer.isBlocked ? "Unblock" : "Block"}
+                          disabled={updatingStatus === customer._id}
+                        >
+                          {customer.isBlocked ? <Unlock size={16} /> : <Lock size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
                   <Users size={48} className="mx-auto text-gray-400" />
                   <h3 className="mt-2 text-lg font-medium text-gray-900">No customers found</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {searchTerm || statusFilter !== 'All' 
-                      ? 'Try adjusting your search or filter criteria'
-                      : 'Get started by adding a new customer'}
-                  </p>
-                  <div className="mt-6">
-                    <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                      <UserPlus size={16} className="mr-2" />
-                      Add Customer
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Pagination */}
-              {!loading && sortedCustomers.length > 0 && (
-                <div className="bg-gray-50 px-6 py-3 flex items-center justify-between border-t border-gray-200">
-                  <div className="flex-1 flex justify-between sm:hidden">
-                    <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                      Previous
-                    </button>
-                    <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                      Next
-                    </button>
-                  </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        Showing <span className="font-medium">1</span> to <span className="font-medium">{sortedCustomers.length}</span> of{' '}
-                        <span className="font-medium">{sortedCustomers.length}</span> customers
-                      </p>
-                    </div>
-                    <div>
-                      <nav className="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination">
-                        <button className="relative inline-flex items-center px-2 py-2 rounded-l-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                          <span className="sr-only">Previous</span>
-                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        <button aria-current="page" className="z-10 bg-indigo-50 border-indigo-500 text-indigo-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                          1
-                        </button>
-                        <button className="relative inline-flex items-center px-2 py-2 rounded-r-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                          <span className="sr-only">Next</span>
-                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                      </nav>
-                    </div>
-                  </div>
+                  <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria</p>
                 </div>
               )}
             </div>
           )}
-          {/* Grid View */}
-          {!loading && !error && viewMode === 'grid' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedCustomers.map((customer) => (
-                <div key={customer._id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col">
-                  <div className="flex items-center mb-4">
-                    <CustomerAvatar customer={customer} />
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{customer.name}</div>
-                      <div className="text-sm text-gray-500">{customer.email}</div>
-                    </div>
-                  </div>
-                  <div className="flex-grow">
-                    <p className="text-sm text-gray-500 mb-2">Phone: {customer.phone}</p>
-                    <p className="text-sm text-gray-500 mb-2">Join Date: {customer.createdAt}</p>
-                    <p className="text-sm text-gray-500 mb-2">Orders: {customer.orders}</p>
-                    <p className="text-sm text-gray-500 mb-2">Last Order: {customer.lastOrder}</p>
-                    <p className="text-sm font-medium text-gray-900">Total Spent: {customer.totalSpent}</p>
-                  </div>
-                  <StatusBadge status={customer?.isVerified} />
-                  <div className="mt-4 flex justify-end space-x-2">
-                    <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
-                      <Eye size={16} />
-                    </button>
-                    <button className="text-gray-500 hover:text-indigo-600 transition-colors duration-200">
-                      <Edit size={16} />
-                    </button>
-                    <button className="text-gray-500 hover:text-red-600 transition-colors duration-200">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+
+          {/* Pagination for Grid View */}
+          {!loading && !error && viewMode === 'grid' && currentItems.length > 0 && (
+            <div className="mt-6">
+              <Pagination />
             </div>
           )}
         </main>
       </div>
     </div>
   );
-}
+};
+
 export default CustomerListing;

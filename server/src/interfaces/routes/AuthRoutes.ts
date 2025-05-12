@@ -1,7 +1,8 @@
 import express from 'express';
-import { AuthController } from '../controllers/AuthController';
-import { handleOtpRequest, verifyOtpController, otpEmailForForgetPass, verifyOtp } from '../controllers/OtpController';
+
 import passport from 'passport';
+import { handleOtpRequest, otpEmailForForgetPass, verifyOtp, verifyOtpController } from '../controllers/otpController';
+import { AuthController } from '../controllers/AuthController';
 const router = express.Router();
 
 router.post('/send-otp', handleOtpRequest)

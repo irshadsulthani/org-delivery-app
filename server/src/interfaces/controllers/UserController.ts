@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { UserRepository } from "../../infrastructure/database/repositories/UserRepository";
-import { StatusCode } from "../../utils/statusCode"; // adjust path if needed
+import { StatusCode } from "../../utils/statusCode";
 
 const userRepo = new UserRepository();
 

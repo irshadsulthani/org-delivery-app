@@ -7,10 +7,12 @@ import { config } from '../../config';
 import { StatusCode } from '../../utils/statusCode';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/ResetPasswordUseCase';
 import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/VerifyOtpAndRegisterUser';
+import { DeliveryBoyRepository } from '../../infrastructure/database/repositories/DeliveryBoyRepository';
 
 
 const userRepo = new UserRepository();
 const authService = new AuthService();
+const deliveryBoyRepo = new DeliveryBoyRepository();
 
 export class AuthController {
   static register = async (req: Request, res: Response) => {
@@ -18,6 +20,9 @@ export class AuthController {
       const { otp, ...userData } = req.body as User & { otp: number };
       const useCase = new VerifyOtpAndRegisterUser(userRepo);
       const user = await useCase.execute(userData, otp);
+      const userId = user._id
+      console.log(userId);
+      
       res.status(StatusCode.CREATED).json(user);
     } catch (err: any) {
       res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
@@ -26,7 +31,7 @@ export class AuthController {
 
   static login = async (req: Request, res: Response) => {
     try {
-      const useCase = new LoginUser(userRepo, authService);
+      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo);
 
       const result = await useCase.execute(req.body.email, req.body.password, ['customer']);
 
@@ -59,7 +64,7 @@ export class AuthController {
   static adminLogin = async (req: Request, res: Response) => {
     try {
       
-      const useCase = new LoginUser(userRepo , authService);
+      const useCase = new LoginUser(userRepo , authService, deliveryBoyRepo);
       
       const result = await useCase.execute(req.body.email, req.body.password,['admin']);
       
@@ -175,24 +180,43 @@ export class AuthController {
   };
   static deliveryBoyLogin = async (req: Request, res: Response) => {
     try {
-      const useCase = new LoginUser(userRepo, authService);
-      const result = await useCase.execute(req.body.email, req.body.password,['deliveryBoy']);
+      const { email, password } = req.body;
+  
+      // 1. Validate credentials
+      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo);
+      const result = await useCase.execute(email, password, ['deliveryBoy']);
+      
+      
+      // 3. Proceed with login if approved
       const { accessToken, refreshToken, ...userData } = result;
+  
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         sameSite: 'strict',
         maxAge: Number(config.accessTokenExpiration),
       });
+  
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         sameSite: 'strict',
         maxAge: Number(config.refreshTokenExpiration),
       });
-      res.status(StatusCode.OK).json({success:true,userData}); 
+  
+      res.status(StatusCode.OK).json({
+        success: true,
+        userData: {
+          ...userData,
+        }
+      });
+  
     } catch (err: any) {
-      res.status(StatusCode.UNAUTHORIZED).json({ success:false,message: err.message });
+      res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: err.message || 'Login failed'
+      });
     }
-  }
+  };
+  
   static deliveryBoyLogout = async (req: Request, res: Response) => {
     try {
       res.clearCookie('accessToken', { httpOnly: true, sameSite: 'strict' });
@@ -204,7 +228,7 @@ export class AuthController {
   }
   static reatilerLogin = async (req: Request, res:Response) =>{
     try {
-      const useCase = new LoginUser(userRepo, authService)
+      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo)
       const result = await useCase.execute(req.body.email, req.body.password,['retailer'])
       const {accessToken, refreshToken, ...userData} = result
 

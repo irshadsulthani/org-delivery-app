@@ -1,5 +1,6 @@
 import privateApi from "./intreceptors/privateApi";
-import api, { publicApi } from "./intreceptors/publicApi";
+import { publicApi } from "./intreceptors/publicApi";
+
 
 export const sendLoginOtp = (email: string) => {
     return publicApi('post', '/auth/send-otp', { email, action: 'login' });
@@ -11,7 +12,7 @@ export const loginUser = async (loginData: { email: string; password: string }) 
 };
 
 export const verifyOtp = (otpValue: string, pendingAuthData: any) => {
-    return api('post', '/auth/verify-otp', { 
+    return publicApi('post', '/auth/verify-otp', { 
       ...pendingAuthData.data, 
       otp: otpValue,
       role:'customer'
@@ -19,7 +20,7 @@ export const verifyOtp = (otpValue: string, pendingAuthData: any) => {
 };
 
 export const sendSignupOtp = (otpEmail:string) => {
-    return api('post', '/auth/send-otp',{
+    return publicApi('post', '/auth/send-otp',{
         email:otpEmail,
         action:'signup'
     })

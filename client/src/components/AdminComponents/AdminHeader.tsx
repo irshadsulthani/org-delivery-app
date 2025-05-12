@@ -1,7 +1,10 @@
-import { Bell, Menu, Search, X, ChevronDown } from "lucide-react";
+// src/components/AdminHeader.tsx
+import { Bell, Menu, Search, X, ChevronDown, Clock, Check, XCircle, Truck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
+import { usePendingDeliveryBoys } from "../../customHooks/usePendingDeliveryBoys";
+
 
 interface AdminHeaderProps {
   toggleMobileSidebar?: () => void;
@@ -12,8 +15,10 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
   const location = window.location.pathname;
   const pageName = location.split("/").filter(Boolean).pop() || "dashboard";
   const formattedPageName = pageName.charAt(0).toUpperCase() + pageName.slice(1).replace(/-/g, " ");
-  const selector = useSelector((state : RootState) => state.admin.admin)
+  const selector = useSelector((state: RootState) => state.admin.admin);
 
+  const { pendingDeliveryBoys, loading, refetch } = usePendingDeliveryBoys();
+  
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
@@ -40,12 +45,52 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
     };
   }, []);
 
-  // Sample notifications data
-  const notifications = [
-    { id: 1, title: "New order received", time: "5 minutes ago", read: false },
-    { id: 2, title: "Delivery #35782 completed", time: "1 hour ago", read: false },
-    { id: 3, title: "Customer feedback received", time: "3 hours ago", read: true },
-  ];
+  // Format date to relative time (e.g., "2 hours ago")
+  const formatRelativeTime = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  };
+
+  // Get status icon and color
+  const getStatusInfo = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return { icon: <Clock size={14} className="text-yellow-500" />, color: 'bg-yellow-100 text-yellow-800' };
+      case 'approved':
+        return { icon: <Check size={14} className="text-green-500" />, color: 'bg-green-100 text-green-800' };
+      case 'rejected':
+        return { icon: <XCircle size={14} className="text-red-500" />, color: 'bg-red-100 text-red-800' };
+      default:
+        return { icon: <Clock size={14} className="text-gray-500" />, color: 'bg-gray-100 text-gray-800' };
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      // Call API to approve delivery boy
+      console.log(`Approving delivery boy with id: ${id}`);
+      // After successful approval, refetch the list
+      refetch();
+    } catch (error) {
+      console.error('Error approving delivery boy:', error);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      // Call API to reject delivery boy
+      console.log(`Rejecting delivery boy with id: ${id}`);
+      // After successful rejection, refetch the list
+      refetch();
+    } catch (error) {
+      console.error('Error rejecting delivery boy:', error);
+    }
+  };
 
   return (
     <header 
@@ -133,11 +178,14 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
           <div className="relative">
             <button 
               className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                refetch(); // Refresh pending delivery boys when opening notifications
+              }}
               aria-label="Notifications"
             >
               <Bell size={20} />
-              {notifications.some(n => !n.read) && (
+              {pendingDeliveryBoys && pendingDeliveryBoys.length > 0 && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
               )}
             </button>
@@ -146,35 +194,104 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-30">
                 <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="font-medium text-gray-700">Notifications</h3>
-                  <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-medium">
-                    {notifications.filter(n => !n.read).length} new
-                  </span>
+                  <h3 className="font-medium text-gray-700">Verification Requests</h3>
+                  {pendingDeliveryBoys && pendingDeliveryBoys.length > 0 && (
+                    <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-medium">
+                      {pendingDeliveryBoys.length} pending
+                    </span>
+                  )}
                 </div>
                 
                 <div className="max-h-72 overflow-y-auto">
-                  {notifications.map(notification => (
-                    <div 
-                      key={notification.id} 
-                      className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors duration-150 flex items-start ${
-                        !notification.read ? "bg-indigo-50/40" : ""
-                      }`}
-                    >
-                      <div className="flex-shrink-0 mt-0.5">
-                        <div className={`w-2 h-2 rounded-full ${!notification.read ? "bg-indigo-500" : "bg-gray-300"}`}></div>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-gray-800">{notification.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                      </div>
+                  {loading ? (
+                    <div className="px-4 py-8 text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                      <p className="text-sm text-gray-500 mt-2">Loading requests...</p>
                     </div>
-                  ))}
+                  ) : pendingDeliveryBoys && pendingDeliveryBoys.length > 0 ? (
+                    pendingDeliveryBoys.map((deliveryBoy) => {
+                      const statusInfo = getStatusInfo(deliveryBoy.status);
+                      return (
+                        <div 
+                          key={deliveryBoy.id} 
+                          className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors duration-150 ${
+                            deliveryBoy.status === 'pending' ? "bg-blue-50/40" : ""
+                          }`}
+                        >
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 mr-3">
+                              {deliveryBoy.profileImageUrl ? (
+                                <img 
+                                  src={deliveryBoy.profileImageUrl} 
+                                  alt={deliveryBoy.name}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                  <Truck className="text-indigo-600" size={18} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-start">
+                                <p className="text-sm font-medium text-gray-800 truncate">
+                                  {deliveryBoy.name}
+                                </p>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.color} flex items-center`}>
+                                  {statusInfo.icon}
+                                  <span className="ml-1">{deliveryBoy.status}</span>
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">{deliveryBoy.phone}</p>
+                              <p className="text-xs text-gray-400 mt-1 flex items-center">
+                                <Clock className="mr-1" size={12} />
+                                {formatRelativeTime(deliveryBoy.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                          {deliveryBoy.status === 'pending' && (
+                            <div className="mt-2 flex space-x-2">
+                              <button 
+                                className="text-xs bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded transition-colors duration-200"
+                                onClick={() => handleApprove(deliveryBoy.id)}
+                              >
+                                Approve
+                              </button>
+                              <button 
+                                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors duration-200"
+                                onClick={() => handleReject(deliveryBoy.id)}
+                              >
+                                Reject
+                              </button>
+                              <button 
+                                className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded transition-colors duration-200"
+                                onClick={() => {
+                                  // Handle view details action
+                                  console.log(`View details ${deliveryBoy.id}`);
+                                }}
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="px-4 py-8 text-center">
+                      <Truck className="mx-auto text-gray-300" size={24} />
+                      <p className="text-sm text-gray-500 mt-2">No pending verification requests</p>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="px-4 py-2 border-t border-gray-100">
-                  <button className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
-                    View all notifications
-                  </button>
+                  <a 
+                    href="/admin/delivery-boy" 
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center justify-center"
+                  >
+                    View all delivery boys
+                  </a>
                 </div>
               </div>
             )}
@@ -183,7 +300,7 @@ function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeader
           {/* User profile */}
           <div className="flex items-center cursor-pointer hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors duration-200">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-800 text-white flex items-center justify-center font-medium shadow-md ring-2 ring-indigo-100">
-              JD
+              {selector?.name?.split(' ').map(n => n[0]).join('') || 'A'}
             </div>
             <div className="ml-2 hidden sm:block">
               <p className="text-sm font-medium text-gray-800">{selector?.name}</p>

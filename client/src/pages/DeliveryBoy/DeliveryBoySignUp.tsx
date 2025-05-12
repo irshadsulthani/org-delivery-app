@@ -113,41 +113,68 @@ const DeliveryBoySignUp = () => {
           toast.error(response.message || 'Failed to send OTP');
         }
       }
-  
+
+      
       else if (authMode === 'login') {
+        console.log('step 2');
         if (!formData.password) {
           setError('Password is required');
           setIsLoading(false);
           return;
         }
-  
-        const response = await loginDeliveryBoy(formData);
-        dispatch(setDeliveryBoy({
-          name: response.userData.name,
-          email: response.userData.email,
-          role: response.userData.role,
-        }));
-  
-        if (response && response.success) {
+      
+        try {
+          setIsLoading(true);
+          const response = await loginDeliveryBoy(formData);
+          
+          console.log('step 3');
+          
+          if (response?.error) {
+            if (response.error.type === 'info') {
+              toast.info(response.error.message); // For pending/rejected status
+            } else {
+              toast.info(response.error.message); // For other errors
+            }
+            setIsLoading(false);
+            return;
+          }
+      
+          // Successful login
+          dispatch(setDeliveryBoy({
+            name: response.userData.name,
+            email: response.userData.email,
+            role: response.userData.role,
+          }));
+      
           setShowSuccessMessage(true);
           let countdown = 3;
           setTimeLeft(countdown);
-  
+      
           const timer = setInterval(() => {
             countdown -= 1;
             setTimeLeft(countdown);
-  
+      
             if (countdown <= 0) {
               clearInterval(timer);
               setShowSuccessMessage(false);
               navigate('/delivery/dashboard');
             }
           }, 1000);
-        } else {
-          const errorMessage = response?.message || 'Sign in failed. Please try again.';
-          toast.error(errorMessage);
+        } catch (err: any) {
+          console.error('Login error:', err);
+          const message = err?.response?.data?.message || 'Sign in failed. Please try again.';
+          
+          // Differentiate between error types
+          if (err?.response?.data?.type === 'info') {
+            toast.info(message);
+          } else {
+            toast.error(message);
+          }
+        } finally {
+          setIsLoading(false);
         }
       }
+      
   
       else if (authMode === 'forgotPassword') {
         const response = await sendPasswordResetEmail(formData.email);

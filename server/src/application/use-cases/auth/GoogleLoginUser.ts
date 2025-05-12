@@ -18,7 +18,6 @@ export class GoogleLoginUser implements IGoogleLoginUser {
         email,
         isGoogleUser: true,
         password: '',
-        phone: '',
         role: 'customer',
         isBlocked: false,
         isVerified: true,

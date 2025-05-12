@@ -1,14 +1,10 @@
 // Dashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { 
-  Bell,
-  Search,
-  Menu,
   Box,
   Users,
   Truck,
   DollarSign,
-  Clock,
   ArrowRight,
   ShoppingBag,
   RefreshCw,
@@ -134,7 +130,7 @@ const Dashboard: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const users = await getAllUsers();
+      await getAllUsers();
       setUsers(users);
       setLoading(false);
     } catch (error: any) {

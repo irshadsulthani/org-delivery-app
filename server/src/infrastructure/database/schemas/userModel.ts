@@ -10,7 +10,6 @@ const userSchema = new Schema<UserDoc>(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    phone: String,
     password: String,
     image: { type: String, default: null },
     role: {

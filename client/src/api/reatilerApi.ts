@@ -1,4 +1,5 @@
-import publicApi from "./intreceptors/publicApi";
+import { publicApi } from "./intreceptors/publicApi";
+
 
 
 export const sendSignupOtp = async (email: string) => {

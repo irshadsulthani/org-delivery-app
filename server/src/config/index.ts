@@ -14,4 +14,11 @@ export const config = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
   googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL,
+  cloudName:process.env.CLOUDINARY_CLOUD_NAME,
+  cloudApiKey:process.env.CLOUDINARY_API_KEY,
+  cloudApiSecret:process.env.CLOUDINARY_API_SECRET,
+  awsAccessKeyId:process.env.AWS_ACCESS_KEY_ID,
+  awsSecretAccessKey:process.env.AWS_SECRET_ACCESS_KEY,
+  awsRegion:process.env.AWS_REGION,
+  awsBucket:process.env.AWS_S3_BUCKET
 };
