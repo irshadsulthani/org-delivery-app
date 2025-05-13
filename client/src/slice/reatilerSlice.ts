@@ -3,18 +3,18 @@ import { IReatilerState } from "../interfaces/reatiler/IReatilerState";
 
 
 const initialState : IReatilerState = {
-    reatiler : null
+    retailer : null
 }
 
 const reatilerSlice = createSlice({
-    name:'reatiler',
+    name:'retailer',
     initialState,
     reducers:{
         setReatiler(state, action) {
-            state.reatiler = action.payload
+            state.retailer = action.payload
         },
         reatilerLogout(state){
-            state.reatiler = null
+            state.retailer = null
         }
     }
 })

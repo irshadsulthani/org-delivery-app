@@ -4,9 +4,9 @@ import { IDeliveryBoyRepository } from "../../../domain/interface/repositories/I
 
 
 export class RejectDeliveryBoy {
-  constructor(private deliveryBoyRepository: IDeliveryBoyRepository) {}
+  constructor(private _deliveryBoyRepo: IDeliveryBoyRepository) {}
 
   async execute(id: string): Promise<void> {
-    await this.deliveryBoyRepository.updateVerificationStatus(id, 'rejected');
+    await this._deliveryBoyRepo.updateVerificationStatus(id, 'rejected');
   }
 }

@@ -14,8 +14,6 @@ export class DeliveryBoyController {
         const { email, phone, address, city, state, zipCode, vehicleType, vehicleNumber,drivingLicense, dateOfBirth } = req.body;
         const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
         
-        console.log(req.body);
-        
 
         if (!files || !files['profileImage'] || !files['verificationImage']) {
           res.status(StatusCode.BAD_REQUEST).json({ 

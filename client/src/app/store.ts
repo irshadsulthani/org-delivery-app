@@ -16,7 +16,7 @@ const rootReducer = combineReducers({
   auth: userSlice,
   admin: adminSlice,
   deliveryBoy: deliveryBoySlice,
-  reatiler: reatilerSlice
+  retailer: reatilerSlice
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

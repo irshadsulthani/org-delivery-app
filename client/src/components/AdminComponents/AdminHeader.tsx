@@ -1,11 +1,12 @@
 // src/components/AdminHeader.tsx
-import { Bell, Menu, Search, X, ChevronDown, Clock, Check, XCircle, Truck } from "lucide-react";
+import { Bell, Menu, Search, X, ChevronDown, Clock, Check, XCircle, Truck, Store } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../app/store";
 import { usePendingDeliveryBoys } from "../../customHooks/usePendingDeliveryBoys";
+import { usePendingRetailers } from "../../customHooks/usePendingRetailers";
 import { useNavigate } from "react-router-dom";
-import { getDeliveryBoyById } from "../../api/adminApi";
+import { getDeliveryBoyById, getRetailerById } from "../../api/adminApi";
 import { toast } from "react-toastify"; // Add this import for toast notifications
 
 interface AdminHeaderProps {
@@ -16,45 +17,63 @@ interface AdminHeaderProps {
 function AdminHeader({ toggleMobileSidebar, isSidebarOpen = false }: AdminHeaderProps) {
   const navigate = useNavigate();
   const routeNameMap: { [key: string]: string } = {
-  "dashboard": "Dashboard",
-  "users": "Users",
-  "orders": "Orders",
-  "products": "Products",
-  "categories": "Categories",
-  "brands": "Brands",
-  "delivery-boy": "Delivery Boy Details",
-  "add-product": "Add Product",
-  "edit-product": "Edit Product",
-  "search": "Search Results",
-};
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "orders": "Orders",
+    "products": "Products",
+    "categories": "Categories",
+    "brands": "Brands",
+    "delivery-boy": "Delivery Boy Details",
+    "retailer": "Retailer Details",
+    "add-product": "Add Product",
+    "edit-product": "Edit Product",
+    "search": "Search Results",
+  };
 
-const location = window.location.pathname;
-const pathSegments = location.split("/").filter(Boolean);
-const lastSegment = pathSegments.pop() || "dashboard";
+  const location = window.location.pathname;
+  const pathSegments = location.split("/").filter(Boolean);
+  const lastSegment = pathSegments.pop() || "dashboard";
 
-// Check if the last segment is an ID (e.g., for detail pages)
-const isId = /^[0-9a-fA-F]{24}$/.test(lastSegment); // MongoDB ObjectId pattern
-const secondLastSegment = pathSegments.pop();
+  // Check if the last segment is an ID (e.g., for detail pages)
+  const isId = /^[0-9a-fA-F]{24}$/.test(lastSegment); // MongoDB ObjectId pattern
+  const secondLastSegment = pathSegments.pop();
 
-const pageKey = isId ? secondLastSegment || "dashboard" : lastSegment;
-const formattedPageName = routeNameMap[pageKey] || pageKey.charAt(0).toUpperCase() + pageKey.slice(1).replace(/-/g, " ");
+  const pageKey = isId ? secondLastSegment || "dashboard" : lastSegment;
+  const formattedPageName = routeNameMap[pageKey] || pageKey.charAt(0).toUpperCase() + pageKey.slice(1).replace(/-/g, " ");
 
   const selector = useSelector((state: RootState) => state.admin.admin);
 
+  // Delivery Boys Hook
   const { 
     pendingDeliveryBoys, 
-    loading, 
-    error,
-    refetch,
-    handleApprove,
-    handleReject 
+    loading: deliveryBoysLoading, 
+    error: deliveryBoysError,
+    refetch: refetchDeliveryBoys,
+    handleApprove: approveDeliveryBoy,
+    handleReject: rejectDeliveryBoy 
   } = usePendingDeliveryBoys();
   
+  // Retailers Hook
+  const {
+    pendingRetailers,
+    loading: retailersLoading,
+    error: retailersError,
+    refetch: refetchRetailers,
+    handleApprove: approveRetailer,
+    handleReject: rejectRetailer
+  } = usePendingRetailers();
+
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 640);
+  const [activeTab, setActiveTab] = useState("delivery"); // "delivery" or "retailers"
+
+  // Calculate total notifications
+  const totalNotifications = 
+    (pendingDeliveryBoys?.filter(boy => boy.status === 'pending')?.length || 0) +
+    (pendingRetailers?.filter(retailer => !retailer.isVerified)?.length || 0);
 
   // Monitor scroll position and screen size
   useEffect(() => {
@@ -80,20 +99,28 @@ const formattedPageName = routeNameMap[pageKey] || pageKey.charAt(0).toUpperCase
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
 
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { icon: <Clock size={14} className="text-yellow-500" />, color: 'bg-yellow-100 text-yellow-800' };
-      case 'approved':
-        return { icon: <Check size={14} className="text-green-500" />, color: 'bg-green-100 text-green-800' };
-      case 'rejected':
-        return { icon: <XCircle size={14} className="text-red-500" />, color: 'bg-red-100 text-red-800' };
-      default:
-        return { icon: <Clock size={14} className="text-gray-500" />, color: 'bg-gray-100 text-gray-800' };
+  const getStatusInfo = (status: string | boolean) => {
+    if (typeof status === 'boolean') {
+      // For retailers where status is represented by isVerified
+      return status 
+        ? { icon: <Check size={14} className="text-green-500" />, color: 'bg-green-100 text-green-800', label: 'Verified' }
+        : { icon: <Clock size={14} className="text-yellow-500" />, color: 'bg-yellow-100 text-yellow-800', label: 'Pending' };
+    } else {
+      // For delivery boys where status is a string
+      switch (status) {
+        case 'pending':
+          return { icon: <Clock size={14} className="text-yellow-500" />, color: 'bg-yellow-100 text-yellow-800', label: 'Pending' };
+        case 'approved':
+          return { icon: <Check size={14} className="text-green-500" />, color: 'bg-green-100 text-green-800', label: 'Approved' };
+        case 'rejected':
+          return { icon: <XCircle size={14} className="text-red-500" />, color: 'bg-red-100 text-red-800', label: 'Rejected' };
+        default:
+          return { icon: <Clock size={14} className="text-gray-500" />, color: 'bg-gray-100 text-gray-800', label: status };
+      }
     }
   };
 
-  const handleViewDetails = async (id: string) => {
+  const handleViewDeliveryBoyDetails = async (id: string) => {
     try {
       await getDeliveryBoyById(id);
       navigate(`/admin/delivery-boy/${id}`);
@@ -104,12 +131,31 @@ const formattedPageName = routeNameMap[pageKey] || pageKey.charAt(0).toUpperCase
     }
   };
 
+  const handleViewRetailerDetails = async (id: string) => {
+    try {
+      await getRetailerById(id);
+      navigate(`/admin/retailer/${id}`);
+      setShowNotifications(false);
+    } catch (error) {
+      console.error("Error fetching retailer details:", error);
+      toast.error("Could not load retailer details");
+    }
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/admin/search?q=${encodeURIComponent(searchQuery)}`);
       setSearchQuery("");
       setIsSearchFocused(false);
+    }
+  };
+
+  const handleOpenNotifications = () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications) {
+      refetchDeliveryBoys();
+      refetchRetailers();
     }
   };
 
@@ -204,133 +250,262 @@ const formattedPageName = routeNameMap[pageKey] || pageKey.charAt(0).toUpperCase
           <div className="relative">
             <button 
               className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
-              onClick={() => {
-                setShowNotifications(!showNotifications);
-                if (!showNotifications) refetch();
-              }}
+              onClick={handleOpenNotifications}
               aria-label="Notifications"
               aria-expanded={showNotifications}
             >
               <Bell size={20} />
-              {pendingDeliveryBoys?.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+              {totalNotifications > 0 && (
+                <span className="absolute top-1 right-1 flex items-center justify-center bg-red-500 text-white text-xs rounded-full w-4 h-4 font-bold">
+                  {totalNotifications > 9 ? '9+' : totalNotifications}
+                </span>
               )}
             </button>
             
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-30">
-                <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="font-medium text-gray-700">Verification Requests</h3>
-                  {pendingDeliveryBoys?.length > 0 && (
-                    <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-medium">
-                      {pendingDeliveryBoys.length} pending
-                    </span>
-                  )}
+                <div className="flex border-b border-gray-100">
+                  <button 
+                    className={`flex-1 text-center py-2 text-sm font-medium ${
+                      activeTab === "delivery" 
+                        ? "text-indigo-600 border-b-2 border-indigo-600" 
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setActiveTab("delivery")}
+                  >
+                    <div className="flex items-center justify-center">
+                      <Truck size={16} className="mr-1" />
+                      Delivery Boys
+                      {pendingDeliveryBoys?.filter(boy => boy.status === 'pending')?.length > 0 && (
+                        <span className="ml-1 w-5 h-5 bg-indigo-100 text-indigo-800 rounded-full text-xs flex items-center justify-center">
+                          {pendingDeliveryBoys.filter(boy => boy.status === 'pending').length}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                  <button 
+                    className={`flex-1 text-center py-2 text-sm font-medium ${
+                      activeTab === "retailers" 
+                        ? "text-indigo-600 border-b-2 border-indigo-600" 
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setActiveTab("retailers")}
+                  >
+                    <div className="flex items-center justify-center">
+                      <Store size={16} className="mr-1" />
+                      Retailers
+                      {pendingRetailers?.filter(retailer => !retailer.isVerified)?.length > 0 && (
+                        <span className="ml-1 w-5 h-5 bg-indigo-100 text-indigo-800 rounded-full text-xs flex items-center justify-center">
+                          {pendingRetailers.filter(retailer => !retailer.isVerified).length}
+                        </span>
+                      )}
+                    </div>
+                  </button>
                 </div>
                 
-                <div className="max-h-72 overflow-y-auto">
-                  {loading ? (
-                    <div className="px-4 py-8 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                      <p className="text-sm text-gray-500 mt-2">Loading requests...</p>
-                    </div>
-                  ) : error ? (
-                    <div className="px-4 py-8 text-center">
-                      <XCircle className="mx-auto text-red-400" size={24} />
-                      <p className="text-sm text-gray-500 mt-2">Failed to load requests</p>
-                      <button 
-                        onClick={refetch}
-                        className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  ) : pendingDeliveryBoys?.length > 0 ? (
-                    pendingDeliveryBoys.map((deliveryBoy) => {
-                      const statusInfo = getStatusInfo(deliveryBoy.status);
-                      return (
-                        <div 
-                          key={deliveryBoy.id} 
-                          className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors duration-150 ${
-                            deliveryBoy.status === 'pending' ? "bg-blue-50/40" : ""
-                          }`}
+                {/* Delivery Boys Tab */}
+                {activeTab === "delivery" && (
+                  <div className="max-h-72 overflow-y-auto">
+                    {deliveryBoysLoading ? (
+                      <div className="px-4 py-8 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                        <p className="text-sm text-gray-500 mt-2">Loading requests...</p>
+                      </div>
+                    ) : deliveryBoysError ? (
+                      <div className="px-4 py-8 text-center">
+                        <XCircle className="mx-auto text-red-400" size={24} />
+                        <p className="text-sm text-gray-500 mt-2">Failed to load requests</p>
+                        <button 
+                          onClick={refetchDeliveryBoys}
+                          className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                         >
-                          <div className="flex items-start">
-                            <div className="flex-shrink-0 mr-3">
-                              {deliveryBoy.profileImageUrl ? (
-                                <img 
-                                  src={deliveryBoy.profileImageUrl} 
-                                  alt={deliveryBoy.name}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                                  <Truck className="text-indigo-600" size={18} />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-start">
-                                <p className="text-sm font-medium text-gray-800 truncate">
-                                  {deliveryBoy.name}
-                                </p>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.color} flex items-center`}>
-                                  {statusInfo.icon}
-                                  <span className="ml-1 capitalize">{deliveryBoy.status}</span>
-                                </span>
+                          Retry
+                        </button>
+                      </div>
+                    ) : pendingDeliveryBoys?.length > 0 ? (
+                      pendingDeliveryBoys.map((deliveryBoy) => {
+                        const statusInfo = getStatusInfo(deliveryBoy.status);
+                        return (
+                          <div 
+                            key={deliveryBoy.id} 
+                            className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors duration-150 ${
+                              deliveryBoy.status === 'pending' ? "bg-blue-50/40" : ""
+                            }`}
+                          >
+                            <div className="flex items-start">
+                              <div className="flex-shrink-0 mr-3">
+                                {deliveryBoy.profileImageUrl ? (
+                                  <img 
+                                    src={deliveryBoy.profileImageUrl} 
+                                    alt={deliveryBoy.name}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                    <Truck className="text-indigo-600" size={18} />
+                                  </div>
+                                )}
                               </div>
-                              <p className="text-xs text-gray-500 mt-1">{deliveryBoy.phone}</p>
-                              <p className="text-xs text-gray-400 mt-1 flex items-center">
-                                <Clock className="mr-1" size={12} />
-                                {formatRelativeTime(deliveryBoy.createdAt)}
-                              </p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start">
+                                  <p className="text-sm font-medium text-gray-800 truncate">
+                                    {deliveryBoy.name}
+                                  </p>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.color} flex items-center`}>
+                                    {statusInfo.icon}
+                                    <span className="ml-1 capitalize">{statusInfo.label}</span>
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">{deliveryBoy.phone}</p>
+                                <p className="text-xs text-gray-400 mt-1 flex items-center">
+                                  <Clock className="mr-1" size={12} />
+                                  {formatRelativeTime(deliveryBoy.createdAt)}
+                                </p>
+                              </div>
                             </div>
+                            {deliveryBoy.status === 'pending' && (
+                              <div className="mt-2 flex space-x-2">
+                                <button 
+                                  className="text-xs bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded transition-colors duration-200"
+                                  onClick={() => approveDeliveryBoy(deliveryBoy.id)}
+                                >
+                                  Approve
+                                </button>
+                                <button 
+                                  className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors duration-200"
+                                  onClick={() => rejectDeliveryBoy(deliveryBoy.id)}
+                                >
+                                  Reject
+                                </button>
+                                <button 
+                                  className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded transition-colors duration-200"
+                                  onClick={() => handleViewDeliveryBoyDetails(deliveryBoy.id)}
+                                >
+                                  View
+                                </button>
+                              </div>
+                            )}
                           </div>
-                          {deliveryBoy.status === 'pending' && (
-                            <div className="mt-2 flex space-x-2">
-                              <button 
-                                className="text-xs bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded transition-colors duration-200"
-                                onClick={() => handleApprove(deliveryBoy.id)}
-                              >
-                                Approve
-                              </button>
-                              <button 
-                                className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors duration-200"
-                                onClick={() => handleReject(deliveryBoy.id)}
-                              >
-                                Reject
-                              </button>
-                              <button 
-                                className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded transition-colors duration-200"
-                                onClick={() => handleViewDetails(deliveryBoy.id)}
-                              >
-                                View
-                              </button>
+                        );
+                      })
+                    ) : (
+                      <div className="px-4 py-8 text-center">
+                        <Truck className="mx-auto text-gray-300" size={24} />
+                        <p className="text-sm text-gray-500 mt-2">No pending verification requests</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Retailers Tab */}
+                {activeTab === "retailers" && (
+                  <div className="max-h-72 overflow-y-auto">
+                    {retailersLoading ? (
+                      <div className="px-4 py-8 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                        <p className="text-sm text-gray-500 mt-2">Loading requests...</p>
+                      </div>
+                    ) : retailersError ? (
+                      <div className="px-4 py-8 text-center">
+                        <XCircle className="mx-auto text-red-400" size={24} />
+                        <p className="text-sm text-gray-500 mt-2">Failed to load retailer requests</p>
+                        <button 
+                          onClick={refetchRetailers}
+                          className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    ) : pendingRetailers?.length > 0 ? (
+                      pendingRetailers.map((retailer) => {
+                        const statusInfo = getStatusInfo(retailer.isVerified);
+                        return (
+                          <div 
+                            key={retailer._id} 
+                            className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors duration-150 ${
+                              !retailer.isVerified ? "bg-blue-50/40" : ""
+                            }`}
+                          >
+                            <div className="flex items-start">
+                              <div className="flex-shrink-0 mr-3">
+                                {retailer.shopImageUrl ? (
+                                  <img 
+                                    src={retailer.shopImageUrl} 
+                                    alt={retailer.shopName}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                    <Store className="text-indigo-600" size={18} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start">
+                                  <p className="text-sm font-medium text-gray-800 truncate">
+                                    {retailer.shopName}
+                                  </p>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.color} flex items-center`}>
+                                    {statusInfo.icon}
+                                    <span className="ml-1">{statusInfo.label}</span>
+                                  </span>
+                                </div>
+                                {/* <p className="text-xs text-gray-500 mt-1">{retailer.address.city}, {retailer.address.state}</p> */}
+                                <p className="text-xs text-gray-400 mt-1 flex items-center">
+                                  <Clock className="mr-1" size={12} />
+                                  {formatRelativeTime(retailer.createdAt)}
+                                </p>
+                              </div>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="px-4 py-8 text-center">
-                      <Truck className="mx-auto text-gray-300" size={24} />
-                      <p className="text-sm text-gray-500 mt-2">No pending verification requests</p>
-                    </div>
-                  )}
-                </div>
+                            {!retailer.isVerified && (
+                              <div className="mt-2 flex space-x-2">
+                                <button 
+                                  className="text-xs bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded transition-colors duration-200"
+                                  onClick={() => approveRetailer(retailer._id)}
+                                >
+                                  Approve
+                                </button>
+                                <button 
+                                  className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors duration-200"
+                                  onClick={() => rejectRetailer(retailer._id)}
+                                >
+                                  Reject
+                                </button>
+                                <button 
+                                  className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded transition-colors duration-200"
+                                  onClick={() => handleViewRetailerDetails(retailer.userId)}
+                                >
+                                  View
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="px-4 py-8 text-center">
+                        <Store className="mx-auto text-gray-300" size={24} />
+                        <p className="text-sm text-gray-500 mt-2">No pending retailer requests</p>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 <div className="px-4 py-2 border-t border-gray-100">
                   <button
                     onClick={() => {
-                      navigate('/admin/delivery-boys');
+                      navigate(activeTab === "delivery" ? '/admin/delivery-boys' : '/admin/retailers');
                       setShowNotifications(false);
                     }}
                     className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center justify-center w-full"
                   >
-                    View all delivery boys
+                    View all {activeTab === "delivery" ? "delivery boys" : "retailers"}
                   </button>
                 </div>
               </div>

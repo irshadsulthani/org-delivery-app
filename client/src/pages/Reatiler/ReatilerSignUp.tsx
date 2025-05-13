@@ -215,7 +215,7 @@ const RetailerAuth = () => {
   };
   
   // Handle OTP verification
-  const handleVerifyOtp = async () => {
+const handleVerifyOtp = async () => {
     setIsLoading(true);
     
     try {
@@ -231,8 +231,13 @@ const RetailerAuth = () => {
         const response = await verifySignupOtp(enteredOtp, formData);
         
         if (response.success) {
-          toast.success('Account created successfully');
+          localStorage.setItem('formData', JSON.stringify(formData))
+          toast.success('Account created successfully! Please complete your retailer profile.');
+          navigate('/retailer/register-retailer'); // Fixed path (added leading slash)
           setVerificationSuccess(true);
+          
+          // Clear OTP fields after successful verification
+          setOtp(['', '', '', '']);
         } else {
           toast.error(response.message || 'Invalid OTP. Please try again.');
         }
@@ -242,8 +247,11 @@ const RetailerAuth = () => {
         const response = await verifyOtpForgetPass(enteredOtp, formData.email);
         
         if (response.success) {
-          toast.success('OTP verified');
+          toast.success('OTP verified successfully');
           setAuthMode('resetPassword');
+          
+          // Clear OTP fields after successful verification
+          setOtp(['', '', '', '']);
         } else {
           toast.error(response.message || 'Invalid OTP. Please try again.');
         }

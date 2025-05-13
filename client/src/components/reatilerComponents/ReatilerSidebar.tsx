@@ -90,7 +90,7 @@ const RetailerSidebar: React.FC<RetailerSidebarProps> = ({ retailerName, storeNa
   const [expandedMenu, setExpandedMenu] = useState<string | null>("inventory");
   const [collapsed, setCollapsed] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
-  const retailerState = useSelector((state: RootState) => state.reatiler.reatiler);
+  const retailerState = useSelector((state: RootState) => state.retailer.retailer);
   const dispatch = useDispatch()
   const navigate = useNavigate()
 

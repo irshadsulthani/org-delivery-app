@@ -12,8 +12,6 @@ export class UserRepository implements IUserRepository {
 
   async createUser(user: User): Promise<User> {
     const hashed = await PasswordService.hash(user.password || '');
-    console.log('user',user);
-    
     const createdUser = new UserModel({
       ...user,
       password: hashed,
@@ -89,11 +87,49 @@ async getAllDeliveryBoys(): Promise<User[]> {
     }));
   }
 
-  async getAllReatilers():Promise<User[]>{
-    const reatilers = await UserModel.find({ role: 'retailer' }).lean();
-    return reatilers.map(reatilers => ({
-      ...reatilers,
-      _id : reatilers._id.toString()
-    }))
-  }
+async getAllRetailers(): Promise<any[]> { 
+  return await UserModel.aggregate([
+    { $match: { role: 'retailer' } },
+    {
+      $lookup: {
+        from: 'retailershops',
+        localField: '_id',
+        foreignField: 'userId',
+        as: 'shopDetails',
+      },
+    },
+    {
+      $unwind: {
+        path: '$shopDetails',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        phone: '$shopDetails.phone',
+        role: 1,
+        isBlocked: 1,
+        isVerified: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        // Shop details
+        shopName: '$shopDetails.shopName',
+        description: '$shopDetails.description',
+        shopImageUrl: '$shopDetails.shopImageUrl',
+        shopLicenseUrl: '$shopDetails.shopLicenseUrl',
+        address: '$shopDetails.address',
+        rating: '$shopDetails.rating',
+        reviews: '$shopDetails.reviews',
+        shopIsVerified: '$shopDetails.isVerified',
+        shopCreatedAt: '$shopDetails.createdAt',
+        shopUpdatedAt: '$shopDetails.updatedAt',
+        shopId: '$shopDetails._id',
+      },
+    },
+  ]);
+}
+
 }

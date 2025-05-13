@@ -6,6 +6,7 @@ import  AuthRoutes  from './interfaces/routes/AuthRoutes';
 import AdminRoutes from './interfaces/routes/AdminRoutes';
 import UserRoutes from './interfaces/routes/UserRoutes';
 import DeliveryBoyRoute from './interfaces/routes/DeliveryBoyRoute'
+import RetailerRoute from './interfaces/routes/RetailerRoute'
 import { config } from './config';
 import cookieParser from 'cookie-parser'
 import passport from 'passport';
@@ -29,6 +30,7 @@ app.use('/api/auth', AuthRoutes);
 app.use('/api/admin', AdminRoutes);
 app.use('/api/user', UserRoutes);
 app.use('/api/delivery-boy', DeliveryBoyRoute);
+app.use('/api/retailer', RetailerRoute)
 
 connectDB().then(() => {
   app.listen(PORT, () => {

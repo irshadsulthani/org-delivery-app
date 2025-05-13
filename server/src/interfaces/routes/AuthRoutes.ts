@@ -28,12 +28,13 @@ router.get(
   AuthController.googleCallback
 );
 
-router.post('/customer-logout', AuthController.userLogut);
+
+router.post('/customer-logout', AuthController.userLogout);
 router.post('/deliveryBoy-login', AuthController.deliveryBoyLogin)
 router.post('/deliveryBoy-logout', AuthController.deliveryBoyLogout);
 router.post('/refresh-token', AuthController.refreshAccessToken);
 
-router.post('/retailer-login', AuthController.reatilerLogin)
-router.post('/reatiler-logout', AuthController.reatilerLogout)
+router.post('/retailer-login', AuthController.retailerLogin)
+router.post('/reatiler-logout', AuthController.retailerLogout)
 
 export default router;

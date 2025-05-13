@@ -4,7 +4,7 @@ import { Navigate, Outlet } from "react-router-dom"
 
 
 function ReatilerPublicRoute() {
-    const reatilerState = useSelector((state : RootState) => state.reatiler.reatiler )
+    const reatilerState = useSelector((state : RootState) => state.retailer.retailer )
 
     return reatilerState ? <Navigate to='/retailer/dashboard' /> : <Outlet />
 }

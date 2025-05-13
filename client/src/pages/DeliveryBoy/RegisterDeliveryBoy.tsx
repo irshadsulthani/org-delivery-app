@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Upload, MapPin, Phone, Mail, User, Lock, Briefcase, Calendar, MapPinned, ChevronDown, Check } from 'lucide-react';
+import { Upload, MapPin, Phone, Mail, User, Lock, Briefcase, Calendar, MapPinned, ChevronDown, Check } from 'lucide-react';
 import { registerDeliveryBoy } from '../../api/deliveryBoyApi';
 import { toast } from 'react-toastify';
 
@@ -322,15 +322,12 @@ const handleSubmit = async (e: FormEvent) => {
       if (formData.idProof) {
         formDataToSend.append('verificationImage', formData.idProof);
       }
-      console.log('savedFormData',savedFormData);
       
       const response = await registerDeliveryBoy(formDataToSend);
       console.log('Registration successful:', response);
       
-      // Clear local storage after successful registration
       localStorage.removeItem('formData');
       
-      console.log('after savedFormData',savedFormData);
       toast.success(
         <div>
           <h3 className="font-bold">Registration Successful!</h3>
@@ -356,9 +353,6 @@ const handleSubmit = async (e: FormEvent) => {
           errorMessage = error.response.data.message;
         }
       }
-      
-      console.log(savedFormData,'savedFormData');
-      
 
       toast.error(
         <div>

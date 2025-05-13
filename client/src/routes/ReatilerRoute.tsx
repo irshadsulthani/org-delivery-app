@@ -4,6 +4,7 @@ import RetailerDashboard from "../pages/Reatiler/ReatilerDashboard"
 import ReatilerProtectedRoutes from "../protectedRoutes/reatiler/ReatilerProtectedRoutes"
 import ReatilerPublicRoute from "../protectedRoutes/reatiler/ReatilerPublicRoute"
 import AddProductPage from "../pages/Reatiler/AddProductPage"
+import RegisterRetailer from "../pages/Reatiler/RegisterRetailer"
 
 function ReatilerRoute() {
   return (
@@ -15,6 +16,7 @@ function ReatilerRoute() {
         </Route>
         <Route element={<ReatilerPublicRoute />}>
           <Route path="/sign-up" element={<ReatilerSignUp />} />
+          <Route path="/register-retailer" element={<RegisterRetailer />} />
         </Route>
       </Routes>
     </div>

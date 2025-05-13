@@ -5,8 +5,8 @@ import { User } from '../../domain/entities/User';
 import { AuthService } from '../../application/services/AuthService';
 import { config } from '../../config';
 import { StatusCode } from '../../utils/statusCode';
-import { ResetPasswordUseCase } from '../../application/use-cases/auth/ResetPasswordUseCase';
-import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/VerifyOtpAndRegisterUser';
+import { ResetPasswordUseCase } from '../../application/use-cases/auth/resetPasswordUseCase';
+import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/verifyOtpAndRegisterUser';
 import { DeliveryBoyRepository } from '../../infrastructure/database/repositories/DeliveryBoyRepository';
 
 
@@ -97,7 +97,7 @@ export class AuthController {
     }
   };
 
-  static userLogut = async (req: Request, res: Response) => {
+  static userLogout = async (req: Request, res: Response) => {
     try {
       res.clearCookie('accessToken', { httpOnly: true, sameSite: 'strict' });
       res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict' });
@@ -226,7 +226,7 @@ export class AuthController {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: 'Failed to logout' });
     }
   }
-  static reatilerLogin = async (req: Request, res:Response) =>{
+  static retailerLogin = async (req: Request, res:Response) =>{
     try {
       const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo)
       const result = await useCase.execute(req.body.email, req.body.password,['retailer'])
@@ -247,7 +247,7 @@ export class AuthController {
       res.status(StatusCode.UNAUTHORIZED).json({ success:false,message: err.message });
     }
   }
-  static reatilerLogout = async (req: Request , res: Response) => {
+  static retailerLogout = async (req: Request , res: Response) => {
     try {
       res.clearCookie('accessToken', {httpOnly:true, sameSite: 'strict'})
       res.clearCookie('refreshToken', {httpOnly: true, sameSite : 'strict'})

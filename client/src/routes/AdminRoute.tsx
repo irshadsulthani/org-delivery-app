@@ -7,6 +7,7 @@ import CustomerListing from '../pages/admin/CustomerListing';
 import DeliveryBoyListing from '../pages/admin/DeliveryBoyListing';
 import RetailerListing from '../pages/admin/ReatilersListing';
 import DeliveryBoyDetailsPage from '../pages/admin/DeliveryBoyDetails';
+import RetailerDeatiles from '../pages/admin/RetailerDeatiles';
 
 
 function AdminRoutes() {
@@ -16,8 +17,9 @@ function AdminRoutes() {
         <Route path='/dashboard' element={ <AdminDashboard /> } />
         <Route path='/customers' element={ <CustomerListing />} />
         <Route path='/delivery-boys' element={ <DeliveryBoyListing />} />
-        <Route path='/reatilers' element={<RetailerListing />} />
+        <Route path='/retailers' element={<RetailerListing />} />
         <Route path="/delivery-boy/:id" element={<DeliveryBoyDetailsPage />} />
+        <Route path='/retailer/:id' element={<RetailerDeatiles/>} />
       </Route>
       <Route element={<AdminPublicRoute />}>
         <Route path="/login" element={<AdminLogin />} />

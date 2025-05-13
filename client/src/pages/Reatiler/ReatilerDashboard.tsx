@@ -143,7 +143,7 @@ const RetailerDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
   
-  const retailerState = useSelector((state: RootState) => state.reatiler.reatiler);
+  const retailerState = useSelector((state: RootState) => state.retailer.retailer);
 
   useEffect(() => {
     const handleResize = () => {

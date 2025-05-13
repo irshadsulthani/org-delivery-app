@@ -25,37 +25,31 @@ export const getAllUsers = async () => {
     return response;
 };
 
-// Get all customers
 export const getAllCustomers = async () => {
     const response = await privateApi('get', '/admin/getallcustomers');
     return response;
 };
 
-// Get all delivery boys
 export const getAllDeliveryBoys = async () => {
     const response = await privateApi('get', '/admin/getalldeliveryboys');
     return response;
 };
 
-// Get all retailers
-export const getAllReatilers = async () => {
+export const getAllRetailers = async () => {
     const response = await privateApi('get', '/admin/get-allReatilers');
     return response;
 };
 
-// Block a delivery boy by ID
 export const blockDeliveryBoy = async (id: string) => {
     const response = await privateApi('patch', `/admin/deliveryboy/${id}/block`);
     return response;
 };
 
-// Unblock a delivery boy by ID
 export const unblockDeliveryBoy = async (id: string) => {
     const response = await privateApi('patch', `/admin/deliveryboy/${id}/unblock`);
     return response;
 };
 
-// Get pending delivery boys
 export const getPendingDeliveryBoys = async () => {
     const response = await privateApi('get', '/admin/deliveryboy/pending');
     return response;
@@ -89,3 +83,35 @@ export const getDeliveryBoyById = async (id: string) => {
     throw error; // Re-throw to allow the calling function to handle it
   }
 };
+
+export const getPendingRetailers = async () => {
+    const response = await privateApi('get', '/admin/retailer/pending');
+    return response;
+};
+
+export const approveRetailer = async (id: string) => {
+  const response = await privateApi('put', `/admin/retailer/approve/${id}`);
+  return response;
+};
+
+export const rejectRetailer = async (id: string) => {
+  const response = await privateApi('put', `/admin/retailer/reject/${id}`);
+  return response;
+};
+
+export const getRetailerById = async (id: string) => {
+  const response = await privateApi('get', `/admin/retailer/${id}`)
+  return response
+}
+
+export const updateRetailerStatus = async (retailerId: string, newStatus: string) => {
+
+}
+
+export const blockRetailer = async (id: string) => {
+
+}
+
+export const unblockRetailer = async (id: string) => {
+
+}

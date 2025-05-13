@@ -1,52 +1,78 @@
 import { useState, useEffect } from 'react';
 import { 
   Search, 
-  Filter, 
   Download, 
   RefreshCw,
-  MoreHorizontal,
   ChevronDown,
-  Trash2,
-  Edit,
-  Phone,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  ArrowUpDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  Unlock,
   Eye,
   MapPin,
   Store,
   Clock,
-  Briefcase,
   Package,
-  DollarSign,
   Star,
-  Tag
+  ShieldCheck,
+  FileText,
+  Check,
+  X,
+  AlertCircle,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  ArrowUpDown
 } from 'lucide-react';
 import AdminSidebar from '../../components/AdminComponents/AdminSidebar';
 import AdminHeader from '../../components/AdminComponents/AdminHeader';
 import { toast } from 'react-toastify';
-import { getAllReatilers } from '../../api/adminApi';
+import { getAllRetailers, updateRetailerStatus } from '../../api/adminApi';
+import { useNavigate } from 'react-router-dom';
 
 // TypeScript interfaces
+interface Review {
+  customerId: string;
+  rating: number;
+  comment?: string;
+  date: Date;
+}
+
+interface Address {
+  street: string;
+  area: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
 interface Retailer {
   _id: string;
-  name: string;
+  userId: string;
+  shopName: string;
+  ownerName: string;
   email: string;
   phone: string;
-  status: 'Active' | 'Inactive' | 'Pending' | 'Suspended';
-  joinDate: string;
-  createdAt: string | number | Date;
-  orders: number;
+  description?: string;
+  shopImageUrl: string;
+  shopLicenseUrl: string;
+  address: Address;
   rating: number;
-  lastOrder: string;
-  location: string;
-  category: string;
-  storeType: 'Grocery' | 'Restaurant' | 'Pharmacy' | 'Electronics' | 'Other';
-  logo?: string;
-  balance: number;
+  reviews: Review[];
+  isVerified: boolean;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+  status: 'Active' | 'Inactive' | 'Pending' | 'Suspended';
+  lastOrderDate?: Date;
+  orderCount: number;
+  totalRevenue?: number;
+  balance?: number;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 const RetailerListing = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -54,13 +80,15 @@ const RetailerListing = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [categoryFilter, setCategoryFilter] = useState('All');
-  const [sortField, setSortField] = useState('name');
-  const [sortDirection, setSortDirection] = useState('asc');
-  const [selectedRetailers, setSelectedRetailers] = useState<string[]>([]);
+  const [verificationFilter, setVerificationFilter] = useState('All');
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [retailers, setRetailers] = useState<Retailer[]>();
+  const [retailers, setRetailers] = useState<Retailer[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<Record<string, boolean>>({});
+  const navigate = useNavigate();
 
   const toggleMobileSidebar = () => {
     setMobileOpen(!mobileOpen);
@@ -71,139 +99,7 @@ const RetailerListing = () => {
       setLoading(true);
       setError(null);
 
-      const mockRetailers = [
-        {
-          _id: '1',
-          name: 'Fresh Grocery Store',
-          email: 'contact@freshgrocery.com',
-          phone: '+1 (555) 123-4567',
-          status: 'Active' as 'Active',
-          joinDate: '2023-01-15',
-          createdAt: '2023-01-15T08:30:00Z',
-          orders: 428,
-          rating: 4.8,
-          lastOrder: '2023-05-01',
-          location: 'Downtown',
-          category: 'Grocery',
-          storeType: 'Grocery',
-          balance: 4850.75
-        },
-        {
-          _id: '2',
-          name: 'Quick Bites Restaurant',
-          email: 'manager@quickbites.com',
-          phone: '+1 (555) 234-5678',
-          status: 'Active',
-          joinDate: '2023-02-22',
-          createdAt: '2023-02-22T10:15:00Z',
-          orders: 1254,
-          rating: 4.5,
-          lastOrder: '2023-05-02',
-          location: 'Midtown',
-          category: 'Fast Food',
-          storeType: 'Restaurant',
-          balance: 8920.30
-        },
-        {
-          _id: '3',
-          name: 'City Pharmacy',
-          email: 'info@citypharmacy.com',
-          phone: '+1 (555) 345-6789',
-          status: 'Active',
-          joinDate: '2023-03-10',
-          createdAt: '2023-03-10T09:45:00Z',
-          orders: 312,
-          rating: 4.7,
-          lastOrder: '2023-05-01',
-          location: 'Eastside',
-          category: 'Healthcare',
-          storeType: 'Pharmacy',
-          balance: 3250.40
-        },
-        {
-          _id: '4',
-          name: 'TechZone Electronics',
-          email: 'sales@techzone.com',
-          phone: '+1 (555) 456-7890',
-          status: 'Inactive' as 'Inactive',
-          joinDate: '2023-01-05',
-          createdAt: '2023-01-05T11:20:00Z',
-          orders: 187,
-          rating: 4.2,
-          lastOrder: '2023-04-15',
-          location: 'Westside',
-          category: 'Electronics',
-          storeType: 'Electronics',
-          balance: 2180.60
-        },
-        {
-          _id: '5',
-          name: 'Healthy Eats',
-          email: 'hello@healthyeats.com',
-          phone: '+1 (555) 567-8901',
-          status: 'Pending' as 'Pending',
-          joinDate: '2023-04-18',
-          createdAt: '2023-04-18T14:10:00Z',
-          orders: 0,
-          rating: 0,
-          lastOrder: '',
-          location: 'Northside',
-          category: 'Organic Food',
-          storeType: 'Grocery',
-          balance: 0.00
-        },
-        {
-          _id: '6',
-          name: 'Gourmet Delights',
-          email: 'chef@gourmetdelights.com',
-          phone: '+1 (555) 678-9012',
-          status: 'Suspended' as 'Suspended',
-          joinDate: '2023-02-08',
-          createdAt: '2023-02-08T12:30:00Z',
-          orders: 98,
-          rating: 3.9,
-          lastOrder: '2023-03-28',
-          location: 'Downtown',
-          category: 'Fine Dining',
-          storeType: 'Restaurant',
-          balance: 1450.25
-        },
-        {
-          _id: '7',
-          name: 'QuickMeds Pharmacy',
-          email: 'support@quickmeds.com',
-          phone: '+1 (555) 789-0123',
-          status: 'Active',
-          joinDate: '2023-03-22',
-          createdAt: '2023-03-22T09:00:00Z',
-          orders: 276,
-          rating: 4.6,
-          lastOrder: '2023-05-02',
-          location: 'Southside',
-          category: 'Healthcare',
-          storeType: 'Pharmacy',
-          balance: 5620.80
-        },
-        {
-          _id: '8',
-          name: 'Gadget Haven',
-          email: 'info@gadgethaven.com',
-          phone: '+1 (555) 890-1234',
-          status: 'Active',
-          joinDate: '2023-02-15',
-          createdAt: '2023-02-15T10:45:00Z',
-          orders: 324,
-          rating: 4.4,
-          lastOrder: '2023-05-01',
-          location: 'Midtown',
-          category: 'Electronics',
-          storeType: 'Electronics',
-          balance: 7840.15
-        }
-      ];
-
-      const response = await getAllReatilers();
-      console.log("Fetched retailers:", response);
+      const response = await getAllRetailers();
       
       setTimeout(() => {
         setRetailers(response);
@@ -211,7 +107,7 @@ const RetailerListing = () => {
       }, 800);
     } catch (error: any) {
       const errorMessage = error.message || "Failed to fetch retailers";
-      console.log("Error fetching retailers:", errorMessage);
+      console.error("Error fetching retailers:", errorMessage);
       setError(errorMessage);
       toast.error(errorMessage);
       setLoading(false);
@@ -221,6 +117,28 @@ const RetailerListing = () => {
   const refreshData = () => {
     fetchRetailers();
     toast.success('Retailer data refreshed!');
+  };
+
+  const handleStatusUpdate = async (retailerId: string, newStatus: 'Active' | 'Suspended') => {
+    try {
+      setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: true }));
+      
+      await updateRetailerStatus(retailerId, newStatus);
+      
+      setRetailers(prev => prev.map(retailer => 
+        retailer._id === retailerId ? { ...retailer, status: newStatus } : retailer
+      ));
+      
+      toast.success(`Retailer ${newStatus === 'Active' ? 'unblocked' : 'blocked'} successfully`);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update status");
+    } finally {
+      setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: false }));
+    }
+  };
+
+  const handleViewDetails = (retailerId: string) => {
+    navigate(`/admin/retailer/${retailerId}`);
   };
 
   useEffect(() => {
@@ -237,60 +155,69 @@ const RetailerListing = () => {
     }
   };
 
-  // Filter retailers based on search, status, and category filters
-  const filteredRetailers = (retailers || []).filter(retailer => {
+  // Filter retailers based on search and filters
+  const filteredRetailers = retailers.filter(retailer => {
     const matchesSearch = 
-      retailer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      retailer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      retailer.phone.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      (retailer.shopName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (retailer.ownerName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (retailer.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (retailer.phone?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (retailer.address.city?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (retailer.address.state?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+
     const matchesStatus = statusFilter === 'All' || retailer.status === statusFilter;
-    const matchesCategory = categoryFilter === 'All' || retailer.category === categoryFilter || retailer.storeType === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
+    const matchesVerification = verificationFilter === 'All' || 
+      (verificationFilter === 'Verified' && retailer.isVerified) || 
+      (verificationFilter === 'Unverified' && !retailer.isVerified);
+
+    return matchesSearch && matchesStatus && matchesVerification;
   });
 
   // Sort retailers
   const sortedRetailers = [...filteredRetailers].sort((a, b) => {
     let comparison = 0;
-    
-    if (sortField === 'name') {
-      comparison = a.name.localeCompare(b.name);
-    } else if (sortField === 'joinDate') {
-      comparison = new Date(a.joinDate).getTime() - new Date(b.joinDate).getTime();
-    } else if (sortField === 'orders') {
-      comparison = a.orders - b.orders;
+
+    if (sortField === 'shopName') {
+      const aShop = a.shopName || '';
+      const bShop = b.shopName || '';
+      comparison = aShop.localeCompare(bShop);
+    } else if (sortField === 'createdAt') {
+      comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    } else if (sortField === 'orderCount') {
+      comparison = (a.orderCount || 0) - (b.orderCount || 0);
     } else if (sortField === 'rating') {
-      comparison = a.rating - b.rating;
-    } else if (sortField === 'balance') {
-      comparison = a.balance - b.balance;
+      comparison = (a.rating || 0) - (b.rating || 0);
+    } else if (sortField === 'totalRevenue') {
+      comparison = (a.totalRevenue || 0) - (b.totalRevenue || 0);
     }
-    
+
     return sortDirection === 'asc' ? comparison : -comparison;
   });
 
-  // Get all unique categories for the filter
-  const categories = ['All', ...Array.from(new Set((retailers ?? [])
-    .map(retailer => retailer.category)
-    .filter(category => category !== '')
-  ))];
+  // Pagination
+  const totalPages = Math.ceil(sortedRetailers.length / ITEMS_PER_PAGE);
+  const paginatedRetailers = sortedRetailers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
-  // Store types for the filter
-  const storeTypes = ['All', 'Grocery', 'Restaurant', 'Pharmacy', 'Electronics', 'Other'];
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Status badge component
   const StatusBadge = ({ status }: { status: 'Active' | 'Inactive' | 'Pending' | 'Suspended' }) => {
     let colorClasses = '';
-    let Icon = CheckCircle;
+    let Icon = Check;
     
     switch (status) {
       case 'Active':
         colorClasses = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-        Icon = CheckCircle;
+        Icon = Check;
         break;
       case 'Inactive':
         colorClasses = 'bg-red-100 text-red-800 border border-red-200';
-        Icon = XCircle;
+        Icon = X;
         break;
       case 'Pending':
         colorClasses = 'bg-yellow-100 text-yellow-800 border border-yellow-200';
@@ -310,63 +237,47 @@ const RetailerListing = () => {
     );
   };
 
-  // Store Type badge component
-  const StoreTypeBadge = ({ type }: { type: 'Grocery' | 'Restaurant' | 'Pharmacy' | 'Electronics' | 'Other' }) => {
-    let colorClasses = '';
-    let Icon = Store;
-    
-    switch (type) {
-      case 'Grocery':
-        colorClasses = 'bg-green-100 text-green-800 border border-green-200';
-        Icon = Package;
-        break;
-      case 'Restaurant':
-        colorClasses = 'bg-blue-100 text-blue-800 border border-blue-200';
-        Icon = Briefcase;
-        break;
-      case 'Pharmacy':
-        colorClasses = 'bg-purple-100 text-purple-800 border border-purple-200';
-        Icon = Briefcase;
-        break;
-      case 'Electronics':
-        colorClasses = 'bg-amber-100 text-amber-800 border border-amber-200';
-        Icon = Briefcase;
-        break;
-      case 'Other':
-        colorClasses = 'bg-gray-100 text-gray-800 border border-gray-200';
-        Icon = Tag;
-        break;
-    }
-    
+  // Verification badge component
+  const VerificationBadge = ({ verified }: { verified: boolean }) => {
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}>
-        <Icon size={12} className="mr-1" />
-        {type}
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        verified ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-gray-100 text-gray-800 border border-gray-200'
+      }`}>
+        <ShieldCheck size={12} className="mr-1" />
+        {verified ? 'Verified' : 'Unverified'}
       </span>
     );
   };
 
-  // Generate avatar placeholder
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
-
-  // Retailer avatar component
+  // Generate avatar placeholder or use shop image
   const RetailerAvatar = ({ retailer }: { retailer: Retailer }) => {
-    const initials = getInitials(retailer.name);
+    if (retailer.shopImageUrl) {
+      return (
+        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+          <img 
+            src={retailer.shopImageUrl} 
+            alt={retailer.shopName}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      );
+    }
     
-    // Generate a consistent color based on the id
+    const initials = retailer?.shopName
+      ? retailer.shopName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+      : 'NA';
+
     const colorIndex = parseInt(retailer._id.replace(/\D/g, '')) % 5;
     const bgColors = [
-      'from-blue-500 to-blue-600',
-      'from-purple-500 to-purple-600',
-      'from-emerald-500 to-emerald-600',
-      'from-amber-500 to-amber-600',
-      'from-indigo-500 to-indigo-700'
+      'bg-blue-500',
+      'bg-purple-500',
+      'bg-emerald-500',
+      'bg-amber-500',
+      'bg-indigo-500'
     ];
     
     return (
-      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${bgColors[colorIndex]} flex items-center justify-center text-white font-medium shadow-sm`}>
+      <div className={`w-10 h-10 rounded-full ${bgColors[colorIndex]} flex items-center justify-center text-white font-medium shadow-sm`}>
         {initials}
       </div>
     );
@@ -374,7 +285,7 @@ const RetailerListing = () => {
 
   // Rating component
   const RatingDisplay = ({ rating }: { rating: number | undefined }) => {
-    if (!rating) return <span>N/A</span>;
+    if (!rating) return <span className="text-gray-400">N/A</span>;
     
     const displayRating = typeof rating === 'number' ? rating.toFixed(1) : 'N/A';
     return (
@@ -383,6 +294,11 @@ const RetailerListing = () => {
         <span>{displayRating}</span>
       </div>
     );
+  };
+
+  // Format address for display
+  const formatAddress = (address: Address) => {
+    return `${address.city}, ${address.state}`;
   };
 
   return (
@@ -411,16 +327,18 @@ const RetailerListing = () => {
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Retailers</h2>
-              <p className="text-gray-500 text-sm mt-1">Manage all your partner stores and retailers</p>
+              <h2 className="text-2xl font-bold text-gray-800">Retailer Management</h2>
+              <p className="text-gray-500 text-sm mt-1">Manage all registered retailer shops</p>
             </div>
-            {/* <button 
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              onClick={() => toast.info('Add Retailer form would open here')}
-            >
-              <Store size={16} className="mr-2" />
-              Add Retailer
-            </button> */}
+            <div className="flex items-center space-x-3">
+              <button 
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={() => navigate('/admin/retailers/add')}
+              >
+                <Store size={16} className="mr-2" />
+                Add Retailer
+              </button>
+            </div>
           </div>
 
           {/* Filters and Actions */}
@@ -430,7 +348,7 @@ const RetailerListing = () => {
                 <div className="relative w-full sm:w-72">
                   <input
                     type="text"
-                    placeholder="Search retailers..."
+                    placeholder="Search shops, owners, emails..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full py-2 pl-10 pr-4 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
@@ -448,7 +366,6 @@ const RetailerListing = () => {
                     <option value="Active">Active</option>
                     <option value="Pending">Pending</option>
                     <option value="Suspended">Suspended</option>
-                    <option value="Inactive">Inactive</option>
                   </select>
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <ChevronDown size={16} className="text-gray-500" />
@@ -458,23 +375,16 @@ const RetailerListing = () => {
                 <div className="relative w-full sm:w-44">
                   <select 
                     className="w-full appearance-none bg-gray-50 border border-gray-200 rounded-lg py-2 pl-4 pr-10 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer"
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    value={verificationFilter}
+                    onChange={(e) => setVerificationFilter(e.target.value)}
                   >
-                    {storeTypes.map(type => (
-                      <option key={type} value={type}>{type === 'All' ? 'All Types' : type}</option>
-                    ))}
+                    <option value="All">All Verification</option>
+                    <option value="Verified">Verified</option>
+                    <option value="Unverified">Unverified</option>
                   </select>
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <ChevronDown size={16} className="text-gray-500" />
                   </div>
-                </div>
-
-                <div className="flex items-center space-x-2 w-full sm:w-auto">
-                  <button className="inline-flex items-center px-1 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <Filter size={16} className="mr-2" />
-                    More Filters
-                  </button>
                 </div>
               </div>
               
@@ -483,6 +393,7 @@ const RetailerListing = () => {
                   <button 
                     className={`p-2 rounded ${viewMode === 'table' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}
                     onClick={() => setViewMode('table')}
+                    title="Table view"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M8 6H21M8 12H21M8 18H21M3 6H3.01M3 12H3.01M3 18H3.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -491,6 +402,7 @@ const RetailerListing = () => {
                   <button 
                     className={`p-2 rounded ${viewMode === 'grid' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}
                     onClick={() => setViewMode('grid')}
+                    title="Grid view"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M4 5C4 4.44772 4.44772 4 5 4H9C9.55228 4 10 4.44772 10 5V9C10 9.55228 9.55228 10 9 10H5C4.44772 10 4 9.55228 4 9V5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -510,37 +422,15 @@ const RetailerListing = () => {
                   Refresh
                 </button>
                 
-                <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <button 
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  onClick={() => toast.info('Export functionality would be implemented here')}
+                >
                   <Download size={16} className="mr-2" />
                   Export
                 </button>
               </div>
             </div>
-            
-            {/* Selected actions (show when items are selected) */}
-            {selectedRetailers.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
-                    <span className="font-medium">{selectedRetailers.length} retailers</span> selected
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                      <Phone size={14} className="mr-1.5" />
-                      Contact
-                    </button>
-                    <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                      <Edit size={14} className="mr-1.5" />
-                      Edit
-                    </button>
-                    <button className="inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                      <Trash2 size={14} className="mr-1.5" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Loading State */}
@@ -576,56 +466,67 @@ const RetailerListing = () => {
 
           {/* Table View */}
           {!loading && !error && viewMode === 'table' && (
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
+                  <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Retailer</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Shop Details
+                      </th>
                       <th 
-                        className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
-                        onClick={() => handleSort('joinDate')}
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        onClick={() => handleSort('createdAt')}
                       >
                         <div className="flex items-center">
-                          <span>Join Date</span>
-                          <ArrowUpDown size={14} className="ml-1" />
+                          <span>Registered</span>
+                          {sortField === 'createdAt' ? (
+                            sortDirection === 'asc' ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />
+                          ) : <ArrowUpDown size={14} className="ml-1 opacity-0" />}
                         </div>
                       </th>
                       <th 
-                        className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
-                        onClick={() => handleSort('orders')}
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        onClick={() => handleSort('orderCount')}
                       >
                         <div className="flex items-center">
                           <span>Orders</span>
-                          <ArrowUpDown size={14} className="ml-1" />
+                          {sortField === 'orderCount' ? (
+                            sortDirection === 'asc' ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />
+                          ) : <ArrowUpDown size={14} className="ml-1 opacity-0" />}
                         </div>
                       </th>
-                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Location</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Location
+                      </th>
                       <th 
-                        className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
+                        scope="col" 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort('rating')}
                       >
                         <div className="flex items-center">
                           <span>Rating</span>
-                          <ArrowUpDown size={14} className="ml-1" />                        </div>
-                      </th>
-                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Store Type</th>
-                      <th 
-                        className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer"
-                        onClick={() => handleSort('balance')}
-                      >
-                        <div className="flex items-center">
-                          <span>Balance</span>
-                          <ArrowUpDown size={14} className="ml-1" />
+                          {sortField === 'rating' ? (
+                            sortDirection === 'asc' ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />
+                          ) : <ArrowUpDown size={14} className="ml-1 opacity-0" />}
                         </div>
                       </th>
-                      <th className="px-6 py-3 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 bg-gray-50 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Verification
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {sortedRetailers.length > 0 ? (
-                      sortedRetailers.map((retailer) => (
+                    {paginatedRetailers.length > 0 ? (
+                      paginatedRetailers.map((retailer) => (
                         <tr key={retailer._id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
@@ -633,81 +534,108 @@ const RetailerListing = () => {
                                 <RetailerAvatar retailer={retailer} />
                               </div>
                               <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">{retailer.name}</div>
-                                <div className="text-sm text-gray-500">{retailer.email}</div>
-                                <div className="text-xs text-gray-400 mt-1 flex items-center">
-                                  <Phone size={12} className="mr-1" />
-                                  {retailer.phone}
+                                <div className="text-sm font-medium text-gray-900">{retailer.shopName}</div>
+                                <div className="text-xs text-gray-500 flex items-center mt-1">
+                                  <User size={12} className="mr-1" />
+                                  {retailer.ownerName}
                                 </div>
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                            {new Date(retailer.createdAt).toLocaleDateString('en-US', {
+                              {new Date(retailer.createdAt).toLocaleDateString('en-US', {
                                 year: 'numeric',
-                                month: 'long',
+                                month: 'short',
                                 day: 'numeric',
-                            })}
+                              })}
                             </div>
                             <div className="text-xs text-gray-500">
-                              {new Date(retailer.createdAt).toLocaleTimeString()}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{retailer.orders}</div>
-                            <div className="text-xs text-gray-500">
-                              {retailer.lastOrder ? `Last: ${new Date(retailer.lastOrder).toLocaleDateString()}` : 'No orders'}
+                              {new Date(retailer.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
+                              <Package size={14} className="text-gray-400 mr-1" />
+                              <span className="text-sm text-gray-900">{retailer.orderCount || 0}</span>
+                            </div>
+                            {retailer.totalRevenue && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                ₹{(retailer.totalRevenue).toLocaleString('en-IN')}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
                               <MapPin size={14} className="text-gray-400 mr-1" />
-                              <span className="text-sm text-gray-900">{retailer.location}</span>
+                              <span className="text-sm text-gray-900">{formatAddress(retailer.address)}</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {retailer.phone}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <RatingDisplay rating={retailer.rating} />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <StoreTypeBadge type={retailer.storeType} />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 flex items-center">
-                              <DollarSign size={14} className="text-gray-500 mr-1" />
-                              {(retailer.balance || 0).toFixed(2)}
+                            <div className="text-xs text-gray-500 mt-1">
+                              {retailer.reviews?.length || 0} reviews
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <VerificationBadge verified={retailer.isVerified} />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <StatusBadge status={retailer.status} />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end space-x-2">
+                            <div className="flex items-center justify-end space-x-3">
                               <button 
                                 className="text-indigo-600 hover:text-indigo-900"
-                                onClick={() => toast.info(`View details for ${retailer.name}`)}
+                                onClick={() => handleViewDetails(retailer._id)}
+                                title="View details"
                               >
                                 <Eye size={16} />
                               </button>
                               <button 
                                 className="text-gray-600 hover:text-gray-900"
-                                onClick={() => toast.info(`Edit ${retailer.name}`)}
+                                onClick={() => toast.info(`View license for ${retailer.shopName}`)}
+                                title="View license"
                               >
-                                <Edit size={16} />
+                                <FileText size={16} />
                               </button>
-                              <button 
-                                className="text-gray-600 hover:text-gray-900"
-                                onClick={() => toast.info(`More options for ${retailer.name}`)}
-                              >
-                                <MoreHorizontal size={16} />
-                              </button>
+                              {retailer.status === 'Active' ? (
+                                <button 
+                                  className="text-red-600 hover:text-red-900"
+                                  onClick={() => handleStatusUpdate(retailer._id, 'Suspended')}
+                                  disabled={isUpdatingStatus[retailer._id]}
+                                  title="Block retailer"
+                                >
+                                  {isUpdatingStatus[retailer._id] ? (
+                                    <RefreshCw size={16} className="animate-spin" />
+                                  ) : (
+                                    <Lock size={16} />
+                                  )}
+                                </button>
+                              ) : (
+                                <button 
+                                  className="text-emerald-600 hover:text-emerald-900"
+                                  onClick={() => handleStatusUpdate(retailer._id, 'Active')}
+                                  disabled={isUpdatingStatus[retailer._id]}
+                                  title="Unblock retailer"
+                                >
+                                  {isUpdatingStatus[retailer._id] ? (
+                                    <RefreshCw size={16} className="animate-spin" />
+                                  ) : (
+                                    <Unlock size={16} />
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={9} className="px-6 py-4 text-center text-sm text-gray-500">
+                        <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500">
                           No retailers found matching your criteria
                         </td>
                       </tr>
@@ -721,43 +649,56 @@ const RetailerListing = () => {
           {/* Grid View */}
           {!loading && !error && viewMode === 'grid' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {sortedRetailers.length > 0 ? (
-                sortedRetailers.map((retailer) => (
+              {paginatedRetailers.length > 0 ? (
+                paginatedRetailers.map((retailer) => (
                   <div key={retailer._id} className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow duration-200">
                     <div className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
                           <RetailerAvatar retailer={retailer} />
                           <div>
-                            <h3 className="font-medium text-gray-900">{retailer.name}</h3>
-                            <div className="text-xs text-gray-500 flex items-center">
-                              <MapPin size={12} className="mr-1" />
-                              {retailer.location}
+                            <h3 className="font-medium text-gray-900">{retailer.shopName}</h3>
+                            <div className="text-xs text-gray-500 mt-1 flex items-center">
+                              <User size={12} className="mr-1" />
+                              {retailer.ownerName}
                             </div>
                           </div>
                         </div>
-                        <StatusBadge status={retailer.status} />
+                        <div className="flex items-center space-x-1">
+                          <VerificationBadge verified={retailer.isVerified} />
+                          <StatusBadge status={retailer.status} />
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {retailer.description || 'No description provided'}
+                        </p>
                       </div>
                       
                       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                        <div className="flex items-center">
+                          <Mail size={14} className="text-gray-400 mr-2" />
+                          <span className="text-gray-700 truncate">{retailer.email}</span>
+                        </div>
                         <div className="flex items-center">
                           <Phone size={14} className="text-gray-400 mr-2" />
                           <span className="text-gray-700">{retailer.phone}</span>
                         </div>
                         <div className="flex items-center">
+                          <MapPin size={14} className="text-gray-400 mr-2" />
+                          <span className="text-gray-700">{retailer.address.city}</span>
+                        </div>
+                        <div className="flex items-center">
                           <Calendar size={14} className="text-gray-400 mr-2" />
                           <span className="text-gray-700">
-                            {new Date(retailer.createdAt).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                            })}
+                            {new Date(retailer.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                         <div className="flex items-center">
                           <Package size={14} className="text-gray-400 mr-2" />
                           <span className="text-gray-700">
-                            {retailer.orders} orders
+                            {retailer.orderCount || 0} orders
                           </span>
                         </div>
                         <div className="flex items-center">
@@ -767,36 +708,50 @@ const RetailerListing = () => {
                           </span>
                         </div>
                       </div>
-                      
-                      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                        <StoreTypeBadge type={retailer.storeType} />
-                        <div className="text-sm font-medium text-gray-900 flex items-center">
-                          <DollarSign size={14} className="text-gray-500 mr-1" />
-                          {(retailer.balance || 0).toFixed(2)}
-                        </div>
-                      </div>
                     </div>
                     
                     <div className="bg-gray-50 px-4 py-3 flex items-center justify-between">
                       <button 
                         className="text-sm font-medium text-indigo-600 hover:text-indigo-900"
-                        onClick={() => toast.info(`View details for ${retailer.name}`)}
+                        onClick={() => handleViewDetails(retailer._id)}
                       >
                         View details
                       </button>
                       <div className="flex items-center space-x-3">
                         <button 
                           className="text-gray-500 hover:text-gray-700"
-                          onClick={() => toast.info(`Contact ${retailer.name}`)}
+                          onClick={() => toast.info(`View license for ${retailer.shopName}`)}
+                          title="View license"
                         >
-                          <Phone size={16} />
+                          <FileText size={16} />
                         </button>
-                        <button 
-                          className="text-gray-500 hover:text-gray-700"
-                          onClick={() => toast.info(`Edit ${retailer.name}`)}
-                        >
-                          <Edit size={16} />
-                        </button>
+                        {retailer.status === 'Active' ? (
+                          <button 
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => handleStatusUpdate(retailer._id, 'Suspended')}
+                            disabled={isUpdatingStatus[retailer._id]}
+                            title="Block retailer"
+                          >
+                            {isUpdatingStatus[retailer._id] ? (
+                              <RefreshCw size={16} className="animate-spin" />
+                            ) : (
+                              <Lock size={16} />
+                            )}
+                          </button>
+                        ) : (
+                          <button 
+                            className="text-emerald-500 hover:text-emerald-700"
+                            onClick={() => handleStatusUpdate(retailer._id, 'Active')}
+                            disabled={isUpdatingStatus[retailer._id]}
+                            title="Unblock retailer"
+                          >
+                            {isUpdatingStatus[retailer._id] ? (
+                              <RefreshCw size={16} className="animate-spin" />
+                            ) : (
+                              <Unlock size={16} />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -811,44 +766,47 @@ const RetailerListing = () => {
 
           {/* Pagination */}
           {sortedRetailers.length > 0 && (
-            <div className="mt-6 flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow-sm">
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div className="mt-6 flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex-1 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">1</span> to <span className="font-medium">8</span> of{' '}
+                    Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+                    <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, sortedRetailers.length)}</span> of{' '}
                     <span className="font-medium">{sortedRetailers.length}</span> retailers
                   </p>
                 </div>
                 <div>
                   <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     <button
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                      disabled
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'}`}
                     >
                       <span className="sr-only">Previous</span>
-                      <ChevronDown size={16} className="transform rotate-90" />
+                      <ChevronLeft size={16} />
                     </button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === page 
+                            ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    
                     <button
-                      aria-current="page"
-                      className="z-10 bg-indigo-50 border-indigo-500 text-indigo-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                    >
-                      1
-                    </button>
-                    <button
-                      className="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                    >
-                      2
-                    </button>
-                    <button
-                      className="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                    >
-                      3
-                    </button>
-                    <button
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'}`}
                     >
                       <span className="sr-only">Next</span>
-                      <ChevronDown size={16} className="transform -rotate-90" />
+                      <ChevronRight size={16} />
                     </button>
                   </nav>
                 </div>
