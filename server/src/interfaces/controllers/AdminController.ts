@@ -264,7 +264,6 @@ export class AdminController {
   static getRetailerById = async (req: Request, res: Response) => {
     try {
       const {id} = req.params
-      console.log(id);
       const useCase = new GetRetailerByIdUseCase(retailerRepo)
       const retailer = await useCase.execute(id)
       res.status(StatusCode.OK).json(retailer)

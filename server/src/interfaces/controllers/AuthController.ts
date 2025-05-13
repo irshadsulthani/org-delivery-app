@@ -8,11 +8,13 @@ import { StatusCode } from '../../utils/statusCode';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/resetPasswordUseCase';
 import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/verifyOtpAndRegisterUser';
 import { DeliveryBoyRepository } from '../../infrastructure/database/repositories/DeliveryBoyRepository';
+import { RetailersRepository } from '../../infrastructure/database/repositories/RetailersRepository';
 
 
 const userRepo = new UserRepository();
 const authService = new AuthService();
 const deliveryBoyRepo = new DeliveryBoyRepository();
+const retailerRepo = new RetailersRepository()
 
 export class AuthController {
   static register = async (req: Request, res: Response) => {
@@ -31,7 +33,7 @@ export class AuthController {
 
   static login = async (req: Request, res: Response) => {
     try {
-      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo);
+      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo, retailerRepo);
 
       const result = await useCase.execute(req.body.email, req.body.password, ['customer']);
 
@@ -64,7 +66,7 @@ export class AuthController {
   static adminLogin = async (req: Request, res: Response) => {
     try {
       
-      const useCase = new LoginUser(userRepo , authService, deliveryBoyRepo);
+      const useCase = new LoginUser(userRepo , authService, deliveryBoyRepo, retailerRepo);
       
       const result = await useCase.execute(req.body.email, req.body.password,['admin']);
       
@@ -183,7 +185,7 @@ export class AuthController {
       const { email, password } = req.body;
   
       // 1. Validate credentials
-      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo);
+      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo, retailerRepo);
       const result = await useCase.execute(email, password, ['deliveryBoy']);
       
       
@@ -228,7 +230,7 @@ export class AuthController {
   }
   static retailerLogin = async (req: Request, res:Response) =>{
     try {
-      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo)
+      const useCase = new LoginUser(userRepo, authService, deliveryBoyRepo, retailerRepo)
       const result = await useCase.execute(req.body.email, req.body.password,['retailer'])
       const {accessToken, refreshToken, ...userData} = result
 

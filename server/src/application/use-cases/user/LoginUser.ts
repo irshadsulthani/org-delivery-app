@@ -1,4 +1,5 @@
 import { IDeliveryBoyRepository } from "../../../domain/interface/repositories/IDeliveryBoyRepository";
+import { IRetailersRepository } from "../../../domain/interface/repositories/IRetailersRepository";
 import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
 import { IAuthService } from "../../../domain/interface/services/IAuthService";
 import { AppError } from "../../../utils/AppError";
@@ -8,7 +9,8 @@ export class LoginUser {
   constructor(
     private _userRepo: IUserRepository,
     private _authService: IAuthService,
-    private _deliveryBoyRepo: IDeliveryBoyRepository
+    private _deliveryBoyRepo: IDeliveryBoyRepository,
+    private _retailerRepo: IRetailersRepository
   ) {}
 
   async execute(email: string, password: string, allowedRoles: string[]): Promise<{
@@ -28,26 +30,52 @@ export class LoginUser {
     const isMatch = await this._userRepo.comparePassword(password, user.password);
     if (!isMatch) throw new AppError("Invalid credentials", StatusCode.UNAUTHORIZED);
 
-    if (user.role === 'deliveryBoy') {
-      if (!user._id) throw new AppError("User ID not found", StatusCode.BAD_REQUEST);
+    // ✅ RETAILER CHECK
+    if (user.role === 'retailer') {
+      if (!user._id) {
+        throw new AppError("User ID is missing", StatusCode.BAD_REQUEST);
+      }
+      const retailer = await this._retailerRepo.findByUserId(user._id);
+      console.log('****************************************************');
 
+      console.log('retailer',retailer?.userId,'retailer');
+      console.log('****************************************************');
+      
+
+      if (!retailer) {
+        throw new AppError("Retailer profile not found", StatusCode.NOT_FOUND);
+      }
+
+      if (user.isBlocked) {
+        throw new AppError("Your account has been blocked. Please contact support.", StatusCode.FORBIDDEN, "info");
+      }
+
+      if (retailer.verificationStatus === 'pending') {
+        throw new AppError("Your account is pending admin approval. Please wait.", StatusCode.FORBIDDEN, "info");
+      }
+
+      if (retailer.verificationStatus === 'rejected') {
+        throw new AppError("Your verification request was rejected. Please contact admin.", StatusCode.FORBIDDEN, "info");
+      }
+    }
+
+    // ✅ DELIVERY BOY CHECK
+    if (user.role === 'deliveryBoy') {
+      if (!user._id) {
+        throw new AppError("User ID is missing", StatusCode.BAD_REQUEST);
+      }
       const deliveryBoy = await this._deliveryBoyRepo.findByUserId(user._id);
-      if (!deliveryBoy) throw new AppError("Delivery boy profile not found", StatusCode.NOT_FOUND);
+
+      if (!deliveryBoy) {
+        throw new AppError("Delivery boy profile not found", StatusCode.NOT_FOUND);
+      }
 
       if (deliveryBoy.verificationStatus === 'pending') {
-        throw new AppError(
-          "Your account is pending admin approval. Please wait.",
-          StatusCode.FORBIDDEN,
-          "info"
-        );
+        throw new AppError("Your account is pending admin approval. Please wait.", StatusCode.FORBIDDEN, "info");
       }
 
       if (deliveryBoy.verificationStatus === 'rejected') {
-        throw new AppError(
-          "Your verification request was rejected. Please contact admin.",
-          StatusCode.FORBIDDEN,
-          "info"
-        );
+        throw new AppError("Your verification request was rejected. Please contact admin.", StatusCode.FORBIDDEN, "info");
       }
     }
 
@@ -62,4 +90,5 @@ export class LoginUser {
       refreshToken,
     };
   }
+
 }

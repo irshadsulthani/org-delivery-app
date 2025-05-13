@@ -20,7 +20,7 @@ export interface RetailerShop {
   _id?: Types.ObjectId;
   userId: Types.ObjectId;
   shopName: string;
-  phone:string;
+  phone: string;
   description?: string;
 
   shopImageUrl: string;       // Cloudinary
@@ -32,6 +32,8 @@ export interface RetailerShop {
   reviews: Review[];
 
   isVerified: boolean;
+  verificationStatus: 'pending' | 'approved' | 'rejected';  // <-- added this
+
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -326,7 +326,7 @@ const RetailerRegistrationForm = () => {
     e.preventDefault();
 
     if (!validateStep3()) {
-      toast.error("Please fix the errors before submitting");
+      // toast.error("Please fix the errors before submitting");
       return;
     }
 
