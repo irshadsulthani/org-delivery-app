@@ -18,5 +18,7 @@ router.get("/retailer/pending", AdminController.getPendingRetailers);
 router.put("/retailer/approve/:id", AdminController.approveRetailer);
 router.put("/retailer/reject/:id", AdminController.rejectRetailer);
 router.get('/retailer/:id',  AdminController.getRetailerById)
+router.patch('/retailer/:id/block', AdminController.blockRetailer)
+router.patch('/retailer/:id/unblock', AdminController.unblockRetailer)
 
 export default router;

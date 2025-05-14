@@ -29,19 +29,12 @@ export class LoginUser {
 
     const isMatch = await this._userRepo.comparePassword(password, user.password);
     if (!isMatch) throw new AppError("Invalid credentials", StatusCode.UNAUTHORIZED);
-
-    // ✅ RETAILER CHECK
+    
     if (user.role === 'retailer') {
       if (!user._id) {
         throw new AppError("User ID is missing", StatusCode.BAD_REQUEST);
       }
       const retailer = await this._retailerRepo.findByUserId(user._id);
-      console.log('****************************************************');
-
-      console.log('retailer',retailer?.userId,'retailer');
-      console.log('****************************************************');
-      
-
       if (!retailer) {
         throw new AppError("Retailer profile not found", StatusCode.NOT_FOUND);
       }

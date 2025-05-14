@@ -29,10 +29,6 @@ export class GetUsers {
   async excuteRetailers() {
     try {
       const reatilers = await this._userRepo.getAllRetailers();
-      console.log('*******************************************');
-      
-      console.log('retailers', reatilers);
-            console.log('*******************************************');
 
       return reatilers.map(({ password, ...user }) => user);
     } catch (error) {

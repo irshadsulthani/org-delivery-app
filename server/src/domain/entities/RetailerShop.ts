@@ -23,8 +23,8 @@ export interface RetailerShop {
   phone: string;
   description?: string;
 
-  shopImageUrl: string;       // Cloudinary
-  shopLicenseUrl: string;     // AWS S3
+  shopImageUrl: string;       
+  shopLicenseUrl: string;     
 
   address: Address;
 

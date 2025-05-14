@@ -15,7 +15,6 @@ import {
   CheckCircle2,
   BanIcon,
   ClipboardCheck,
-  Edit,
   Package,
   Shield,
   MessageCircle,

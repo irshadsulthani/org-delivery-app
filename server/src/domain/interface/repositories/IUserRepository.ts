@@ -9,4 +9,6 @@ export interface IUserRepository {
     getAllCustomers(): Promise<User[]>;
     getAllDeliveryBoys(): Promise<User[]>;
     getAllRetailers(): Promise<User[]>
+    blockUser(userId: string): Promise<User>;
+    unblockUser(userId: string): Promise<User>;
 }

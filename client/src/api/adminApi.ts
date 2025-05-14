@@ -109,9 +109,11 @@ export const updateRetailerStatus = async (retailerId: string, newStatus: string
 }
 
 export const blockRetailer = async (id: string) => {
-
+  const response = await privateApi('patch', `/admin/retailer/${id}/block`);
+    return response;
 }
 
 export const unblockRetailer = async (id: string) => {
-
+  const response = await privateApi('patch', `/admin/retailer/${id}/unblock`);
+    return response;
 }

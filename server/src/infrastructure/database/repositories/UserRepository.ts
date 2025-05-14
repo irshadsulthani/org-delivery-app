@@ -131,5 +131,32 @@ async getAllRetailers(): Promise<any[]> {
     },
   ]);
 }
+    async blockUser(userId: string): Promise<User> {
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      { isBlocked: true },
+      { new: true }
+    );
+    if (!user) throw new Error("User not found");
+    const userObj = user.toObject();
+    return {
+      ...userObj,
+      _id: userObj._id.toString(),
+    };
+  }
+
+  async unblockUser(userId: string): Promise<User> {
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      { isBlocked: false },
+      { new: true }
+    );
+    if (!user) throw new Error("User not found");
+    const userObj = user.toObject();
+    return {
+      ...userObj,
+      _id: userObj._id.toString(),
+    };
+  }
 
 }

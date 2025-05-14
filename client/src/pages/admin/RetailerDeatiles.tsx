@@ -13,7 +13,7 @@ import {
   Star,
   CheckCircle2,
   ClipboardCheck,
-  Store,
+  Store,  
   ShieldCheck,
   MessageCircle,
   FileImage,
@@ -76,10 +76,11 @@ const SkeletonLoader = () => (
 
 function RetailerDetailsPage() {
   const { id } = useParams<{ id: string }>();
+
   const navigate = useNavigate();
 
   interface RetailerShop {
-    verificationStatus: any;
+    verificationStatus: string;
     _id: string;
     userId: {
       _id: string;
@@ -122,65 +123,57 @@ function RetailerDetailsPage() {
   const [activeTab, setActiveTab] = useState("shop");
   const [licenseImageError, setLicenseImageError] = useState(false);
 
-  const handleApprove = async (retailerId: string) => {
-    try {
-      await approveRetailer(retailerId); // Your API call
-      toast.success("Retailer approved successfully");
-      // ... rest of your logic
-    } catch (error) {
-      toast.error("Failed to approve retailer");
-      // ... error handling
-    }
-  };
-
-  const handleReject = async (retailerId: string) => {
-    try {
-      await rejectRetailer(retailerId); // Your API call
-      toast.success("Retailer rejected successfully");
-      // ... rest of your logic
-    } catch (error) {
-      toast.error("Failed to reject retailer");
-      // ... error handling
-    }
-  };
-
-  useEffect(() => {
-    const fetchRetailerDetails = async () => {
-      if (!id) return;
-
-      try {
-        setLoading(true);
-        const data = await getRetailerById(id);
-        console.log("daata", data);
-
-        setRetailer(data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching retailer details:", err);
-        setError("Failed to load retailer details. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRetailerDetails();
-  }, [id]);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const handleBlockRetailer = async () => {
+  const fetchRetailerData = async () => {
     if (!id) return;
+    try {
+      const data = await getRetailerById(id);
+      console.log(data._id);
+      
+      setRetailer(data);
+    } catch (err) {
+      console.error("Error fetching retailer:", err);
+      toast.error("Failed to fetch retailer data");
+    }
+  };
 
+  const handleApprove = async (_id: string) => {
+    if (!_id) return;
     try {
       setProcessingAction(true);
-      await blockRetailer(id);
+      await approveRetailer(_id);
+      await fetchRetailerData();
+      toast.success("Retailer approved successfully");
+    } catch (error) {
+      console.error("Error approving retailer:", error);
+      toast.error("Failed to approve retailer");
+    } finally {
+      setProcessingAction(false);
+    }
+  };
 
-      // Refresh data after blocking
-      const data = await getRetailerById(id);
-      setRetailer(data);
+  const handleReject = async (_id:string) => {
+    if (!_id) return;
+    try {
+      setProcessingAction(true);
+      await rejectRetailer(_id);
+      await fetchRetailerData();
+      toast.success("Retailer rejected successfully");
+    } catch (error) {
+      console.error("Error rejecting retailer:", error);
+      toast.error("Failed to reject retailer");
+    } finally {
+      setProcessingAction(false);
+    }
+  };
 
+  const handleBlockRetailer = async (_id: string) => {
+    if (!_id) return;
+    console.log('id hered ',_id);
+    
+    try {
+      setProcessingAction(true);
+      await blockRetailer(_id);
+      await fetchRetailerData();
       toast.success("Retailer blocked successfully");
     } catch (err) {
       console.error("Error blocking retailer:", err);
@@ -190,17 +183,14 @@ function RetailerDetailsPage() {
     }
   };
 
-  const handleUnblockRetailer = async () => {
-    if (!id) return;
-
+  const handleUnblockRetailer = async (_id: string) => {
+    if (!_id) return;
+    console.log('its here in unblock', id);
+    
     try {
       setProcessingAction(true);
-      await unblockRetailer(id);
-
-      // Refresh data after unblocking
-      const data = await getRetailerById(id);
-      setRetailer(data);
-
+      await unblockRetailer(_id);
+      await fetchRetailerData();
       toast.success("Retailer unblocked successfully");
     } catch (err) {
       console.error("Error unblocking retailer:", err);
@@ -210,25 +200,57 @@ function RetailerDetailsPage() {
     }
   };
 
-  const getStatusBadge = (isVerified: boolean) => {
-    if (isVerified) {
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        await fetchRetailerData();
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching retailer details:", err);
+        setError("Failed to load retailer details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const getStatusBadge = () => {
+    if (!retailer) return null;
+    
+    if (retailer.isVerified) {
       return (
         <span className="flex items-center text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-medium">
           <CheckCircle size={16} className="mr-1" />
           Verified
         </span>
       );
-    } else {
+    } else if (retailer.verificationStatus === "pending") {
       return (
         <span className="flex items-center text-yellow-700 bg-yellow-100 px-3 py-1 rounded-full text-sm font-medium">
           <Clock size={16} className="mr-1" />
-          Pending
+          Pending Approval
+        </span>
+      );
+    } else if (retailer.userId.isBlocked) {
+      return (
+        <span className="flex items-center text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-medium">
+          <XCircle size={16} className="mr-1" />
+          Blocked
         </span>
       );
     }
+    return null;
   };
 
-  const formatDate = (dateString: string | number | Date | undefined) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -238,15 +260,12 @@ function RetailerDetailsPage() {
     });
   };
 
-  // Calculate total reviews or return 0 if no reviews
   const getTotalReviews = () => {
     return retailer?.reviews?.length || 0;
   };
 
-  // Calculate average rating
   const getAverageRating = () => {
-    if (!retailer?.reviews || retailer.reviews.length === 0) return 0;
-
+    if (!retailer?.reviews || retailer.reviews.length === 0) return "0.0";
     const totalRating = retailer.reviews.reduce(
       (sum, review) => sum + review.rating,
       0
@@ -254,7 +273,6 @@ function RetailerDetailsPage() {
     return (totalRating / retailer.reviews.length).toFixed(1);
   };
 
-  // Error state component
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
@@ -288,7 +306,6 @@ function RetailerDetailsPage() {
     );
   }
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
@@ -306,7 +323,6 @@ function RetailerDetailsPage() {
     );
   }
 
-  // If no retailer data after loading
   if (!retailer) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
@@ -351,7 +367,6 @@ function RetailerDetailsPage() {
           isSidebarOpen={isSidebarOpen}
         />
 
-        {/* Mobile sidebar */}
         {isSidebarOpen && (
           <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50">
             <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl transition-transform">
@@ -367,7 +382,6 @@ function RetailerDetailsPage() {
         )}
 
         <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6">
-          {/* Back button and action buttons */}
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <button
               onClick={() => navigate("/admin/retailers")}
@@ -376,77 +390,80 @@ function RetailerDetailsPage() {
               <ArrowLeft size={18} className="mr-1" />
               Back to Retailers
             </button>
-            {/* // Replace the action buttons section with this: */}
-            <div className="flex space-x-3">
-  {/* Approve/Reject buttons - show when retailer is not verified and status is pending */}
-  {!retailer.isVerified && retailer.status === "pending" && (
-    <>
-      <button
-        onClick={() => handleApprove(retailer._id)}
-        disabled={processingAction}
-        className={`bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
-          processingAction ? "opacity-70 cursor-not-allowed" : ""
-        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-      >
-        {processingAction ? (
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-        ) : (
-          <CheckCircle size={18} className="mr-2" />
-        )}
-        Approve
-      </button>
-      <button
-        onClick={() => handleReject(retailer._id)}
-        disabled={processingAction}
-        className={`bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
-          processingAction ? "opacity-70 cursor-not-allowed" : ""
-        } focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2`}
-      >
-        {processingAction ? (
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-        ) : (
-          <XCircle size={18} className="mr-2" />
-        )}
-        Reject
-      </button>
-    </>
-  )}
 
-  {/* Block/Unblock button - show when retailer is verified */}
-  {retailer.isVerified && (
-    retailer.userId.isBlocked ? (
-      <button
-        onClick={handleUnblockRetailer}
-        disabled={processingAction}
-        className={`bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
-          processingAction ? "opacity-70 cursor-not-allowed" : ""
-        } focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2`}
-      >
-        {processingAction ? (
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-        ) : (
-          <Unlock size={18} className="mr-2" />
-        )}
-        Unblock
-      </button>
-    ) : (
-      <button
-        onClick={handleBlockRetailer}
-        disabled={processingAction}
-        className={`bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
-          processingAction ? "opacity-70 cursor-not-allowed" : ""
-        } focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2`}
-      >
-        {processingAction ? (
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-        ) : (
-          <Lock size={18} className="mr-2" />
-        )}
-        Block
-      </button>
-    )
-  )}
-</div>
+            {/* Admin Actions Section */}
+            <div className="flex flex-wrap gap-3">
+              {/* Verification Actions - Only show for pending retailers */}
+              {!retailer.isVerified && retailer.verificationStatus === "pending" && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={()=>handleApprove(retailer._id)}
+                    disabled={processingAction}
+                    className={`bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
+                      processingAction ? "opacity-70 cursor-not-allowed" : ""
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                  >
+                    {processingAction ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    ) : (
+                      <CheckCircle size={18} className="mr-2" />
+                    )}
+                    Approve
+                  </button>
+                  <button
+                    onClick={()=> handleReject(retailer._id) }
+                    disabled={processingAction}
+                    className={`bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
+                      processingAction ? "opacity-70 cursor-not-allowed" : ""
+                    } focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2`}
+                  >
+                    {processingAction ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    ) : (
+                      <XCircle size={18} className="mr-2" />
+                    )}
+                    Reject
+                  </button>
+                </div>
+              )}
+
+              {/* Block/Unblock Actions - Only show for verified retailers */}
+              {retailer.isVerified && (
+                <div className="flex gap-3">
+                  {retailer.userId.isBlocked ? (
+                    <button
+                      onClick={()=>handleUnblockRetailer(retailer.userId._id)}
+                      disabled={processingAction}
+                      className={`bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
+                        processingAction ? "opacity-70 cursor-not-allowed" : ""
+                      } focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2`}
+                    >
+                      {processingAction ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      ) : (
+                        <Unlock size={18} className="mr-2" />
+                      )}
+                      Unblock
+                    </button>
+                  ) : (
+                    <button
+                      onClick={()=> handleBlockRetailer(retailer.userId._id)}
+                      disabled={processingAction}
+                      className={`bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
+                        processingAction ? "opacity-70 cursor-not-allowed" : ""
+                      } focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2`}
+                    >
+                      {processingAction ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      ) : (
+                        <Lock size={18} className="mr-2" />
+                      )}
+                      Block
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Main profile card */}
@@ -476,7 +493,7 @@ function RetailerDetailsPage() {
                     <h1 className="text-2xl font-bold text-white">
                       {retailer.shopName}
                     </h1>
-                    {getStatusBadge(retailer.isVerified)}
+                    {getStatusBadge()}
                   </div>
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-blue-100">
                     <div className="flex items-center">
@@ -513,11 +530,7 @@ function RetailerDetailsPage() {
 
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white text-blue-800">
                       <Calendar className="mr-1" size={12} />
-                      Joined{" "}
-                      {formatDate(retailer.createdAt)
-                        .split(" ")
-                        .slice(0, 2)
-                        .join(" ")}
+                      Joined {formatDate(retailer.createdAt)}
                     </span>
                   </div>
                 </div>
@@ -692,27 +705,29 @@ function RetailerDetailsPage() {
                           className="mr-3 text-blue-600 mt-1"
                         />
                         <div>
-  <p className="text-sm font-medium text-gray-500">Verification Status</p>
-  <p
-    className={`font-medium ${
-      retailer.verificationStatus === 'Verified'
-        ? 'text-green-600'
-        : retailer.verificationStatus === 'Approved'
-        ? 'text-blue-600'
-        : retailer.verificationStatus === 'Rejected'
-        ? 'text-red-600'
-        : 'text-yellow-600'
-    }`}
-  >
-    {retailer.verificationStatus === 'pending'
-      ? 'Pending Verification'
-      : retailer.verificationStatus === 'approved'
-      ? 'Approved'
-      : retailer.verificationStatus === 'rejected'
-      ? 'Rejected'
-      : 'verified'}
-  </p>
-</div>
+                          <p className="text-sm font-medium text-gray-500">
+                            Verification Status
+                          </p>
+                          <p
+                            className={`font-medium ${
+                              retailer.verificationStatus === "verified"
+                                ? "text-green-600"
+                                : retailer.verificationStatus === "approved"
+                                ? "text-blue-600"
+                                : retailer.verificationStatus === "rejected"
+                                ? "text-red-600"
+                                : "text-yellow-600"
+                            }`}
+                          >
+                            {retailer.verificationStatus === "pending"
+                              ? "Pending Verification"
+                              : retailer.verificationStatus === "approved"
+                              ? "Approved"
+                              : retailer.verificationStatus === "rejected"
+                              ? "Rejected"
+                              : "Verified"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>

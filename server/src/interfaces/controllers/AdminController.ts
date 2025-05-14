@@ -14,6 +14,8 @@ import { ApproveRetailerUseCase } from "../../application/use-cases/retailers/Ap
 import { RetailersRepository } from "../../infrastructure/database/repositories/RetailersRepository";
 import { GetRetailerByIdUseCase } from "../../application/use-cases/retailers/GetRetailerByIdUseCase";
 import { RejectRetailerUseCase } from "../../application/use-cases/retailers/RejectRetailerUseCase";
+import { BlockRetailerUseCase } from "../../application/use-cases/retailers/BlockRetailerUseCase";
+import { UnBlockRetailerUseCase } from "../../application/use-cases/retailers/UnBlockRetailerUseCase";
 
 const userRepo = new UserRepository();
 const deliveryBoyRepo = new DeliveryBoyRepository();
@@ -112,34 +114,29 @@ export class AdminController {
     try {
       const useCase = new GetUsers(userRepo);
       const retailers = await useCase.excuteRetailers();
-      console.log("retailers", retailers);
-
-  const transformedData = retailers.map((retailer: any) => ({
-  _id: retailer._id,
-  userId: retailer.shopId,
-  shopName: retailer.shopName,
-  email: retailer.email,
-  phone: retailer.phone || "",
-  status: retailer.isBlocked ? "Blocked" : "Active",
-  joinDate: retailer.createdAt,
-  totalOrders: 0,
-  rating: retailer.shopRating || 0,
-  address: {
-    street: retailer.address?.street || "",
-    city: retailer.address?.city || "",
-    state: retailer.address?.state || ""
-  },
-  shopImageUrl: retailer.shopImageUrl,
-  licenseStatus: retailer.shopLicenseUrl ? "uploaded" : "pending",
-  isBlocked: retailer.isBlocked || false,
-  isVerified: retailer.shopIsVerified || false,
-  createdAt: retailer.createdAt,
-  updatedAt: retailer.updatedAt,
-}));
-
-
-      console.log("transformedData", transformedData);
-
+      const transformedData = retailers.map((retailer: any) => ({
+        _id: retailer._id,
+        userId: retailer.shopId,
+        shopName: retailer.shopName,
+        name: retailer.name,
+        email: retailer.email,
+        phone: retailer.phone || "",
+        status: retailer.isBlocked ? "Blocked" : "Active",
+        joinDate: retailer.createdAt,
+        totalOrders: 0,
+        rating: retailer.shopRating || 0,
+        address: {
+          street: retailer.address?.street || "",
+          city: retailer.address?.city || "",
+          state: retailer.address?.state || "",
+        },
+        shopImageUrl: retailer.shopImageUrl,
+        licenseStatus: retailer.shopLicenseUrl ? "uploaded" : "pending",
+        isBlocked: retailer.isBlocked || false,
+        isVerified: retailer.shopIsVerified || false,
+        createdAt: retailer.createdAt,
+        updatedAt: retailer.updatedAt,
+      }));
       res.status(StatusCode.OK).json(transformedData);
     } catch (err: any) {
       res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
@@ -229,7 +226,6 @@ export class AdminController {
   static approveRetailer = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      console.log(id);
       const useCase = new ApproveRetailerUseCase(retailerRepo);
       await useCase.execute(id);
       res.status(StatusCode.OK).json({
@@ -247,9 +243,8 @@ export class AdminController {
   static rejectRetailer = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const useCase = new RejectRetailerUseCase(retailerRepo)
-      await useCase.execute(id)
-      console.log(id);
+      const useCase = new RejectRetailerUseCase(retailerRepo);
+      await useCase.execute(id);
       res.status(StatusCode.OK).json({
         message: "Retailer rejected successfully",
       });
@@ -263,17 +258,49 @@ export class AdminController {
   };
   static getRetailerById = async (req: Request, res: Response) => {
     try {
-      const {id} = req.params
-      const useCase = new GetRetailerByIdUseCase(retailerRepo)
-      const retailer = await useCase.execute(id)
-      res.status(StatusCode.OK).json(retailer)
+      const { id } = req.params;
+      const useCase = new GetRetailerByIdUseCase(retailerRepo);
+      const retailer = await useCase.execute(id);
+      res.status(StatusCode.OK).json(retailer);
     } catch (err: any) {
       console.error("Error fetching retailer boy:", err);
       res.status(StatusCode.NOT_FOUND).json({
         message: err.message || "Retailer boy not found",
       });
     }
+  };
+  static blockRetailer = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const useCase = new BlockRetailerUseCase(userRepo, retailerRepo);
+      await useCase.execute(id);
+      
+      res.status(StatusCode.OK).json({
+        message: "Retailer blocked successfully"
+      });
+    } catch (err: any) {
+      console.error("Error blocking retailer:", err);
+      res.status(StatusCode.BAD_REQUEST).json({
+        message: err.message || "Failed to block retailer"
+      });
+    }
   }
+  static unblockRetailer = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      console.log('its here in unblock',id);
+      
+      const useCase = new UnBlockRetailerUseCase(userRepo, retailerRepo);
+      await useCase.execute(id);
+      
+      res.status(StatusCode.OK).json({
+        message: "Retailer unblocked successfully"
+      });
+    } catch (err: any) {
+      console.error("Error unblocking retailer:", err);
+      res.status(StatusCode.BAD_REQUEST).json({
+        message: err.message || "Failed to unblock retailer"
+      });
+    }
+  };
 }
-
-
