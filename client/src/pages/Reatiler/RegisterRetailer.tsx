@@ -1079,6 +1079,3 @@ const RetailerRegistrationForm = () => {
 };
 
 export default RetailerRegistrationForm;
-
-
-
