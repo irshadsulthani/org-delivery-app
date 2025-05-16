@@ -56,7 +56,7 @@ export class AdminController {
         status: boy.status || "Active",
         joinDate: boy.createdAt,
         deliveries: boy.totalDeliveredOrders || 0,
-        rating: ratingService.calculateAverageRating(boy), // You'll need to implement this
+        rating: ratingService.calculateAverageRating(boy),
         area: `${boy.city}, ${boy.state}`,
         vehicleType: boy.vehicleType || "Bike",
         isBlocked: boy.isBlocked || false,
@@ -70,45 +70,8 @@ export class AdminController {
     }
   };
 
-  //   static blockDeliveryBoy = async (req: Request, res: Response) => {
-  //     try {
-  //       const { id } = req.params;
-  //       const user = await userRepo.findById(id);
-
-  //       if (!user) {
-  //         return res.status(StatusCode.NOT_FOUND).json({ message: 'User not found' });
-  //       }
-
-  //       if (user.role !== 'deliveryBoy') {
-  //         return res.status(StatusCode.BAD_REQUEST).json({ message: 'User is not a delivery boy' });
-  //       }
-
-  //       const updatedUser = await userRepo.updateUser(id, { isBlocked: true });
-  //       res.status(StatusCode.OK).json(updatedUser);
-  //     } catch (err: any) {
-  //       res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
-  //     }
-  //   };
-
-  //   static unblockDeliveryBoy = async (req: Request, res: Response) => {
-  //     try {
-  //       const { id } = req.params;
-  //       const user = await userRepo.findById(id);
-
-  //       if (!user) {
-  //         return res.status(StatusCode.NOT_FOUND).json({ message: 'User not found' });
-  //       }
-
-  //       if (user.role !== 'deliveryBoy') {
-  //         return res.status(StatusCode.BAD_REQUEST).json({ message: 'User is not a delivery boy' });
-  //       }
-
-  //       const updatedUser = await userRepo.updateUser(id, { isBlocked: false });
-  //       res.status(StatusCode.OK).json(updatedUser);
-  //     } catch (err: any) {
-  //       res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
-  //     }
-  //   };
+  static blockDelveryBoy = async (req: Request, res: Response) => {};
+  static UnblockDelveryBoy = async (req: Request, res: Response) => {};
 
   static getAllRetailers = async (req: Request, res: Response) => {
     try {
@@ -274,32 +237,32 @@ export class AdminController {
       const { id } = req.params;
       const useCase = new BlockRetailerUseCase(userRepo, retailerRepo);
       await useCase.execute(id);
-      
+
       res.status(StatusCode.OK).json({
-        message: "Retailer blocked successfully"
+        message: "Retailer blocked successfully",
       });
     } catch (err: any) {
       console.error("Error blocking retailer:", err);
       res.status(StatusCode.BAD_REQUEST).json({
-        message: err.message || "Failed to block retailer"
+        message: err.message || "Failed to block retailer",
       });
     }
-  }
+  };
   static unblockRetailer = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      console.log('its here in unblock',id);
-      
+      console.log("its here in unblock", id);
+
       const useCase = new UnBlockRetailerUseCase(userRepo, retailerRepo);
       await useCase.execute(id);
-      
+
       res.status(StatusCode.OK).json({
-        message: "Retailer unblocked successfully"
+        message: "Retailer unblocked successfully",
       });
     } catch (err: any) {
       console.error("Error unblocking retailer:", err);
       res.status(StatusCode.BAD_REQUEST).json({
-        message: err.message || "Failed to unblock retailer"
+        message: err.message || "Failed to unblock retailer",
       });
     }
   };

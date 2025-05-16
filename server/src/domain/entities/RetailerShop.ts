@@ -31,8 +31,9 @@ export interface RetailerShop {
   rating: number;
   reviews: Review[];
 
+  registrationCompleted:boolean;
   isVerified: boolean;
-  verificationStatus: 'pending' | 'approved' | 'rejected';  // <-- added this
+  verificationStatus: 'pending' | 'approved' | 'rejected';  
 
   createdAt?: Date;
   updatedAt?: Date;

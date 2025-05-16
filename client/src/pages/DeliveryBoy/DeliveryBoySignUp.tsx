@@ -1,136 +1,153 @@
-import { useState, useRef, FormEvent, ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { 
-  ArrowRight, 
-  Loader2, 
-  Mail, 
-  Lock, 
-  User, 
+import { useState, useRef, FormEvent, ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import {
+  ArrowRight,
+  Loader2,
+  Mail,
+  Lock,
+  User,
   CheckCircle,
   Truck,
-  ChevronLeft
-} from 'lucide-react';
-import { 
-  loginDeliveryBoy, 
-  sendSignupOtp, 
+  ChevronLeft,
+} from "lucide-react";
+import {
+  loginDeliveryBoy,
+  sendSignupOtp,
   verifyOtpApi,
-} from '../../api/deliveryBoyApi';
-import { useDispatch } from 'react-redux';
-import { setDeliveryBoy } from '../../slice/deliveryBoySlice';
-import { resetPassword, sendPasswordResetEmail, verifyOtpForgetPass } from '../../api/userApi';
+} from "../../api/deliveryBoyApi";
+import { useDispatch } from "react-redux";
+import { setDeliveryBoy } from "../../slice/deliveryBoySlice";
+import {
+  resetPassword,
+  sendPasswordResetEmail,
+  verifyOtpForgetPass,
+} from "../../api/userApi";
 
 const DeliveryBoySignUp = () => {
   // Auth mode states
-  const [authMode, setAuthMode] = useState<'signup' | 'login' | 'forgotPassword' | 'resetPassword'>('login');
+  const [authMode, setAuthMode] = useState<
+    "signup" | "login" | "forgotPassword" | "resetPassword"
+  >("login");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   // Form data
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    newPassword: '',
-    confirmPassword: ''
+    name: "",
+    email: "",
+    password: "",
+    newPassword: "",
+    confirmPassword: "",
   });
-  
+
   // OTP states
   const [showOtpVerification, setShowOtpVerification] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '']);
-  const [otpPurpose, setOtpPurpose] = useState<'signup' | 'resetPassword'>('signup');
+  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [otpPurpose, setOtpPurpose] = useState<"signup" | "resetPassword">(
+    "signup"
+  );
   const otpInputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
-  
+
   // Success states
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [timeLeft, setTimeLeft] = useState(3);
   const [registrationComplete, setRegistrationComplete] = useState(false);
-  
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
-  
+
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) {
       value = value.charAt(0);
     }
-    
+
     // Only allow numbers
     if (value && !/^[0-9]$/.test(value)) {
       return;
     }
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    
+
     // Auto focus next input if current input is filled
     if (value && index < 3 && otpInputRefs[index + 1]?.current) {
       (otpInputRefs[index + 1].current as unknown as HTMLInputElement).focus();
     }
   };
-  
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
-  
+    setError("");
+
     try {
       setIsLoading(true);
-  
+
       if (!formData.email) {
-        toast.error('Email is required');
+        toast.error("Email is required");
         setIsLoading(false);
         return;
       }
-  
-      if (authMode === 'signup') {
-        if (!formData.name || formData.name.trim() === '') {
-          toast.error('Invalid Name');
+
+      if (authMode === "signup") {
+        if (!formData.name || formData.name.trim() === "") {
+          toast.error("Invalid Name");
           setIsLoading(false);
           return;
         }
-  
+
         // Password validation
-        if (!formData.password || formData.password.trim() === '' ) {
-          toast.error('Invalid Password');
+        if (!formData.password || formData.password.trim() === "") {
+          toast.error("Password is required");
           setIsLoading(false);
           return;
         }
-  
+
+        const password = formData.password.trim();
+
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+        if (!strongPasswordRegex.test(password)) {
+          toast.error(
+            "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+          );
+          setIsLoading(false);
+          return;
+        }
+
         const response = await sendSignupOtp(formData.email);
-        if (response.message === 'OTP sent successfully') {
-          toast.success('OTP sent successfully. Please check your email.');
-          setOtpPurpose('signup');
+        if (response.message === "OTP sent successfully") {
+          toast.success("OTP sent successfully. Please check your email.");
+          setOtpPurpose("signup");
           setShowOtpVerification(true);
         } else {
-          toast.error(response.message || 'Failed to send OTP');
+          toast.error(response.message || "Failed to send OTP");
         }
-      }
-
-      
-      else if (authMode === 'login') {
-        console.log('step 2');
+      } else if (authMode === "login") {
+        console.log("step 2");
         if (!formData.password) {
-          setError('Password is required');
+          setError("Password is required");
           setIsLoading(false);
           return;
         }
-      
+
         try {
           setIsLoading(true);
           const response = await loginDeliveryBoy(formData);
-          
-          console.log('step 3');
-          
+
+          console.log("step 3");
+
           if (response?.error) {
-            if (response.error.type === 'info') {
+            if (response.error.type === "info") {
               toast.info(response.error.message); // For pending/rejected status
             } else {
               toast.info(response.error.message); // For other errors
@@ -138,34 +155,37 @@ const DeliveryBoySignUp = () => {
             setIsLoading(false);
             return;
           }
-      
+
           // Successful login
-          dispatch(setDeliveryBoy({
-            name: response.userData.name,
-            email: response.userData.email,
-            role: response.userData.role,
-          }));
-      
+          dispatch(
+            setDeliveryBoy({
+              name: response.userData.name,
+              email: response.userData.email,
+              role: response.userData.role,
+            })
+          );
+
           setShowSuccessMessage(true);
           let countdown = 3;
           setTimeLeft(countdown);
-      
+
           const timer = setInterval(() => {
             countdown -= 1;
             setTimeLeft(countdown);
-      
+
             if (countdown <= 0) {
               clearInterval(timer);
               setShowSuccessMessage(false);
-              navigate('/delivery/dashboard');
+              navigate("/delivery/dashboard");
             }
           }, 1000);
         } catch (err: any) {
-          console.error('Login error:', err);
-          const message = err?.response?.data?.message || 'Sign in failed. Please try again.';
-          
+          console.error("Login error:", err);
+          const message =
+            err?.response?.data?.message || "Sign in failed. Please try again.";
+
           // Differentiate between error types
-          if (err?.response?.data?.type === 'info') {
+          if (err?.response?.data?.type === "info") {
             toast.info(message);
           } else {
             toast.error(message);
@@ -173,156 +193,157 @@ const DeliveryBoySignUp = () => {
         } finally {
           setIsLoading(false);
         }
-      }
-      
-  
-      else if (authMode === 'forgotPassword') {
+      } else if (authMode === "forgotPassword") {
         const response = await sendPasswordResetEmail(formData.email);
-  
-        if (response.message === 'OTP sent successfully') {
-          toast.success('OTP sent successfully. Please check your email.');
-          setOtpPurpose('resetPassword');
+
+        if (response.message === "OTP sent successfully") {
+          toast.success("OTP sent successfully. Please check your email.");
+          setOtpPurpose("resetPassword");
           setShowOtpVerification(true);
         } else {
-          toast.error(response.message || 'Failed to send OTP');
+          toast.error(response.message || "Failed to send OTP");
         }
-      }
-  
-      else if (authMode === 'resetPassword') {
+      } else if (authMode === "resetPassword") {
         if (!formData.newPassword || formData.newPassword.length < 6) {
-          setError('New password must be at least 6 characters');
+          setError("New password must be at least 6 characters");
           setIsLoading(false);
           return;
         }
-  
+
         if (formData.newPassword !== formData.confirmPassword) {
-          setError('Passwords do not match');
+          setError("Passwords do not match");
           setIsLoading(false);
           return;
         }
-  
-        const response = await resetPassword(formData.email, formData.newPassword);
-  
+
+        const response = await resetPassword(
+          formData.email,
+          formData.newPassword
+        );
+
         if (response.success) {
-          toast.success('Password reset successfully! Please login with your new password.');
-          setAuthMode('login');
+          toast.success(
+            "Password reset successfully! Please login with your new password."
+          );
+          setAuthMode("login");
           setFormData({
-            name: '',
+            name: "",
             email: formData.email,
-            password: '',
-            newPassword: '',
-            confirmPassword: ''
+            password: "",
+            newPassword: "",
+            confirmPassword: "",
           });
         } else {
-          toast.error(response?.message || 'Failed to reset password');
+          toast.error(response?.message || "Failed to reset password");
         }
       }
-  
     } catch (err: any) {
-      console.error('Auth error:', err);
+      console.error("Auth error:", err);
       const message =
         err?.response?.data?.message ||
-        'Something went wrong. Please try again.';
+        "Something went wrong. Please try again.";
       toast.error(message);
     } finally {
       setIsLoading(false);
     }
   };
-  
-    
+
   const handleVerifyOtp = async () => {
-    const otpString = otp.join('');
-    
+    const otpString = otp.join("");
+
     if (otpString.length !== 4) {
-      setError('Please enter all 4 digits of the OTP');
+      setError("Please enter all 4 digits of the OTP");
       return;
     }
-    
+
     setIsLoading(true);
     try {
-      if (otpPurpose === 'signup') {
-        const response: { success: boolean; [key: string]: any } = await verifyOtpApi(otpString, formData);
-        
+      if (otpPurpose === "signup") {
+        const response: { success: boolean; [key: string]: any } =
+          await verifyOtpApi(otpString, formData);
+
         if (response?.success) {
-          localStorage.setItem('formData', JSON.stringify(formData));
-          console.log("OTP verified successfully. Navigating to registration page...");
-          toast.success('OTP verified successfully! Redirecting to registration...');
+          localStorage.setItem("formData", JSON.stringify(formData));
+          console.log(
+            "OTP verified successfully. Navigating to registration page..."
+          );
+          toast.success(
+            "OTP verified successfully! Redirecting to registration..."
+          );
           setTimeout(() => {
-            navigate('/delivery/register-dev', { replace: true });
+            navigate("/delivery/register-dev", { replace: true });
           }, 500);
         }
-      } 
-      
-      else if (otpPurpose === 'resetPassword') {
+      } else if (otpPurpose === "resetPassword") {
         const response = await verifyOtpForgetPass(otpString, formData.email);
-        
+
         if (response?.success) {
           setShowOtpVerification(false);
-          setAuthMode('resetPassword');
+          setAuthMode("resetPassword");
           toast.success("OTP verified. Please set your new password.");
         }
       }
     } catch (err: any) {
       console.error(err.response?.data?.message);
-      toast.error(err.response?.data?.message || 'Invalid OTP');
+      toast.error(err.response?.data?.message || "Invalid OTP");
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const handleResendOtp = async () => {
-    setError('');
+    setError("");
     setIsLoading(true);
-    
+
     try {
       let response;
-      if (otpPurpose === 'signup') {
+      if (otpPurpose === "signup") {
         response = await sendSignupOtp(formData.email);
       } else {
         response = await sendPasswordResetEmail(formData.email);
       }
-      
-      if (response.message === 'OTP sent successfully') {
-        toast.success('New OTP has been sent to your email.');
+
+      if (response.message === "OTP sent successfully") {
+        toast.success("New OTP has been sent to your email.");
       } else {
-        setError(response.message || 'Failed to resend OTP. Please try again.');
+        setError(response.message || "Failed to resend OTP. Please try again.");
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to resend OTP. Please try again.');
+      setError("Failed to resend OTP. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const toggleAuthMode = (mode: 'signup' | 'login') => {
+  const toggleAuthMode = (mode: "signup" | "login") => {
     setAuthMode(mode);
-    setError('');
+    setError("");
     setFormData({
-      name: '',
-      email: mode === 'login' && authMode === 'signup' ? formData.email : '', // Keep email if switching from signup to login
-      password: '',
-      newPassword: '',
-      confirmPassword: ''
+      name: "",
+      email: mode === "login" && authMode === "signup" ? formData.email : "", // Keep email if switching from signup to login
+      password: "",
+      newPassword: "",
+      confirmPassword: "",
     });
     setShowOtpVerification(false);
-    setOtp(['', '', '', '']);
+    setOtp(["", "", "", ""]);
   };
 
   const initiateForgotPassword = () => {
-    setAuthMode('forgotPassword');
-    setError('');
-    setFormData(prev => ({
+    setAuthMode("forgotPassword");
+    setError("");
+    setFormData((prev) => ({
       ...prev,
-      password: '',
-      newPassword: '',
-      confirmPassword: ''
+      password: "",
+      newPassword: "",
+      confirmPassword: "",
     }));
   };
 
   const handleKeyPress = (index: number, e: React.KeyboardEvent) => {
     if (
-      e.key === 'Backspace' &&
+      e.key === "Backspace" &&
       !otp[index] &&
       index > 0 &&
       otpInputRefs[index - 1]?.current
@@ -330,41 +351,53 @@ const DeliveryBoySignUp = () => {
       (otpInputRefs[index - 1].current as unknown as HTMLInputElement).focus();
     }
   };
-  
+
   const getTitle = () => {
     switch (authMode) {
-      case 'signup': return 'Join Delivery Team';
-      case 'login': return 'Welcome Back';
-      case 'forgotPassword': return 'Reset Your Password';
-      case 'resetPassword': return 'Set New Password';
-      default: return 'Welcome';
+      case "signup":
+        return "Join Delivery Team";
+      case "login":
+        return "Welcome Back";
+      case "forgotPassword":
+        return "Reset Your Password";
+      case "resetPassword":
+        return "Set New Password";
+      default:
+        return "Welcome";
     }
   };
-  
+
   const getSubtitle = () => {
     switch (authMode) {
-      case 'signup': return 'Create your account to start delivering';
-      case 'login': return 'Sign in to your account';
-      case 'forgotPassword': return 'Enter your email to receive a reset link';
-      case 'resetPassword': return 'Create a new password for your account';
-      default: return '';
+      case "signup":
+        return "Create your account to start delivering";
+      case "login":
+        return "Sign in to your account";
+      case "forgotPassword":
+        return "Enter your email to receive a reset link";
+      case "resetPassword":
+        return "Create a new password for your account";
+      default:
+        return "";
     }
   };
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
         {/* Header with back button when needed */}
         <div className="mb-6">
-          {(authMode === 'forgotPassword' || authMode === 'resetPassword' || showOtpVerification) && (
-            <button 
+          {(authMode === "forgotPassword" ||
+            authMode === "resetPassword" ||
+            showOtpVerification) && (
+            <button
               onClick={() => {
                 if (showOtpVerification) {
                   setShowOtpVerification(false);
-                } else if (authMode === 'resetPassword') {
-                  setAuthMode('forgotPassword');
+                } else if (authMode === "resetPassword") {
+                  setAuthMode("forgotPassword");
                 } else {
-                  setAuthMode('login');
+                  setAuthMode("login");
                 }
               }}
               className="flex items-center text-sm text-blue-600 hover:text-blue-800 mb-4"
@@ -373,17 +406,13 @@ const DeliveryBoySignUp = () => {
               Back
             </button>
           )}
-          
+
           <div className="text-center">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 mb-3">
               <Truck className="h-6 w-6" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800">
-              {getTitle()}
-            </h2>
-            <p className="text-gray-500 text-sm mt-1">
-              {getSubtitle()}
-            </p>
+            <h2 className="text-2xl font-bold text-gray-800">{getTitle()}</h2>
+            <p className="text-gray-500 text-sm mt-1">{getSubtitle()}</p>
           </div>
         </div>
 
@@ -393,35 +422,41 @@ const DeliveryBoySignUp = () => {
             {error}
           </div>
         )}
-        
+
         {/* Success message */}
         {showSuccessMessage && (
           <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center">
             <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
             <div>
-              {authMode === 'signup' ? 'Account created successfully!' : 'Login successful!'} 
+              {authMode === "signup"
+                ? "Account created successfully!"
+                : "Login successful!"}
               <span className="ml-1">Redirecting in {timeLeft}s...</span>
             </div>
           </div>
         )}
-        
+
         {/* Registration complete message */}
-        {authMode === 'login' && registrationComplete && !showSuccessMessage && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-            Registration successful! Please login with your credentials.
-          </div>
-        )}
+        {authMode === "login" &&
+          registrationComplete &&
+          !showSuccessMessage && (
+            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              Registration successful! Please login with your credentials.
+            </div>
+          )}
 
         {/* OTP Verification View */}
         {showOtpVerification ? (
           <div>
             <div className="text-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Verify Your Email</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                Verify Your Email
+              </h3>
               <p className="text-gray-500 text-sm mt-1">
                 We've sent a 4-digit code to {formData.email}
               </p>
             </div>
-            
+
             <div className="flex justify-center gap-3 my-6">
               {[0, 1, 2, 3].map((index) => (
                 <input
@@ -437,10 +472,10 @@ const DeliveryBoySignUp = () => {
                 />
               ))}
             </div>
-            
+
             <button
               onClick={handleVerifyOtp}
-              disabled={isLoading || otp.join('').length !== 4}
+              disabled={isLoading || otp.join("").length !== 4}
               className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center font-medium"
             >
               {isLoading ? (
@@ -449,18 +484,18 @@ const DeliveryBoySignUp = () => {
                   Verifying...
                 </>
               ) : (
-                'Verify OTP'
+                "Verify OTP"
               )}
             </button>
-            
+
             <div className="flex justify-between mt-4 text-sm">
-              <button 
+              <button
                 onClick={() => setShowOtpVerification(false)}
                 className="text-gray-600 hover:text-gray-800"
               >
                 Back
               </button>
-              <button 
+              <button
                 onClick={handleResendOtp}
                 disabled={isLoading}
                 className="text-blue-600 hover:text-blue-800 disabled:opacity-50"
@@ -473,9 +508,12 @@ const DeliveryBoySignUp = () => {
           /* Main Auth Form */
           <form onSubmit={handleSubmit}>
             {/* Name field - only for signup */}
-            {authMode === 'signup' && (
+            {authMode === "signup" && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="name">
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                  htmlFor="name"
+                >
                   Full Name
                 </label>
                 <div className="relative">
@@ -497,9 +535,12 @@ const DeliveryBoySignUp = () => {
             )}
 
             {/* Email field - shown in all modes except reset password */}
-            {(authMode !== 'resetPassword') && (
+            {authMode !== "resetPassword" && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                  htmlFor="email"
+                >
                   Email Address
                 </label>
                 <div className="relative">
@@ -521,9 +562,12 @@ const DeliveryBoySignUp = () => {
             )}
 
             {/* Password field - for login and signup */}
-            {(authMode === 'login' || authMode === 'signup') && (
+            {(authMode === "login" || authMode === "signup") && (
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="password">
+                <label
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                  htmlFor="password"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -546,10 +590,13 @@ const DeliveryBoySignUp = () => {
             )}
 
             {/* New password fields - for reset password */}
-            {authMode === 'resetPassword' && (
+            {authMode === "resetPassword" && (
               <>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="newPassword">
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                    htmlFor="newPassword"
+                  >
                     New Password
                   </label>
                   <div className="relative">
@@ -569,9 +616,12 @@ const DeliveryBoySignUp = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div className="mb-5">
-                  <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="confirmPassword">
+                  <label
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                    htmlFor="confirmPassword"
+                  >
                     Confirm New Password
                   </label>
                   <div className="relative">
@@ -595,10 +645,10 @@ const DeliveryBoySignUp = () => {
             )}
 
             {/* Forgot password link - only for login */}
-            {authMode === 'login' && (
+            {authMode === "login" && (
               <div className="flex items-center justify-end mb-5">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={initiateForgotPassword}
                   className="text-sm font-medium text-blue-600 hover:text-blue-800"
                 >
@@ -616,24 +666,30 @@ const DeliveryBoySignUp = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  {authMode === 'signup' ? 'Creating Account...' : 
-                   authMode === 'login' ? 'Signing In...' :
-                   authMode === 'forgotPassword' ? 'Sending OTP...' :
-                   'Resetting Password...'}
+                  {authMode === "signup"
+                    ? "Creating Account..."
+                    : authMode === "login"
+                    ? "Signing In..."
+                    : authMode === "forgotPassword"
+                    ? "Sending OTP..."
+                    : "Resetting Password..."}
                 </>
               ) : (
                 <>
-                  {authMode === 'signup' ? 'Create Account' : 
-                   authMode === 'login' ? 'Sign In' :
-                   authMode === 'forgotPassword' ? 'Send Reset Link' :
-                   'Reset Password'}
+                  {authMode === "signup"
+                    ? "Create Account"
+                    : authMode === "login"
+                    ? "Sign In"
+                    : authMode === "forgotPassword"
+                    ? "Send Reset Link"
+                    : "Reset Password"}
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </>
               )}
             </button>
 
             {/* Social login options - only for login/signup */}
-            {(authMode === 'login' || authMode === 'signup') && (
+            {(authMode === "login" || authMode === "signup") && (
               <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -644,16 +700,20 @@ const DeliveryBoySignUp = () => {
             )}
 
             {/* Toggle between signup and signin */}
-            {(authMode === 'login' || authMode === 'signup') && (
+            {(authMode === "login" || authMode === "signup") && (
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                  {authMode === 'signup' ? 'Already have an account?' : 'Don\'t have an account?'}{' '}
+                  {authMode === "signup"
+                    ? "Already have an account?"
+                    : "Don't have an account?"}{" "}
                   <button
                     type="button"
-                    onClick={() => toggleAuthMode(authMode === 'signup' ? 'login' : 'signup')}
+                    onClick={() =>
+                      toggleAuthMode(authMode === "signup" ? "login" : "signup")
+                    }
                     className="font-medium text-blue-600 hover:text-blue-800"
                   >
-                    {authMode === 'signup' ? 'Sign in' : 'Sign up'}
+                    {authMode === "signup" ? "Sign in" : "Sign up"}
                   </button>
                 </p>
               </div>

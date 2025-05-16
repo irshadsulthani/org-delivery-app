@@ -34,6 +34,7 @@ export class RegisterRetailerShopUseCase {
 
       rating: 0,
       reviews: [],
+      registrationCompleted:false,
       isVerified: false,
       verificationStatus: 'pending',
       createdAt: new Date(),

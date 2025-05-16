@@ -306,7 +306,7 @@ const RetailerRegistrationForm = () => {
       toast.error("Please fix the errors before proceeding");
       return;
     } else if (step === 2 && !validateStep2()) {
-      toast.error("Please fix the errors before proceeding");
+      // toast.error("Please fix the errors before proceeding");
       return;
     }
 

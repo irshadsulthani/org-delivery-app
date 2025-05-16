@@ -35,21 +35,21 @@ export class LoginUser {
         throw new AppError("User ID is missing", StatusCode.BAD_REQUEST);
       }
       const retailer = await this._retailerRepo.findByUserId(user._id);
-      if (!retailer) {
-        throw new AppError("Retailer profile not found", StatusCode.NOT_FOUND);
-      }
+      // if (!retailer) {
+      //   throw new AppError("Retailer profile not found", StatusCode.NOT_FOUND);
+      // }
 
       if (user.isBlocked) {
         throw new AppError("Your account has been blocked. Please contact support.", StatusCode.FORBIDDEN, "info");
       }
 
-      if (retailer.verificationStatus === 'pending') {
-        throw new AppError("Your account is pending admin approval. Please wait.", StatusCode.FORBIDDEN, "info");
-      }
+      // if (retailer.verificationStatus === 'pending') {
+      //   throw new AppError("Your account is pending admin approval. Please wait.", StatusCode.FORBIDDEN, "info");
+      // }
 
-      if (retailer.verificationStatus === 'rejected') {
-        throw new AppError("Your verification request was rejected. Please contact admin.", StatusCode.FORBIDDEN, "info");
-      }
+      // if (retailer.verificationStatus === 'rejected') {
+      //   throw new AppError("Your verification request was rejected. Please contact admin.", StatusCode.FORBIDDEN, "info");
+      // }
     }
 
     // ✅ DELIVERY BOY CHECK

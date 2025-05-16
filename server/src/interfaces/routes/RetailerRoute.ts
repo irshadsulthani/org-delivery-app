@@ -20,5 +20,8 @@ router.post(
     RetailerController.register
 );
 
+router.get('/register-status/:email', RetailerController.getRegisterStatus)
+
+
 export default router;
   

@@ -181,8 +181,8 @@ const RetailerSidebar: React.FC<RetailerSidebarProps> = ({ retailerName, storeNa
             />
             <SubMenuItem 
               title="Add Products" 
-              active={activePage === "add-products"}
-              onClick={() => onNavigate("add-products")}
+              active={activePage === "add-product"}
+              onClick={() => onNavigate("/add-product")}
             />
             <SubMenuItem 
               title="Categories" 

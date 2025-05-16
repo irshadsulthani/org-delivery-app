@@ -1,3 +1,4 @@
+import privateApi from "./intreceptors/privateApi";
 import { fileUploadApi, publicApi } from "./intreceptors/publicApi";
 
 
@@ -30,5 +31,10 @@ export const logoutReatiler = async () => {
 
 export const registerRetailer = async (formData: FormData)=> {
     const response = await fileUploadApi('/retailer/register-retailer',formData)
+    return response
+}
+
+export const getRegistrationStatus = async (email: string) => {
+    const response = await privateApi('get', `/retailer/register-status/${email}`)
     return response
 }

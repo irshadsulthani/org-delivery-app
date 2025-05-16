@@ -74,9 +74,9 @@ export const rejectDeliveryBoy = async (id: string): Promise<void> => {
   }
 };
 
-export const getDeliveryBoyById = async (id: string) => {
+export const getDeliveryBoyById = async (deliveryBoyId: string) => {
   try {
-    const response = await privateApi('get', `/admin/deliveryboy/${id}`);
+    const response = await privateApi('get', `/admin/deliveryboy/${deliveryBoyId}`);
     return response;
   } catch (error) {
     console.error('Error fetching delivery boy details:', error);
@@ -89,31 +89,32 @@ export const getPendingRetailers = async () => {
     return response;
 };
 
-export const approveRetailer = async (id: string) => {
-  const response = await privateApi('put', `/admin/retailer/approve/${id}`);
+export const approveRetailer = async (retailerId: string) => {
+  const response = await privateApi('put', `/admin/retailer/approve/${retailerId}`);
   return response;
 };
 
-export const rejectRetailer = async (id: string) => {
-  const response = await privateApi('put', `/admin/retailer/reject/${id}`);
+export const rejectRetailer = async (retailerId: string) => {
+  const response = await privateApi('put', `/admin/retailer/reject/${retailerId}`);
   return response;
 };
 
-export const getRetailerById = async (id: string) => {
-  const response = await privateApi('get', `/admin/retailer/${id}`)
+export const getRetailerById = async (retailerId: string) => {
+  const response = await privateApi('get', `/admin/retailer/${retailerId}`)
   return response
 }
 
 export const updateRetailerStatus = async (retailerId: string, newStatus: string) => {
-
+  const response = await privateApi('get', `/admin/retailer/${retailerId}/${newStatus}`)
+  return response
 }
 
-export const blockRetailer = async (id: string) => {
-  const response = await privateApi('patch', `/admin/retailer/${id}/block`);
+export const blockRetailer = async (retailerId: string) => {
+  const response = await privateApi('patch', `/admin/retailer/${retailerId}/block`);
     return response;
 }
 
-export const unblockRetailer = async (id: string) => {
-  const response = await privateApi('patch', `/admin/retailer/${id}/unblock`);
+export const unblockRetailer = async (retailerId: string) => {
+  const response = await privateApi('patch', `/admin/retailer/${retailerId}/unblock`);
     return response;
 }

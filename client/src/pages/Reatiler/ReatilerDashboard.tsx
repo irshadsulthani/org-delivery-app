@@ -1,4 +1,4 @@
-import  { useState, useEffect, SetStateAction } from 'react';
+import React, { useState, useEffect, SetStateAction } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../app/store';
 import { 
@@ -17,6 +17,8 @@ import {
   Store
 } from 'lucide-react';
 import RetailerSidebar from '../../components/reatilerComponents/ReatilerSidebar';
+import { getRegistrationStatus } from '../../api/reatilerApi';
+import RegistrationStatus from '../../components/reatilerComponents/RegistrationStatusProps';
 
 // Dashboard Card Component
 interface DashboardCardProps {
@@ -142,8 +144,48 @@ const RetailerDashboard = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+  const [statusDismissed, setStatusDismissed] = useState(false);
+  const [registrationStatusData, setRegistrationStatusData] = useState<{
+    registrationCompleted: boolean;
+    verificationStatus: 'pending' | 'approved' | 'rejected';
+    rejectionReason?: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const retailerState = useSelector((state: RootState) => state.retailer.retailer);
+  const retailerEmail = retailerState?.email;
+  
+  // Check if retailer is verified
+  console.log('registrationStatusData',registrationStatusData);
+  
+  const retailerVerified = registrationStatusData?.verificationStatus === 'approved';
+  console.log('retailerVerified','retailerVerified',retailerVerified);
+  
+  const registrationIncomplete = !registrationStatusData?.registrationCompleted;
+  console.log('registrationIncomplete',registrationIncomplete);
+  
+  const registrationRejected = registrationStatusData?.verificationStatus === 'rejected';
+
+  // Fetch registration status
+  useEffect(() => {
+    const fetchRegistrationStatus = async () => {
+      if (!retailerEmail) return;
+      
+      try {
+        setLoading(true);
+        const response = await getRegistrationStatus(retailerEmail);
+        console.log('response',response,'response response response');
+        
+        setRegistrationStatusData(response);
+      } catch (err) {
+        console.error('Failed to fetch registration status:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRegistrationStatus();
+  }, [retailerEmail]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -167,6 +209,18 @@ const RetailerDashboard = () => {
     };
   }, []);
 
+  // Check if status was previously dismissed
+  useEffect(() => {
+    const isDismissed = localStorage.getItem('statusDismissed') === 'true';
+    setStatusDismissed(isDismissed);
+  }, []);
+
+  // Handler for dismissing the status
+  const handleDismiss = () => {
+    setStatusDismissed(true);
+    localStorage.setItem('statusDismissed', 'true');
+  };
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -179,9 +233,16 @@ const RetailerDashboard = () => {
     }
   };
 
+  const handleRegistrationAction = () => {
+    if (registrationIncomplete) {
+      window.location.href = '/retailer/complete-registration';
+    } else if (registrationRejected) {
+      window.location.href = '/retailer/update-registration';
+    }
+  };
+
   // Mock data - in a real app this would come from API/state
   const dashboardData = {
-    retailerName: "Priya Sharma",
     storeName: "Green Basket Vegetables",
     todaySales: 14250,
     orders: 17,
@@ -203,20 +264,72 @@ const RetailerDashboard = () => {
     ] as RecentOrderProps[]
   };
 
-  const renderDashboardContent = () => {
+  const renderRestrictedDashboard = () => {
+    return (
+      <div className="p-4 md:p-6">
+        <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Retailer Dashboard</h1>
+            <p className="text-sm md:text-base text-gray-500 mt-1">Welcome, {retailerState?.name}!</p>
+          </div>
+        </div>
+        
+        {!loading && !statusDismissed && registrationStatusData && (
+          <RegistrationStatus 
+            onDismiss={handleDismiss}
+            onActionClick={handleRegistrationAction}
+          />
+        )}
+        
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 text-center">
+          <div className="max-w-md mx-auto">
+            <AlertCircle className="mx-auto text-yellow-500 mb-4" size={48} />
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              {registrationIncomplete ? 'Complete Your Registration' : 'Registration Under Review'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {registrationIncomplete 
+                ? 'You need to complete your registration process to access all dashboard features.' 
+                : 'Your registration is being reviewed. You will have full access once approved.'}
+            </p>
+            <button 
+              onClick={handleRegistrationAction}
+              className={`px-6 py-3 rounded-lg text-white font-medium ${
+                registrationIncomplete 
+                  ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700'
+                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+              }`}
+            >
+              {registrationIncomplete ? 'Complete Registration' : 'View Status'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderFullDashboard = () => {
     return (
       <div className="p-4 md:p-6">
         {/* Header Section with Welcome and Date */}
         <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 bg-gradient-to-r from-green-600 to-teal-500 bg-clip-text text-transparent">Retailer Dashboard</h1>
-            <p className="text-sm md:text-base text-gray-500 mt-1">Welcome back, {retailerState?.name || dashboardData.retailerName}! Here's your store overview.</p>
+            <p className="text-sm md:text-base text-gray-500 mt-1">Welcome back, {retailerState?.name}! Here's your store overview.</p>
           </div>
           <div className="mt-4 md:mt-0 bg-white shadow-sm rounded-lg px-3 py-1 md:px-4 md:py-2 border border-gray-100 flex items-center text-sm">
             <Calendar size={16} className="text-gray-400 mr-2" />
             <span className="text-gray-700 font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
           </div>
         </div>
+        
+        {/* Registration Status */}
+        {!loading && !statusDismissed && registrationStatusData && (
+          <RegistrationStatus 
+            onDismiss={handleDismiss}
+            onActionClick={handleRegistrationAction}
+          />
+        )}
         
         {/* Dashboard Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
@@ -382,7 +495,7 @@ const RetailerDashboard = () => {
         fixed lg:relative z-30 transition-transform duration-300 h-full
       `}>
         <RetailerSidebar 
-          retailerName={dashboardData.retailerName}
+          retailerName={retailerState?.name ?? ""}
           storeName={dashboardData.storeName}
           onNavigate={handleNavigate}
           activePage={activePage}
@@ -391,8 +504,9 @@ const RetailerDashboard = () => {
       
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-br from-gray-50 to-gray-100 pt-16 lg:pt-0">
-        {activePage === 'dashboard' && renderDashboardContent()}
-        {/* Add other page components here based on activePage state */}
+        {activePage === 'dashboard' && (
+          retailerVerified ? renderFullDashboard() : renderRestrictedDashboard()
+        )}
       </div>
     </div>
   );

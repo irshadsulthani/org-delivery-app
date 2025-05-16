@@ -35,7 +35,7 @@ const retailerShopSchema = new Schema<RetailerShopDoc>(
         date: { type: Date, default: Date.now },
       },
     ],
-
+    registrationCompleted:{type: Boolean, default:false},
     isVerified: { type: Boolean, default: false },
     verificationStatus: {
       type: String,
