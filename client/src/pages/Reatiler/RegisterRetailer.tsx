@@ -1036,6 +1036,10 @@ const RetailerRegistrationForm = () => {
                     </>
                   ) : (
                     <>
+
+
+
+                    
                       Complete Registration
                       <Check size={18} className="ml-2" />
                     </>
