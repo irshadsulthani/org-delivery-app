@@ -313,9 +313,4 @@ const RetailerSidebar: React.FC<RetailerSidebarProps> = ({ retailerName, storeNa
     </div>
   );
 };
-
-
-
-
-
 export default RetailerSidebar;
