@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../../domain/entities/User';
 import { config } from '../../config/index';
-import { IAuthService } from '../../domain/interface/services/IAuthService';
+import { IAuthService } from './interface/IAuthService';
+
 
 const ACCESS_SECRET = config.jwtAccessSecret;
 const REFRESH_SECRET = config.jwtRefreshSecret;

@@ -46,7 +46,7 @@ export class AdminController {
   static getAllDeliveryBoys = async (req: Request, res: Response) => {
     try {
       const useCase = new GetUsers(userRepo);
-      const deliveryBoys = await useCase.excuteDeliveryBoys();
+      const deliveryBoys = await useCase.executeDeliveryBoys();
       const transformedData = deliveryBoys.map((boy: any) => ({
         _id: boy._id,
         userId: boy.userId,
@@ -76,7 +76,7 @@ export class AdminController {
   static getAllRetailers = async (req: Request, res: Response) => {
     try {
       const useCase = new GetUsers(userRepo);
-      const retailers = await useCase.excuteRetailers();
+      const retailers = await useCase.executeRetailers();
       const transformedData = retailers.map((retailer: any) => ({
         _id: retailer._id,
         userId: retailer.shopId,

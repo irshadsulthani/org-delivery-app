@@ -1,38 +1,40 @@
-import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
+import { User } from "../../../domain/entities/User";
+import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
+import { IGetUsers } from "./interface/IGetUsers";
 
-export class GetUsers {
-  constructor(private _userRepo: IUserRepository) {}
-  async execute() {
+
+export class GetUsers implements IGetUsers {
+  constructor(private readonly userRepo: IUserRepository) {}
+
+  async execute(): Promise<Omit<User, 'password'>[]> {
+    return this.handleUserFetch(() => this.userRepo.getAllUsers());
+  }
+
+  async executeCustomers(): Promise<Omit<User, 'password'>[]> {
+    return this.handleUserFetch(() => this.userRepo.getAllCustomers());
+  }
+
+  async executeDeliveryBoys(): Promise<Omit<User, 'password'>[]> {
+    return this.handleUserFetch(() => this.userRepo.getAllDeliveryBoys());
+  }
+
+  async executeRetailers(): Promise<Omit<User, 'password'>[]> {
+    return this.handleUserFetch(() => this.userRepo.getAllRetailers());
+  }
+
+  private async handleUserFetch(
+    fetchFn: () => Promise<User[]>
+  ): Promise<Omit<User, 'password'>[]> {
     try {
-      const users = await this._userRepo.getAllUsers();
+      const users = await fetchFn();
       return users.map(({ password, ...user }) => user);
     } catch (error) {
-      throw new Error("Error fetching users");
-    }
-  }
-  async executeCustomers() {
-    try {
-      const customers = await this._userRepo.getAllCustomers();
-      return customers.map(({ password, ...user }) => user);
-    } catch (error) {
-      throw new Error("Error fetching customers");
-    }
-  }
-  async excuteDeliveryBoys() {
-    try {
-      const deliveryBoys = await this._userRepo.getAllDeliveryBoys();
-      return deliveryBoys.map(({ password, ...user }) => user);
-    } catch (error) {
-      throw new Error("Error fetching delivery Boys");
-    }
-  }
-  async excuteRetailers() {
-    try {
-      const reatilers = await this._userRepo.getAllRetailers();
-
-      return reatilers.map(({ password, ...user }) => user);
-    } catch (error) {
-      throw new Error("Error fetching Reatilers");
+      if (error instanceof Error) {
+        throw new Error(`Error fetching users: ${error.message}`);
+      } else {
+        throw new Error("Error fetching users: Unknown error");
+      }
     }
   }
 }
+

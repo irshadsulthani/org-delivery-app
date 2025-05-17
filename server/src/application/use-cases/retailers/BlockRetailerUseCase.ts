@@ -1,11 +1,12 @@
-import { IRetailersRepository } from './../../../domain/interface/repositories/IRetailersRepository';
-import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
+import { IRetailersRepository } from "../../../infrastructure/database/repositories/interface/IRetailersRepository"
+import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository"
+import { IBlockRetailerUseCase } from "./interface/IBlockRetailerUseCase"
 
 
-export class BlockRetailerUseCase {
+export class BlockRetailerUseCase implements IBlockRetailerUseCase {
     constructor(
-    private _userRepo:IUserRepository,
-    private _retailerRepo:IRetailersRepository    
+    private readonly _userRepo:IUserRepository,
+    private readonly _retailerRepo:IRetailersRepository    
     ){}
 
     async execute(retailerId: string): Promise<void> {

@@ -1,7 +1,8 @@
 // src/application/services/RatingService.ts
 
 import { DeliveryBoy } from '../../domain/entities/DeliveryBoy';
-import { IRatingService } from '../../domain/interface/services/IRatingService';
+import { IRatingService } from './interface/IRatingService';
+
 
 
 export class RatingService implements IRatingService {

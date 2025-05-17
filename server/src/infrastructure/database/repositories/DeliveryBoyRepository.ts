@@ -1,8 +1,9 @@
 // src/infrastructure/database/repositories/DeliveryBoyRepository.ts
 import { DeliveryBoy } from "../../../domain/entities/DeliveryBoy";
-import { IDeliveryBoyRepository } from "../../../domain/interface/repositories/IDeliveryBoyRepository";
+
 import { DeliveryBoyModel } from "../schemas/deliveryBoyModel";
 import { UserModel } from "../schemas/userModel";
+import { IDeliveryBoyRepository } from "./interface/IDeliveryBoyRepository";
 
 export class DeliveryBoyRepository implements IDeliveryBoyRepository {
     async create(deliveryBoy: DeliveryBoy): Promise<DeliveryBoy> {

@@ -1,14 +1,11 @@
 import { RetailerShop } from "../../../domain/entities/RetailerShop";
-import { IRetailersRepository } from "../../../domain/interface/repositories/IRetailersRepository";
+import { IRetailersRepository } from "../../../infrastructure/database/repositories/interface/IRetailersRepository";
+import { IGetPendingRetailerUseCase } from "./interface/IGetPendingRetailerUseCase";
 
-
-export class GetPendingRetailerUseCase {
-    static execute() {
-      throw new Error('Method not implemented.');
-    }
-    constructor (private  _retailerRepo: IRetailersRepository){}
+export class GetPendingRetailerUseCase implements IGetPendingRetailerUseCase {
+    constructor(private readonly retailerRepo: IRetailersRepository) {}
     
-    async execute(): Promise<RetailerShop[]>{
-        return await this._retailerRepo.findPendingRetailers();
-    } 
+    async execute(): Promise<RetailerShop[]> {
+        return this.retailerRepo.findPendingRetailers();
+    }
 }

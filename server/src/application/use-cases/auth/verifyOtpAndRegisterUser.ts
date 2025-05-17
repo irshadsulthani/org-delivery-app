@@ -2,8 +2,8 @@
 
 import OtpModel from '../../../infrastructure/database/schemas/otpModel';
 import { User } from '../../../domain/entities/User';
-import { IUserRepository } from '../../../domain/interface/repositories/IUserRepository';
-import { IVerifyOtpAndRegisterUser } from '../../../domain/interface/use-case/IVerifyOtpAndRegisterUser';
+import { IVerifyOtpAndRegisterUser } from './interface/IVerifyOtpAndRegisterUser';
+import { IUserRepository } from '../../../infrastructure/database/repositories/interface/IUserRepository';
 
 export class VerifyOtpAndRegisterUser implements IVerifyOtpAndRegisterUser {
   constructor(private _userRepo: IUserRepository) {}

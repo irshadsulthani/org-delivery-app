@@ -3,7 +3,8 @@
 import { User } from '../../../domain/entities/User';
 import { UserModel } from '../schemas/userModel';
 import { PasswordService } from '../../../domain/services/PasswordService';
-import { IUserRepository } from '../../../domain/interface/repositories/IUserRepository';
+import { IUserRepository } from './interface/IUserRepository';
+
 
 export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {

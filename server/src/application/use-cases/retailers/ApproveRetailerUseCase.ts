@@ -1,10 +1,8 @@
-import { IRetailersRepository } from "../../../domain/interface/repositories/IRetailersRepository";
+import { IRetailersRepository } from "../../../infrastructure/database/repositories/interface/IRetailersRepository";
+import { IApproveDeliveryBoy } from "../deliveryBoy/interface/IApproveDeliveryBoy";
 
 
-export class ApproveRetailerUseCase {
-    static execute() {
-      throw new Error('Method not implemented.');
-    }
+export class ApproveRetailerUseCase implements IApproveDeliveryBoy {
     constructor (private _retailerRepo: IRetailersRepository) {}
 
     async execute(id: string): Promise <void> {

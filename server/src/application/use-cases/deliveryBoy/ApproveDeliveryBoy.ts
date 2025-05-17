@@ -1,9 +1,11 @@
 // src/application/use-cases/deliveryBoy/ApproveDeliveryBoy.ts
 
-import { IDeliveryBoyRepository } from "../../../domain/interface/repositories/IDeliveryBoyRepository";
+
+import { IDeliveryBoyRepository } from "../../../infrastructure/database/repositories/interface/IDeliveryBoyRepository";
+import { IApproveDeliveryBoy } from "./interface/IApproveDeliveryBoy";
 
 
-export class ApproveDeliveryBoy {
+export class ApproveDeliveryBoy implements IApproveDeliveryBoy {
   constructor(private _deliveryBoyRepo: IDeliveryBoyRepository) {}
 
   async execute(id: string): Promise<void> {

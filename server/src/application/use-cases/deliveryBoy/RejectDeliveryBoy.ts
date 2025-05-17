@@ -1,9 +1,11 @@
 // src/application/use-cases/deliveryBoy/RejectDeliveryBoy.ts
 
-import { IDeliveryBoyRepository } from "../../../domain/interface/repositories/IDeliveryBoyRepository";
+
+import { IDeliveryBoyRepository } from "../../../infrastructure/database/repositories/interface/IDeliveryBoyRepository";
+import { IRejectDeliveryBoy } from "./interface/IRejectDeliveryBoy";
 
 
-export class RejectDeliveryBoy {
+export class RejectDeliveryBoy implements IRejectDeliveryBoy {
   constructor(private _deliveryBoyRepo: IDeliveryBoyRepository) {}
 
   async execute(id: string): Promise<void> {

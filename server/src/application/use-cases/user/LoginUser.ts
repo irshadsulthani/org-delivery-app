@@ -1,11 +1,14 @@
-import { IDeliveryBoyRepository } from "../../../domain/interface/repositories/IDeliveryBoyRepository";
-import { IRetailersRepository } from "../../../domain/interface/repositories/IRetailersRepository";
-import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
-import { IAuthService } from "../../../domain/interface/services/IAuthService";
+
+
+import { IDeliveryBoyRepository } from "../../../infrastructure/database/repositories/interface/IDeliveryBoyRepository";
+import { IRetailersRepository } from "../../../infrastructure/database/repositories/interface/IRetailersRepository";
+import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
 import { AppError } from "../../../utils/AppError";
 import { StatusCode } from "../../../utils/statusCode";
+import { IAuthService } from "../../services/interface/IAuthService";
+import { ILoginUser } from "./interface/ILoginUser";
 
-export class LoginUser {
+export class LoginUser implements ILoginUser {
   constructor(
     private _userRepo: IUserRepository,
     private _authService: IAuthService,

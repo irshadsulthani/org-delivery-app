@@ -1,7 +1,7 @@
 // src/application/use-cases/auth/verifyOtpForPasswordReset.ts
 
 import OtpModel from '../../../infrastructure/database/schemas/otpModel';
-import { IVerifyOtpForPasswordReset } from '../../../domain/interface/use-case/IVerifyOtpForPasswordReset';
+import { IVerifyOtpForPasswordReset } from './interface/IVerifyOtpForPasswordReset';
 
 export class VerifyOtpForPasswordReset implements IVerifyOtpForPasswordReset {
   async execute(email: string, enteredOtp: number): Promise<void> {

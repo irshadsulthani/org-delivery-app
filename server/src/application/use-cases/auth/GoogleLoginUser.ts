@@ -1,6 +1,6 @@
 import { User } from "../../../domain/entities/User";
-import { IGoogleLoginUser } from "../../../domain/interface/use-case/IGoogleLoginUser";
 import { UserRepository } from "../../../infrastructure/database/repositories/UserRepository";
+import { IGoogleLoginUser } from "./interface/IGoogleLoginUser";
 
 // application/use-cases/GoogleLoginUser.ts
 export class GoogleLoginUser implements IGoogleLoginUser {

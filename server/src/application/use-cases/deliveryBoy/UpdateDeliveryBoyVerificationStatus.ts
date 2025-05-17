@@ -1,9 +1,11 @@
 // src/application/use-cases/deliveryBoy/UpdateDeliveryBoyVerificationStatus.ts
 
-import { IDeliveryBoyRepository } from "../../../domain/interface/repositories/IDeliveryBoyRepository";
+
+import { IDeliveryBoyRepository } from "../../../infrastructure/database/repositories/interface/IDeliveryBoyRepository";
+import { IUpdateDeliveryBoyVerificationStatus } from "./interface/IUpdateDeliveryBoyVerificationStatus";
 
 
-export class UpdateDeliveryBoyVerificationStatus {
+export class UpdateDeliveryBoyVerificationStatus implements IUpdateDeliveryBoyVerificationStatus {
   constructor(private deliveryBoyRepository: IDeliveryBoyRepository) {}
 
   async execute(

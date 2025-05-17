@@ -1,9 +1,10 @@
 // src/application/use-cases/ResetPasswordUseCase.ts
 
-import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
-import { IResetPassword } from "../../../domain/interface/use-case/IResetPassord";
+
 import { PasswordService } from "../../../domain/services/PasswordService";
+import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
 import { UserModel } from "../../../infrastructure/database/schemas/userModel";
+import { IResetPassword } from "./interface/IResetPassord";
 
 
 export class ResetPasswordUseCase implements IResetPassword {

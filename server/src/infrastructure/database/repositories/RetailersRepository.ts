@@ -1,6 +1,6 @@
-import { IRetailersRepository } from "../../../domain/interface/repositories/IRetailersRepository";
 import { RetailerShop } from "../../../domain/entities/RetailerShop";
 import { RetailerShopModel } from "../schemas/retailerModel";
+import { IRetailersRepository } from "./interface/IRetailersRepository";
 
 export class RetailersRepository implements IRetailersRepository {
   async register(retailer: RetailerShop): Promise<RetailerShop> {

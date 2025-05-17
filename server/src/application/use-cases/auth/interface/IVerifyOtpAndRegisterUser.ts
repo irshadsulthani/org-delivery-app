@@ -1,6 +1,6 @@
 // src/domain/interface/use-case/IVerifyOtpAndRegisterUser.ts
 
-import { User } from "../../entities/User";
+import { User } from "../../../../domain/entities/User";
 
 
 export interface IVerifyOtpAndRegisterUser {

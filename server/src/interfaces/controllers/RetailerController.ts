@@ -21,10 +21,6 @@ export class RetailerController {
         phone,
         address: { street, area, city, state, zipCode, country } = {}, // Default empty object to prevent errors if address is missing
       } = req.body;
-      console.log(req.files);
-      
-      console.log("req.body", req.body);
-
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const shopImage = files["shopImage"][0];
       const licenseImage = files["shopLicense"][0];
@@ -63,8 +59,6 @@ export class RetailerController {
   static async getRegisterStatus(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.params;
-      console.log('email',email);
-      
       const useCase = new GetRegistrationStatusUseCase(
         retailerRepo,
         userRepository

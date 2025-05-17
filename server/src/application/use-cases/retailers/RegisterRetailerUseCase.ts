@@ -1,17 +1,17 @@
 // src/application/usecases/retailer/RegisterRetailerShopUseCase.ts
 
-
 import { Types } from 'mongoose';
 import { RegisterRetailerInput } from '../../../domain/dtos/RegisterRetailerInput';
-import { IRetailersRepository } from '../../../domain/interface/repositories/IRetailersRepository';
 import { uploadToCloudinary } from '../../../infrastructure/cloudinary/cloudinary';
 import { uploadToS3 } from '../../../infrastructure/s3/s3Service';
+import { IRetailersRepository } from '../../../infrastructure/database/repositories/interface/IRetailersRepository';
+import { RetailerShop } from '../../../domain/entities/RetailerShop';
+import { IRegisterRetailerUseCase } from './interface/IRegisterRetailerUseCase';
 
-
-export class RegisterRetailerShopUseCase {
+export class RegisterRetailerShopUseCase implements IRegisterRetailerUseCase {
   constructor(private readonly _retailerRepo: IRetailersRepository) {}
 
-  async execute(input: RegisterRetailerInput): Promise<any> {
+  async execute(input: RegisterRetailerInput): Promise<RetailerShop> {
     const shopImageUrl = await uploadToCloudinary(input.shopImage.buffer, input.shopImage.originalname);
     const shopLicenseUrl = await uploadToS3(input.shopLicense.buffer, input.shopLicense.originalname);
 
@@ -34,15 +34,12 @@ export class RegisterRetailerShopUseCase {
 
       rating: 0,
       reviews: [],
-      registrationCompleted:false,
+      registrationCompleted: false,
       isVerified: false,
       verificationStatus: 'pending',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-
-    console.log('shop ', shop);
-    
 
     return shop;
   }

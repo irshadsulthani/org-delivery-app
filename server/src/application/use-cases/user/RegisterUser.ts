@@ -1,7 +1,9 @@
 import { User } from '../../../domain/entities/User';
-import { IUserRepository } from '../../../domain/interface/repositories/IUserRepository';
+import { IUserRepository } from '../../../infrastructure/database/repositories/interface/IUserRepository';
+import { IRegisterUser } from './interface/IRegisterUser';
 
-export class RegisterUser {
+
+export class RegisterUser implements IRegisterUser {
   constructor(private _userRepo: IUserRepository) {}
 
   async execute(user: User): Promise<User> {

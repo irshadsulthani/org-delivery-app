@@ -1,8 +1,9 @@
 import { DeliveryBoy } from "../../../domain/entities/DeliveryBoy";
 import { DeliveryBoyRepository } from "../../../infrastructure/database/repositories/DeliveryBoyRepository";
+import { IGetDeliveryBoyById } from "./interface/IGetDeliveryBoyById";
 
 
-export class GetDeliveryBoyById {
+export class GetDeliveryBoyById implements IGetDeliveryBoyById {
   constructor(private _deliveryBoyRepo: DeliveryBoyRepository) {}
 
   async execute(id: string): Promise<DeliveryBoy> {

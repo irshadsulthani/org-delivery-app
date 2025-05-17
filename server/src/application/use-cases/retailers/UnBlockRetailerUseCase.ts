@@ -1,17 +1,24 @@
-import { IRetailersRepository } from "../../../domain/interface/repositories/IRetailersRepository";
-import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
+import { IRetailersRepository } from "../../../infrastructure/database/repositories/interface/IRetailersRepository";
+import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
+import { IUnBlockRetailerUseCase } from "./interface/IUnBlockRetailerUseCase";
 
 
-export class UnBlockRetailerUseCase{
+export class UnBlockRetailerUseCase implements IUnBlockRetailerUseCase {
     constructor(
-        private _userRepo: IUserRepository,
-        private _retailerRepo: IRetailersRepository
-    ){}
+        private readonly userRepo: IUserRepository,
+        private readonly retailerRepo: IRetailersRepository
+    ) {}
+
     async execute(retailerId: string): Promise<void> {
-        const retailer = await this._retailerRepo.findByUserId(retailerId)
+        if (!retailerId || typeof retailerId !== 'string') {
+            throw new Error('Invalid retailer ID');
+        }
 
-        if(!retailer) throw new Error('Retailer not found')
+        const retailer = await this.retailerRepo.findByUserId(retailerId);
+        if (!retailer) {
+            throw new Error(`Retailer with ID ${retailerId} not found`);
+        }
 
-        await this._userRepo.unblockUser(retailer.userId._id.toString())
+        await this.userRepo.unblockUser(retailer.userId._id.toString());
     }
 }

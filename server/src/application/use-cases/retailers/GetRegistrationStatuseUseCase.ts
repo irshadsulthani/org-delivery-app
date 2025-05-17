@@ -1,6 +1,6 @@
 import { RetailerShop } from "../../../domain/entities/RetailerShop";
-import { IRetailersRepository } from "../../../domain/interface/repositories/IRetailersRepository";
-import { IUserRepository } from "../../../domain/interface/repositories/IUserRepository";
+import { IRetailersRepository } from "../../../infrastructure/database/repositories/interface/IRetailersRepository";
+import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
 import { IGetRegistrationStatusUseCase } from "./interface/IGetRegistrationStatuseUseCase";
 
 

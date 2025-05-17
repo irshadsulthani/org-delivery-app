@@ -1,8 +1,8 @@
-import { IUserRepository } from '../../../domain/interface/repositories/IUserRepository';
+import { IUserRepository } from '../../../infrastructure/database/repositories/interface/IUserRepository';
 import { GenerateOtpWithExpiry } from '../../../infrastructure/services/generateOtp';
 import { SendOtpMail } from '../../../infrastructure/services/nodemailer';
 import { saveOtp } from '../../../infrastructure/services/OtpStore';
-import { ISendOtpForPasswordReset } from '../../../domain/interface/use-case/ISendOtpForPasswordReset';
+import { ISendOtpForPasswordReset } from './interface/ISendOtpForPasswordReset';
 
 export class SendOtpForPasswordReset implements ISendOtpForPasswordReset {
   constructor(private userRepo: IUserRepository) {}
