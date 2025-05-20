@@ -95,7 +95,7 @@ const RetailerAuth = () => {
     }));
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -105,19 +105,27 @@ const RetailerAuth = () => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
       if (!email || !emailRegex.test(email)) {
-        toast.info("Enter Valid Email");
+        toast.error("Please enter a valid email address");
         setIsLoading(false);
         return;
       }
 
       if (authMode === "login") {
         if (!password || password.length < 6 || password.trim() === "") {
-          toast.info("Enter Valid password");
+          toast.error("Password must be at least 6 characters");
           setIsLoading(false);
           return;
         }
 
         const response = await loginReatiler({ email, password });
+        
+        // Check if user is blocked
+        if (response.userData?.isBlocked) {
+          toast.error("Your account has been blocked. Please contact support.");
+          navigate("/retailer/sign-up");
+          return;
+        }
+
         dispatch(
           setReatiler({
             email: response.userData.email,
@@ -125,63 +133,60 @@ const RetailerAuth = () => {
             name: response.userData.name,
           })
         );
-        toast.success("Login Success");
+        
+        toast.success("Login successful! Redirecting to dashboard...");
         navigate("/retailer/dashboard");
       } else if (authMode === "signup") {
-        if (
-          !formData.name ||
-          formData.name.length < 3 ||
-          formData.name.trim() === ""
-        ) {
-          toast("Invalid Name");
+        if (!formData.name || formData.name.length < 3 || formData.name.trim() === "") {
+          toast.error("Name must be at least 3 characters");
           setIsLoading(false);
           return;
         }
 
         if (!password || password.trim() === "") {
-          toast.info("Password is required");
+          toast.error("Password is required");
           setIsLoading(false);
           return;
         }
 
         const trimmedPassword = password.trim();
-
-        const strongPasswordRegex =
-          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
         if (!strongPasswordRegex.test(trimmedPassword)) {
-          toast.info(
-            "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+          toast.error(
+            "Password must contain:\n- 8+ characters\n- Uppercase letter\n- Lowercase letter\n- Number\n- Special character"
           );
           setIsLoading(false);
           return;
         }
 
         await handleSendOtp("signup");
+        toast.success("OTP sent successfully! Please verify your email");
       } else if (authMode === "forgotPassword") {
         await handleSendOtp("forgotPassword");
+        toast.success("Password reset OTP sent to your email");
       } else if (authMode === "resetPassword") {
         if (!newPassword || !confirmPassword) {
-          toast.info("Missing password");
+          toast.error("Both password fields are required");
           setIsLoading(false);
           return;
         }
 
         if (newPassword.length < 6) {
-          toast.info("invalid password");
+          toast.error("Password must be at least 6 characters");
           setIsLoading(false);
           return;
         }
 
         if (newPassword !== confirmPassword) {
-          toast.info("Password Dont match");
+          toast.error("Passwords don't match");
           setIsLoading(false);
           return;
         }
 
         const response = await resetPassword(email, newPassword);
         if (response.success) {
-          toast.success("Password reset successful");
+          toast.success("Password reset successfully! You can now login");
           setAuthMode("login");
           setFormData((prev) => ({
             ...prev,
@@ -192,11 +197,16 @@ const RetailerAuth = () => {
         }
       }
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message ||
-          "Something went wrong. Please try again."
-      );
-      console.error(error);
+      console.log(error);
+      
+      if (error.status === 401) {
+        toast.error("Your account has been blocked. Please contact support.");
+      } else if (error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("An unexpected error occurred. Please try again later.");
+      }
+      console.error("Auth error:", error);
     } finally {
       setIsLoading(false);
     }

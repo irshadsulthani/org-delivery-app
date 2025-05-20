@@ -21,7 +21,7 @@ function ReatilerRoute() {
            <Route path="/complete-registration" element={<RetailerProfileCompletion />} />
            <Route path="/registration-status" element={<RegistrationStatus />} />
            <Route path='/products' element={<ProductListing/>} />
-           <Route path='/products/view/:productId' element={<RetailerProductDetailPage />} />
+           <Route path='/products/:productId' element={<RetailerProductDetailPage />} />
         </Route>
         <Route element={<ReatilerPublicRoute />}>
           <Route path="/sign-up" element={<ReatilerSignUp />} />

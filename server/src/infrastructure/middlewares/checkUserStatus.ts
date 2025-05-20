@@ -7,9 +7,7 @@ import { StatusCode } from '../../utils/statusCode';
 export const checkUserStatus = (userRepo: UserRepository) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Get user ID from authenticated request
       const userId = (req.user as any).id;
-      console.log('userId',userId);
       
       if (!userId) {
         res.status(StatusCode.UNAUTHORIZED).json({
@@ -21,8 +19,6 @@ export const checkUserStatus = (userRepo: UserRepository) => {
 
       // Fetch user from repository
       const user = await userRepo.findById(userId);
-      console.log('user',user);
-      
       if (!user) {
         res.status(StatusCode.NOT_FOUND).json({
           success: false,
@@ -41,19 +37,17 @@ export const checkUserStatus = (userRepo: UserRepository) => {
       }
 
       // Check if user is verified
-      if (!user.isVerified) {
-        res.status(StatusCode.FORBIDDEN).json({
-          success: false,
-          message: 'Account not verified - Please verify your email'
-        });
-        return;
-      }
-
-      // Attach full user object to request for downstream use
+    //   if (!user.isVerified) {
+    //     res.status(StatusCode.FORBIDDEN).json({
+    //       success: false,
+    //       message: 'Account not verified - Please verify your email'
+    //     });
+    //     return;
+    //   }
       req.user = user;
-      next(); // Continue to next middleware
+      next();
     } catch (error) {
-      next(error); // Pass errors to Express error handler
+      next(error);
     }
   };
 };

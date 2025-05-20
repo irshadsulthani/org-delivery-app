@@ -46,7 +46,7 @@ export const addProduct = async (formData: FormData) =>{
 
 export const getRetailerProducts = async () => {
     const response = await privateApi('get', '/retailer/products')
-    return response
+    return response.data
 }
 
 export const deleteProduct = async (productId: string) => {
@@ -55,7 +55,7 @@ export const deleteProduct = async (productId: string) => {
 }
 
 export const getProductById = async (productId: string) => {
-    const response = await privateApi('get', `/retailer/detaile-view/${productId}`)
+    const response = await privateApi('get', `/retailer/products/${productId}`)
     console.log('response',response);
     return response
 }

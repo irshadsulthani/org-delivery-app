@@ -14,13 +14,13 @@ import {
   FiGrid,
   FiList,
   FiAlertTriangle,
-  FiCheck,
-  FiInfo
 } from "react-icons/fi";
 import RetailerSidebar from "../../components/Retailer/ReatilerSidebar";
-import { getRetailerProducts, deleteProduct } from "../../api/reatilerApi";
+import { getRetailerProducts, deleteProduct, logoutReatiler } from "../../api/reatilerApi";
 import { toast, ToastContainer, ToastContentProps } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { reatilerLogout } from "../../slice/reatilerSlice";
+import { useDispatch } from "react-redux";
 
 // Product type definition
 interface Product {
@@ -49,6 +49,7 @@ function RetailerProductsPage() {
   const [sort, setSort] = useState<"name" | "price" | "quantity">("name");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9);
+  const dispatch = useDispatch()
 
   // Toast configuration
   const notifySuccess = (message: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | ((props: ToastContentProps<unknown>) => ReactNode) | null | undefined) => {
@@ -92,33 +93,41 @@ function RetailerProductsPage() {
     fetchProducts();
   }, []);
 
-  const fetchProducts = async () => {
+ const fetchProducts = async () => {
     try {
       setLoading(true);
-      const data = await getRetailerProducts();
-      console.log('data', data);
+      const response = await getRetailerProducts();
+      console.log('data', response);
       
-      if (data.error) {
-        setError(data.error);
-        notifyError(data.error);
+      if (response.error) {
+        setError(response.error);
+        notifyError(response.error);
         return;
       }
       
-      setProducts(data);
+      setProducts(response);
       
       // Extract unique categories for filter
-      const uniqueCategories = Array.from(new Set(data.map((product: { category: any; }) => product.category))) as string[];
+      const uniqueCategories = Array.from(new Set(response.map((product: { category: any; }) => product.category))) as string[];
       setCategories(uniqueCategories);
       
-      if (data.length === 0) {
+      if (response.length === 0) {
         notifyInfo("No products found. Add some products to get started!");
       } else {
-        notifySuccess(`${data.length} products loaded successfully!`);
+        notifySuccess(`${response.length} products loaded successfully!`);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to load products";
-      setError(errorMessage);
-      notifyError(errorMessage);
+    } catch (err:any) {
+        if(err.message === 'Request failed with status code 403'){
+            // Call retailer logout function
+            await logoutReatiler();
+            // Clear retailer state
+           dispatch(reatilerLogout())
+            // Redirect to sign-up page
+            navigate('/retailer/sign-up');
+        }
+        const errorMessage = err instanceof Error ? err.message : "Failed to load products";
+        setError(errorMessage);
+        notifyError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -129,7 +138,7 @@ function RetailerProductsPage() {
   };
 
   const viewProductDetails = (productId: string) => {
-    navigate(`/retailer/products/view/${productId}`);
+    navigate(`/retailer/products/${productId}`);
   };
 
   const confirmDelete = (productId: string, e: React.MouseEvent) => {

@@ -56,6 +56,8 @@ function RetailerProductDetailPage() {
     try {
       setLoading(true);
       const data = await getProductById(productId);
+      console.log(data);
+      
       setProduct(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load product details");
