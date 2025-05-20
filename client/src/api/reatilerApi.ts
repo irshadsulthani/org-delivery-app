@@ -59,3 +59,11 @@ export const getProductById = async (productId: string) => {
     console.log('response',response);
     return response
 }
+
+export const updateProduct = async (productId: string, formData: FormData) => {
+  // Change from post to put
+  const response = await fileUploadApi(`/retailer/edit-product/${productId}`, formData, {
+    method: 'PUT' // Explicitly specify PUT method
+  });
+  return response.data;
+};

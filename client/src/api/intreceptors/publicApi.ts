@@ -37,12 +37,17 @@ export const publicApi = async (
   return res.data;
 };
 
-// Add a new function specifically for file uploads
 export const fileUploadApi = async (
   url: string,
   formData: FormData,
   config?: any
 ) => {
-  const res = await fileInstance.post(url, formData, config);
+  const method = config?.method || 'POST'; 
+  const res = await fileInstance.request({
+    method,
+    url,
+    data: formData,
+    ...config,
+  });
   return res.data;
 };

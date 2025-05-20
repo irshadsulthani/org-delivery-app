@@ -7,6 +7,8 @@ import { AddProductUseCase } from "../../application/use-cases/product/AddProduc
 import { GetProductDetailsUseCase } from "../../application/use-cases/product/GetProductDetailsUseCase";
 import { GetRetailerProudctUseCase } from "../../application/use-cases/product/GetRetailerProudctUseCase";
 import { GetAllProductsUseCase } from "../../application/use-cases/product/GetAllProductsUseCase";
+import { UpdateProductDto } from "../../domain/dtos/UpdateProductDto";
+import { UpdateProductUseCase } from "../../application/use-cases/product/UpdateProductUseCase";
 
 export class ProductController {
   private static productRepository = new ProductRepository();
@@ -113,6 +115,68 @@ export class ProductController {
       next(error);
     }
   }
+static async updateProduct(req: Request, res: Response, next: NextFunction) {
+  try {
+    const retailerId = (req.user as any).id;
+    const { productId } = req.params;
+    if (!productId) {
+      return res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: "Product ID is required",
+      });
+    }
+
+    // Prepare DTO
+    const dto: UpdateProductDto = {
+      productId,
+      retailerId,
+      name: req.body.name,
+      category: req.body.category,
+      price: req.body.price ? parseFloat(req.body.price) : undefined,
+      quantity: req.body.quantity ? parseInt(req.body.quantity) : undefined,
+      description: req.body.description,
+      unit: req.body.unit,
+      existingImages: [],
+      newImages: []
+    };
+
+    // Handle existing images
+    if (req.body.existingImages) {
+      try {
+        dto.existingImages = typeof req.body.existingImages === 'string' 
+          ? JSON.parse(req.body.existingImages)
+          : req.body.existingImages;
+        
+        // Ensure it's always an array
+        if (!Array.isArray(dto.existingImages)) {
+          dto.existingImages = [];
+        }
+      } catch (error) {
+        console.warn('Failed to parse existingImages, defaulting to empty array');
+        dto.existingImages = [];
+      }
+    }
+    if (req.files) {
+      const files = req.files as Express.Multer.File[];
+      if (files && files.length > 0) {
+        dto.newImages = files;
+      }
+    }
+
+    const useCase = new UpdateProductUseCase(ProductController.productRepository);
+    const updatedProduct = await useCase.execute(dto);
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Product updated successfully",
+      data: updatedProduct,
+    });
+  } catch (error: any) {
+    console.error("Error updating product:", error);
+    next(error);
+  }
+}
+
 }
 
 // import { Request, Response } from "express";

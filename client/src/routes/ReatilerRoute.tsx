@@ -9,7 +9,7 @@ import RetailerProfileCompletion from "../pages/Reatiler/RetailerRegistrationCom
 import RegistrationStatus from "../components/Retailer/RegistrationStatusProps"
 import ProductListing from "../pages/Reatiler/ProductListing"
 import RetailerProductDetailPage from "../pages/Reatiler/ProductDeatileView"
-
+import EditProduct from '../pages/Reatiler/EditProduct'
 
 function ReatilerRoute() {
   return (
@@ -22,6 +22,7 @@ function ReatilerRoute() {
            <Route path="/registration-status" element={<RegistrationStatus />} />
            <Route path='/products' element={<ProductListing/>} />
            <Route path='/products/:productId' element={<RetailerProductDetailPage />} />
+           <Route path='/products/edit/:productId' element={<EditProduct />} />
         </Route>
         <Route element={<ReatilerPublicRoute />}>
           <Route path="/sign-up" element={<ReatilerSignUp />} />

@@ -52,4 +52,14 @@ router.get(
   (req: Request, res: Response, next: NextFunction) => ProductController.getProductDetails(req, res, next)
 );
 
+router.put(
+  '/edit-product/:productId',
+  verifyToken,
+  upload.array('newImages', 3), //
+  (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(ProductController.updateProduct(req, res, next)).catch(next);
+  }
+);
+
+
 export default router;

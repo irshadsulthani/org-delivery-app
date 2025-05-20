@@ -31,3 +31,15 @@ export const uploadProductImageToCloudinary = async (file: Express.Multer.File):
     stream.end(file.buffer);
   });
 };
+
+export const deleteImageFromCloudinary = async (publicId: string): Promise<void> => {
+  try {
+    const result = await cloudinary.uploader.destroy(publicId);
+    if (result.result !== 'ok') {
+      throw new Error(`Failed to delete image with public ID: ${publicId}`);
+    }
+  } catch (error) {
+    console.error(`Error deleting image from Cloudinary: ${publicId}`, error);
+    throw error;
+  }
+};
