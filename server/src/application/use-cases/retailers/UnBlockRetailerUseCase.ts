@@ -5,8 +5,8 @@ import { IUnBlockRetailerUseCase } from "./interface/IUnBlockRetailerUseCase";
 
 export class UnBlockRetailerUseCase implements IUnBlockRetailerUseCase {
     constructor(
-        private readonly userRepo: IUserRepository,
-        private readonly retailerRepo: IRetailersRepository
+        private readonly _userRepo: IUserRepository,
+        private readonly _retailerRepo: IRetailersRepository
     ) {}
 
     async execute(retailerId: string): Promise<void> {
@@ -14,11 +14,11 @@ export class UnBlockRetailerUseCase implements IUnBlockRetailerUseCase {
             throw new Error('Invalid retailer ID');
         }
 
-        const retailer = await this.retailerRepo.findByUserId(retailerId);
+        const retailer = await this._retailerRepo.findByUserId(retailerId);
         if (!retailer) {
             throw new Error(`Retailer with ID ${retailerId} not found`);
         }
 
-        await this.userRepo.unblockUser(retailer.userId._id.toString());
+        await this._userRepo.unblockUser(retailer.userId._id.toString());
     }
 }

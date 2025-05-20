@@ -1,5 +1,7 @@
 // src/domain/interfaces/repositories/IDeliveryBoyRepository.ts
-import { DeliveryBoy } from "../../entities/DeliveryBoy";
+
+import { DeliveryBoy } from "../../../../domain/entities/DeliveryBoy";
+
 
 export interface IDeliveryBoyRepository {
     create(deliveryBoy: DeliveryBoy): Promise<DeliveryBoy>;

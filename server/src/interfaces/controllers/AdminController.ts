@@ -16,6 +16,8 @@ import { GetRetailerByIdUseCase } from "../../application/use-cases/retailers/Ge
 import { RejectRetailerUseCase } from "../../application/use-cases/retailers/RejectRetailerUseCase";
 import { BlockRetailerUseCase } from "../../application/use-cases/retailers/BlockRetailerUseCase";
 import { UnBlockRetailerUseCase } from "../../application/use-cases/retailers/UnBlockRetailerUseCase";
+import { BlockDeliveryBoyUseCase } from "../../application/use-cases/deliveryBoy/BlockDeliveryBoyUseCase";
+import { UnBlockDeliveryBoyUseCase } from "../../application/use-cases/deliveryBoy/UnBlockDeliveryBoyUseCase";
 
 const userRepo = new UserRepository();
 const deliveryBoyRepo = new DeliveryBoyRepository();
@@ -70,8 +72,36 @@ export class AdminController {
     }
   };
 
-  static blockDelveryBoy = async (req: Request, res: Response) => {};
-  static UnblockDelveryBoy = async (req: Request, res: Response) => {};
+  static blockDelveryBoy = async (req: Request, res: Response) => {
+    try {
+      const { deliveryBoyId } = req.params;
+      
+      const useCase = new BlockDeliveryBoyUseCase(userRepo, deliveryBoyRepo)
+      await useCase.execute(deliveryBoyId)
+
+      res.status(StatusCode.OK).json({
+        message:'Delivery Boy Blocked Success'
+      })
+    } catch (error:any) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        message: error.message || 'Failed to block Delivery Boy'
+      })
+    }
+  };
+  static UnblockDelveryBoy = async (req: Request, res: Response) => {
+    try {
+      const { deliveryBoyId } = req.params;
+      const useCase = new UnBlockDeliveryBoyUseCase(userRepo, deliveryBoyRepo)
+      await useCase.execute(deliveryBoyId)
+      res.status(StatusCode.OK).json({
+        message:'Delivery Boy Un Blocked Success'
+      })
+    } catch (error:any) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        message: error.message || 'Failed to un block Delivery Boy'
+      })
+    }
+  };
 
   static getAllRetailers = async (req: Request, res: Response) => {
     try {
@@ -251,8 +281,6 @@ export class AdminController {
   static unblockRetailer = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      console.log("its here in unblock", id);
-
       const useCase = new UnBlockRetailerUseCase(userRepo, retailerRepo);
       await useCase.execute(id);
 

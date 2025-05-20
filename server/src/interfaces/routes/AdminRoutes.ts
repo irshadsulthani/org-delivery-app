@@ -20,5 +20,7 @@ router.put("/retailer/reject/:id", AdminController.rejectRetailer);
 router.get('/retailer/:id',  AdminController.getRetailerById)
 router.patch('/retailer/:id/block', AdminController.blockRetailer)
 router.patch('/retailer/:id/unblock', AdminController.unblockRetailer)
+router.patch('/deliveryboy/:deliveryBoyId/block', AdminController.blockDelveryBoy)
+router.patch('/deliveryboy/:deliveryBoyId/unblock', AdminController.UnblockDelveryBoy)
 
 export default router;

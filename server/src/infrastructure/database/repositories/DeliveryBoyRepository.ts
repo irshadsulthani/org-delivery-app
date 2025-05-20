@@ -13,7 +13,7 @@ export class DeliveryBoyRepository implements IDeliveryBoyRepository {
     }
   
     async findByUserId(userId: string): Promise<DeliveryBoy | null> {
-      const deliveryBoy = await DeliveryBoyModel.findOne({ userId }).populate('userId');
+      const deliveryBoy = await DeliveryBoyModel.findOne({ userId }).populate('userId')
       return deliveryBoy ? { ...deliveryBoy.toObject(), _id: deliveryBoy._id.toString() } : null;
     }
   
@@ -43,8 +43,6 @@ export class DeliveryBoyRepository implements IDeliveryBoyRepository {
 
     async findById(id: string): Promise<DeliveryBoy | null> {
       const deliveryBoy = await DeliveryBoyModel.findById(id).populate('userId');
-      console.log('find user id', deliveryBoy);
-      
       return deliveryBoy ? { ...deliveryBoy.toObject(), _id: deliveryBoy._id.toString() } : null;
     }
 }

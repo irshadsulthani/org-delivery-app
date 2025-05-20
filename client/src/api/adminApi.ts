@@ -40,13 +40,13 @@ export const getAllRetailers = async () => {
     return response;
 };
 
-export const blockDeliveryBoy = async (id: string) => {
-    const response = await privateApi('patch', `/admin/deliveryboy/${id}/block`);
+export const blockDeliveryBoy = async (deliveryBoyId: string) => {
+    const response = await privateApi('patch', `/admin/deliveryboy/${deliveryBoyId}/block`);
     return response;
 };
 
-export const unblockDeliveryBoy = async (id: string) => {
-    const response = await privateApi('patch', `/admin/deliveryboy/${id}/unblock`);
+export const unblockDeliveryBoy = async (deliveryBoyId: string) => {
+    const response = await privateApi('patch', `/admin/deliveryboy/${deliveryBoyId}/unblock`);
     return response;
 };
 
@@ -56,9 +56,9 @@ export const getPendingDeliveryBoys = async () => {
 };
 
 
-export const approveDeliveryBoy = async (id: string): Promise<void> => {
+export const approveDeliveryBoy = async (deliveryBoyId: string): Promise<void> => {
   try {
-    await privateApi('put',`/admin/deliveryboy/${id}/approve`);
+    await privateApi('put',`/admin/deliveryboy/${deliveryBoyId}/approve`);
   } catch (error) {
     console.error('Error approving delivery boy:', error);
     throw error;

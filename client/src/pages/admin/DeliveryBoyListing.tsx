@@ -832,7 +832,7 @@ const DeliveryBoyListing = () => {
                                   {person.isBlocked ? (
                                     <button
                                       className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-100 w-full"
-                                      onClick={() => handleUnblock(person.userId)}
+                                      onClick={() => handleUnblock(person._id)}
                                     >
                                       <Shield size={16} className="mr-2" />
                                       Unblock

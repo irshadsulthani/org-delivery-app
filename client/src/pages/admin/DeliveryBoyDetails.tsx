@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  User, 
-  Phone, 
-  Mail, 
-  Truck, 
-  FileText, 
+import {
+  User,
+  Phone,
+  Mail,
+  Truck,
+  FileText,
   ArrowLeft,
   CheckCircle,
   XCircle,
@@ -20,12 +20,18 @@ import {
   MessageCircle,
   FileImage,
   File,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
-import { getDeliveryBoyById, approveDeliveryBoy, rejectDeliveryBoy } from "../../api/adminApi";
-import AdminHeader from "../../components/Admin/AdminHeader";
-import AdminSidebar from "../../components/Admin/AdminSidebar";
+import {
+  getDeliveryBoyById,
+  approveDeliveryBoy,
+  rejectDeliveryBoy,
+  blockDeliveryBoy,
+  unblockDeliveryBoy,
+} from "../../api/adminApi";
 import { toast } from "react-toastify";
+import AdminSidebar from "../../components/Admin/AdminSidebar";
+import AdminHeader from "../../components/Admin/AdminHeader";
 
 // Add skeleton loading component for better UX
 const SkeletonLoader = () => (
@@ -70,6 +76,7 @@ function DeliveryBoyDetailsPage() {
   const navigate = useNavigate();
   interface DeliveryBoy {
     userId: {
+      _id:string;
       name: string;
       email: string;
       isBlocked: boolean;
@@ -102,13 +109,35 @@ function DeliveryBoyDetailsPage() {
   const [collapsed, setCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
 
+const handleBlock = async (id: string) => {
+  try {
+    await blockDeliveryBoy(id);
+    toast.success("Delivery boy blocked successfully");
+    window.location.reload(); // Reload the page after success
+  } catch (error) {
+    toast.error("Failed to block delivery boy");
+  }
+};
+
+const handleUnblock = async (id: string) => {
+  try {
+    await unblockDeliveryBoy(id);
+    toast.success("Delivery boy unblocked successfully");
+    window.location.reload(); // Reload the page after success
+  } catch (error) {
+    toast.error("Failed to unblock delivery boy");
+  }
+};
+
   useEffect(() => {
     const fetchDeliveryBoyDetails = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         const data = await getDeliveryBoyById(id);
+        console.log("data", data);
+
         setDeliveryBoy(data);
         setError(null);
       } catch (err) {
@@ -128,15 +157,15 @@ function DeliveryBoyDetailsPage() {
 
   const handleApprove = async () => {
     if (!id) return;
-    
+
     try {
       setProcessingAction(true);
       await approveDeliveryBoy(id);
-      
+
       // Refresh data after approval
       const data = await getDeliveryBoyById(id);
       setDeliveryBoy(data);
-      
+
       toast.success("Delivery boy approved successfully");
     } catch (err) {
       console.error("Error approving delivery boy:", err);
@@ -148,15 +177,15 @@ function DeliveryBoyDetailsPage() {
 
   const handleReject = async () => {
     if (!id) return;
-    
+
     try {
       setProcessingAction(true);
       await rejectDeliveryBoy(id);
-      
+
       // Refresh data after rejection
       const data = await getDeliveryBoyById(id);
       setDeliveryBoy(data);
-      
+
       toast.success("Delivery boy rejected");
     } catch (err) {
       console.error("Error rejecting delivery boy:", err);
@@ -168,21 +197,21 @@ function DeliveryBoyDetailsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'approved':
+      case "approved":
         return (
           <span className="flex items-center text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-medium">
             <CheckCircle size={16} className="mr-1" />
             Approved
           </span>
         );
-      case 'rejected':
+      case "rejected":
         return (
           <span className="flex items-center text-red-700 bg-red-100 px-3 py-1 rounded-full text-sm font-medium">
             <XCircle size={16} className="mr-1" />
             Rejected
           </span>
         );
-      case 'pending':
+      case "pending":
       default:
         return (
           <span className="flex items-center text-yellow-700 bg-yellow-100 px-3 py-1 rounded-full text-sm font-medium">
@@ -196,10 +225,10 @@ function DeliveryBoyDetailsPage() {
   const formatDate = (dateString: string | number | Date | undefined) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -211,7 +240,10 @@ function DeliveryBoyDetailsPage() {
           <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         </div>
         <div className="flex-1">
-          <AdminHeader toggleMobileSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+          <AdminHeader
+            toggleMobileSidebar={toggleSidebar}
+            isSidebarOpen={isSidebarOpen}
+          />
           <div className="max-w-4xl mx-auto py-8 px-4">
             <div className="bg-white rounded-lg shadow-md p-8 text-center">
               <XCircle size={48} className="mx-auto text-red-500 mb-4" />
@@ -222,7 +254,7 @@ function DeliveryBoyDetailsPage() {
                 We couldn't find the delivery boy details you're looking for.
               </p>
               <button
-                onClick={() => navigate('/admin/delivery-boys')}
+                onClick={() => navigate("/admin/delivery-boys")}
                 className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Go Back to List
@@ -242,7 +274,10 @@ function DeliveryBoyDetailsPage() {
           <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         </div>
         <div className="flex-1">
-          <AdminHeader toggleMobileSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+          <AdminHeader
+            toggleMobileSidebar={toggleSidebar}
+            isSidebarOpen={isSidebarOpen}
+          />
           <SkeletonLoader />
         </div>
       </div>
@@ -257,7 +292,10 @@ function DeliveryBoyDetailsPage() {
           <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
         </div>
         <div className="flex-1">
-          <AdminHeader toggleMobileSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+          <AdminHeader
+            toggleMobileSidebar={toggleSidebar}
+            isSidebarOpen={isSidebarOpen}
+          />
           <div className="max-w-4xl mx-auto py-8 px-4">
             <div className="bg-white rounded-lg shadow-md p-8 text-center">
               <XCircle size={48} className="mx-auto text-red-500 mb-4" />
@@ -268,7 +306,7 @@ function DeliveryBoyDetailsPage() {
                 We couldn't find the delivery boy details you're looking for.
               </p>
               <button
-                onClick={() => navigate('/admin/delivery-boys')}
+                onClick={() => navigate("/admin/delivery-boys")}
                 className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 Go Back to List
@@ -286,14 +324,17 @@ function DeliveryBoyDetailsPage() {
         <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
       </div>
       <div className="flex-1">
-        <AdminHeader toggleMobileSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-        
+        <AdminHeader
+          toggleMobileSidebar={toggleSidebar}
+          isSidebarOpen={isSidebarOpen}
+        />
+
         {/* Mobile sidebar */}
         {isSidebarOpen && (
           <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50">
             <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl transition-transform">
               <AdminSidebar collapsed={false} setCollapsed={() => {}} />
-              <button 
+              <button
                 onClick={toggleSidebar}
                 className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
               >
@@ -302,25 +343,25 @@ function DeliveryBoyDetailsPage() {
             </div>
           </div>
         )}
-        
+
         <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6">
           {/* Back button and action buttons */}
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <button
-              onClick={() => navigate('/admin/delivery-boys')}
+              onClick={() => navigate("/admin/delivery-boys")}
               className="flex items-center text-indigo-600 hover:text-indigo-800 transition-colors font-medium"
             >
               <ArrowLeft size={18} className="mr-1" />
               Back to Delivery Boys
             </button>
-            
-            {deliveryBoy.verificationStatus === 'pending' && (
+
+            {deliveryBoy.verificationStatus === "pending" && (
               <div className="flex space-x-3">
                 <button
                   onClick={handleApprove}
                   disabled={processingAction}
                   className={`bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
-                    processingAction ? 'opacity-70 cursor-not-allowed' : ''
+                    processingAction ? "opacity-70 cursor-not-allowed" : ""
                   } focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2`}
                 >
                   {processingAction ? (
@@ -334,7 +375,7 @@ function DeliveryBoyDetailsPage() {
                   onClick={handleReject}
                   disabled={processingAction}
                   className={`bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md shadow-sm transition-colors flex items-center justify-center min-w-28 ${
-                    processingAction ? 'opacity-70 cursor-not-allowed' : ''
+                    processingAction ? "opacity-70 cursor-not-allowed" : ""
                   } focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2`}
                 >
                   {processingAction ? (
@@ -360,7 +401,8 @@ function DeliveryBoyDetailsPage() {
                       alt={deliveryBoy.userId.name}
                       className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100';
+                        (e.target as HTMLImageElement).src =
+                          "https://via.placeholder.com/100";
                       }}
                     />
                   ) : (
@@ -371,7 +413,9 @@ function DeliveryBoyDetailsPage() {
                 </div>
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
-                    <h1 className="text-2xl font-bold text-white">{deliveryBoy.userId.name}</h1>
+                    <h1 className="text-2xl font-bold text-white">
+                      {deliveryBoy.userId.name}
+                    </h1>
                     {getStatusBadge(deliveryBoy.verificationStatus)}
                   </div>
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-indigo-100">
@@ -388,21 +432,25 @@ function DeliveryBoyDetailsPage() {
                       <span>Joined {formatDate(deliveryBoy.createdAt)}</span>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                      deliveryBoy.currentlyAvailable 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {deliveryBoy.currentlyAvailable ? 'Available Now' : 'Unavailable'}
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        deliveryBoy.currentlyAvailable
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {deliveryBoy.currentlyAvailable
+                        ? "Available Now"
+                        : "Unavailable"}
                     </span>
-                    
+
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white text-indigo-800">
                       <Truck className="mr-1" size={12} />
                       {deliveryBoy.vehicleType}
                     </span>
-                    
+
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white text-blue-800">
                       <ClipboardCheck className="mr-1" size={12} />
                       {deliveryBoy.totalDeliveredOrders} Deliveries
@@ -425,10 +473,23 @@ function DeliveryBoyDetailsPage() {
               </div>
               <div className="p-5 border-r border-gray-200 flex flex-col items-center justify-center">
                 <div className="flex items-center justify-center mb-2 h-10 w-10 rounded-full bg-indigo-100">
-                  <Shield size={20} className={deliveryBoy.userId.isBlocked ? "text-red-600" : "text-green-600"} />
+                  <Shield
+                    size={20}
+                    className={
+                      deliveryBoy.userId.isBlocked
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }
+                  />
                 </div>
                 <p className="text-sm text-gray-500 text-center">Status</p>
-                <p className={`text-xl font-bold ${deliveryBoy.userId.isBlocked ? "text-red-600" : "text-green-600"}`}>
+                <p
+                  className={`text-xl font-bold ${
+                    deliveryBoy.userId.isBlocked
+                      ? "text-red-600"
+                      : "text-green-600"
+                  }`}
+                >
                   {deliveryBoy.userId.isBlocked ? "Blocked" : "Active"}
                 </p>
               </div>
@@ -441,7 +502,10 @@ function DeliveryBoyDetailsPage() {
                   {deliveryBoy.reviews && deliveryBoy.reviews.length > 0 ? (
                     <>
                       <p className="text-2xl font-bold text-gray-800">4.2</p>
-                      <Star size={18} className="ml-1 text-yellow-500 fill-yellow-500" />
+                      <Star
+                        size={18}
+                        className="ml-1 text-yellow-500 fill-yellow-500"
+                      />
                       <span className="ml-1 text-sm font-normal text-gray-500">
                         ({deliveryBoy.reviews.length})
                       </span>
@@ -459,8 +523,8 @@ function DeliveryBoyDetailsPage() {
                 <button
                   onClick={() => setActiveTab("personal")}
                   className={`px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap ${
-                    activeTab === "personal" 
-                      ? "border-indigo-600 text-indigo-600" 
+                    activeTab === "personal"
+                      ? "border-indigo-600 text-indigo-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -469,8 +533,8 @@ function DeliveryBoyDetailsPage() {
                 <button
                   onClick={() => setActiveTab("vehicle")}
                   className={`px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap ${
-                    activeTab === "vehicle" 
-                      ? "border-indigo-600 text-indigo-600" 
+                    activeTab === "vehicle"
+                      ? "border-indigo-600 text-indigo-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -479,8 +543,8 @@ function DeliveryBoyDetailsPage() {
                 <button
                   onClick={() => setActiveTab("documents")}
                   className={`px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap ${
-                    activeTab === "documents" 
-                      ? "border-indigo-600 text-indigo-600" 
+                    activeTab === "documents"
+                      ? "border-indigo-600 text-indigo-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -489,8 +553,8 @@ function DeliveryBoyDetailsPage() {
                 <button
                   onClick={() => setActiveTab("reviews")}
                   className={`px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap ${
-                    activeTab === "reviews" 
-                      ? "border-indigo-600 text-indigo-600" 
+                    activeTab === "reviews"
+                      ? "border-indigo-600 text-indigo-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
                 >
@@ -508,47 +572,82 @@ function DeliveryBoyDetailsPage() {
                       <div className="flex items-start">
                         <User size={20} className="mr-3 text-indigo-600 mt-1" />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Full Name</p>
-                          <p className="font-medium text-gray-900">{deliveryBoy.userId.name}</p>
+                          <p className="text-sm font-medium text-gray-500">
+                            Full Name
+                          </p>
+                          <p className="font-medium text-gray-900">
+                            {deliveryBoy.userId.name}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start">
                         <Mail size={20} className="mr-3 text-indigo-600 mt-1" />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Email Address</p>
-                          <p className="font-medium text-gray-900">{deliveryBoy.userId.email}</p>
+                          <p className="text-sm font-medium text-gray-500">
+                            Email Address
+                          </p>
+                          <p className="font-medium text-gray-900">
+                            {deliveryBoy.userId.email}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <Phone size={20} className="mr-3 text-indigo-600 mt-1" />
+                        <Phone
+                          size={20}
+                          className="mr-3 text-indigo-600 mt-1"
+                        />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Phone Number</p>
-                          <p className="font-medium text-gray-900">{deliveryBoy.phone}</p>
+                          <p className="text-sm font-medium text-gray-500">
+                            Phone Number
+                          </p>
+                          <p className="font-medium text-gray-900">
+                            {deliveryBoy.phone}
+                          </p>
                         </div>
                       </div>
                     </div>
                     <div className="space-y-4">
                       <div className="flex items-start">
-                        <CalendarIcon size={20} className="mr-3 text-indigo-600 mt-1" />
+                        <CalendarIcon
+                          size={20}
+                          className="mr-3 text-indigo-600 mt-1"
+                        />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Date of Birth</p>
-                          <p className="font-medium text-gray-900">{formatDate(deliveryBoy.dob)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start">
-                        <FileText size={20} className="mr-3 text-indigo-600 mt-1" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-500">Address</p>
+                          <p className="text-sm font-medium text-gray-500">
+                            Date of Birth
+                          </p>
                           <p className="font-medium text-gray-900">
-                            {deliveryBoy.address}, {deliveryBoy.city}, {deliveryBoy.state} - {deliveryBoy.zipCode}
+                            {formatDate(deliveryBoy.dob)}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <CalendarIcon size={20} className="mr-3 text-indigo-600 mt-1" />
+                        <FileText
+                          size={20}
+                          className="mr-3 text-indigo-600 mt-1"
+                        />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Account Created</p>
-                          <p className="font-medium text-gray-900">{formatDate(deliveryBoy.createdAt)}</p>
+                          <p className="text-sm font-medium text-gray-500">
+                            Address
+                          </p>
+                          <p className="font-medium text-gray-900">
+                            {deliveryBoy.address}, {deliveryBoy.city},{" "}
+                            {deliveryBoy.state} - {deliveryBoy.zipCode}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start">
+                        <CalendarIcon
+                          size={20}
+                          className="mr-3 text-indigo-600 mt-1"
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-500">
+                            Account Created
+                          </p>
+                          <p className="font-medium text-gray-900">
+                            {formatDate(deliveryBoy.createdAt)}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -561,33 +660,65 @@ function DeliveryBoyDetailsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div className="flex items-start">
-                        <Truck size={20} className="mr-3 text-indigo-600 mt-1" />
+                        <Truck
+                          size={20}
+                          className="mr-3 text-indigo-600 mt-1"
+                        />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Vehicle Type</p>
-                          <p className="font-medium text-gray-900 capitalize">{deliveryBoy.vehicleType || "Not provided"}</p>
+                          <p className="text-sm font-medium text-gray-500">
+                            Vehicle Type
+                          </p>
+                          <p className="font-medium text-gray-900 capitalize">
+                            {deliveryBoy.vehicleType || "Not provided"}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <FileText size={20} className="mr-3 text-indigo-600 mt-1" />
+                        <FileText
+                          size={20}
+                          className="mr-3 text-indigo-600 mt-1"
+                        />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Vehicle Number</p>
-                          <p className="font-medium text-gray-900">{deliveryBoy.vehicleNumber || "Not provided"}</p>
+                          <p className="text-sm font-medium text-gray-500">
+                            Vehicle Number
+                          </p>
+                          <p className="font-medium text-gray-900">
+                            {deliveryBoy.vehicleNumber || "Not provided"}
+                          </p>
                         </div>
                       </div>
                     </div>
                     <div className="space-y-4">
                       <div className="flex items-start">
-                        <Shield size={20} className="mr-3 text-indigo-600 mt-1" />
+                        <Shield
+                          size={20}
+                          className="mr-3 text-indigo-600 mt-1"
+                        />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Driving License Number</p>
-                          <p className="font-medium text-gray-900">{deliveryBoy.dlNumber || "Not provided"}</p>
+                          <p className="text-sm font-medium text-gray-500">
+                            Driving License Number
+                          </p>
+                          <p className="font-medium text-gray-900">
+                            {deliveryBoy.dlNumber || "Not provided"}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <CheckCircle2 size={20} className="mr-3 text-indigo-600 mt-1" />
+                        <CheckCircle2
+                          size={20}
+                          className="mr-3 text-indigo-600 mt-1"
+                        />
                         <div>
-                          <p className="text-sm font-medium text-gray-500">Currently Available</p>
-                          <p className={`font-medium ${deliveryBoy.currentlyAvailable ? "text-green-600" : "text-gray-900"}`}>
+                          <p className="text-sm font-medium text-gray-500">
+                            Currently Available
+                          </p>
+                          <p
+                            className={`font-medium ${
+                              deliveryBoy.currentlyAvailable
+                                ? "text-green-600"
+                                : "text-gray-900"
+                            }`}
+                          >
                             {deliveryBoy.currentlyAvailable ? "Yes" : "No"}
                           </p>
                         </div>
@@ -612,18 +743,19 @@ function DeliveryBoyDetailsPage() {
                         {deliveryBoy.profileImageUrl ? (
                           <div className="flex flex-col items-center">
                             <div className="w-full h-64 bg-gray-100 rounded-md overflow-hidden mb-3">
-                              <img 
-                                src={deliveryBoy.profileImageUrl} 
-                                alt="Profile" 
+                              <img
+                                src={deliveryBoy.profileImageUrl}
+                                alt="Profile"
                                 className="w-full h-full object-contain"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400';
+                                  (e.target as HTMLImageElement).src =
+                                    "https://via.placeholder.com/400";
                                 }}
                               />
                             </div>
-                            <a 
-                              href={deliveryBoy.profileImageUrl} 
-                              target="_blank" 
+                            <a
+                              href={deliveryBoy.profileImageUrl}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
                             >
@@ -633,8 +765,13 @@ function DeliveryBoyDetailsPage() {
                           </div>
                         ) : (
                           <div className="w-full h-64 bg-gray-100 rounded-md flex flex-col items-center justify-center">
-                            <AlertCircle size={32} className="text-gray-400 mb-2" />
-                            <p className="text-gray-500 text-sm">No profile image provided</p>
+                            <AlertCircle
+                              size={32}
+                              className="text-gray-400 mb-2"
+                            />
+                            <p className="text-gray-500 text-sm">
+                              No profile image provided
+                            </p>
                           </div>
                         )}
                       </div>
@@ -652,18 +789,19 @@ function DeliveryBoyDetailsPage() {
                         {deliveryBoy.verificationImageUrl ? (
                           <div className="flex flex-col items-center">
                             <div className="w-full h-64 bg-gray-100 rounded-md overflow-hidden mb-3">
-                              <img 
-                                src={deliveryBoy.verificationImageUrl} 
-                                alt="Verification Document" 
+                              <img
+                                src={deliveryBoy.verificationImageUrl}
+                                alt="Verification Document"
                                 className="w-full h-full object-contain"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400';
+                                  (e.target as HTMLImageElement).src =
+                                    "https://via.placeholder.com/400";
                                 }}
                               />
                             </div>
-                            <a 
-                              href={deliveryBoy.verificationImageUrl} 
-                              target="_blank" 
+                            <a
+                              href={deliveryBoy.verificationImageUrl}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center"
                             >
@@ -673,8 +811,13 @@ function DeliveryBoyDetailsPage() {
                           </div>
                         ) : (
                           <div className="w-full h-64 bg-gray-100 rounded-md flex flex-col items-center justify-center">
-                            <AlertCircle size={32} className="text-gray-400 mb-2" />
-                            <p className="text-gray-500 text-sm">No verification document provided</p>
+                            <AlertCircle
+                              size={32}
+                              className="text-gray-400 mb-2"
+                            />
+                            <p className="text-gray-500 text-sm">
+                              No verification document provided
+                            </p>
                           </div>
                         )}
                       </div>
@@ -692,10 +835,14 @@ function DeliveryBoyDetailsPage() {
                         <div className="flex items-center mb-2">
                           <div className="flex">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <Star 
-                                key={star} 
-                                size={16} 
-                                className={star <= 5 ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}
+                              <Star
+                                key={star}
+                                size={16}
+                                className={
+                                  star <= 5
+                                    ? "text-yellow-500 fill-yellow-500"
+                                    : "text-gray-300"
+                                }
                               />
                             ))}
                           </div>
@@ -704,17 +851,22 @@ function DeliveryBoyDetailsPage() {
                           </span>
                         </div>
                         <p className="text-gray-800">
-                          Great delivery service. Always on time and very professional.
+                          Great delivery service. Always on time and very
+                          professional.
                         </p>
                       </div>
                       <div className="p-4 border border-gray-200 rounded-lg">
                         <div className="flex items-center mb-2">
                           <div className="flex">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <Star 
-                                key={star} 
-                                size={16} 
-                                className={star <= 4 ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}
+                              <Star
+                                key={star}
+                                size={16}
+                                className={
+                                  star <= 4
+                                    ? "text-yellow-500 fill-yellow-500"
+                                    : "text-gray-300"
+                                }
                               />
                             ))}
                           </div>
@@ -729,8 +881,13 @@ function DeliveryBoyDetailsPage() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <MessageCircle size={32} className="mx-auto text-gray-400 mb-2" />
-                      <p className="text-gray-500">No reviews available for this delivery boy yet.</p>
+                      <MessageCircle
+                        size={32}
+                        className="mx-auto text-gray-400 mb-2"
+                      />
+                      <p className="text-gray-500">
+                        No reviews available for this delivery boy yet.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -745,20 +902,29 @@ function DeliveryBoyDetailsPage() {
               Admin Actions
             </h2>
             <div className="flex flex-wrap gap-3">
-              <button 
+              <button
                 className={`px-4 py-2 rounded-md transition-colors flex items-center shadow-sm focus:outline-none focus:ring-2 ${
-                  deliveryBoy.userId.isBlocked 
-                    ? "bg-green-500 hover:bg-green-600 text-white focus:ring-green-500" 
+                  deliveryBoy.userId.isBlocked
+                    ? "bg-green-500 hover:bg-green-600 text-white focus:ring-green-500"
                     : "bg-red-500 hover:bg-red-600 text-white focus:ring-red-500"
                 } focus:ring-offset-2`}
+                onClick={() =>
+                  deliveryBoy.userId.isBlocked
+                    ? handleUnblock(deliveryBoy.userId._id)
+                    : handleBlock(deliveryBoy.userId._id)
+                }
               >
                 <BanIcon size={16} className="mr-2" />
-                {deliveryBoy.userId.isBlocked ? "Unblock Account" : "Block Account"}
+                {deliveryBoy.userId.isBlocked
+                  ? "Unblock Account"
+                  : "Block Account"}
               </button>
-              
-              <button 
+
+              <button
                 className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-md transition-colors flex items-center shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-                onClick={() => navigate(`/admin/delivery-boy/${id}/orders`)}
+                onClick={() =>
+                  navigate(`/admin/delivery-boy/${deliveryBoy.userId}/orders`)
+                }
               >
                 <Package size={16} className="mr-2" />
                 View Deliveries
