@@ -23,8 +23,8 @@ import {
   AlertCircle
 } from "lucide-react";
 import { getDeliveryBoyById, approveDeliveryBoy, rejectDeliveryBoy } from "../../api/adminApi";
-import AdminHeader from "../../components/AdminComponents/AdminHeader";
-import AdminSidebar from "../../components/AdminComponents/AdminSidebar";
+import AdminHeader from "../../components/Admin/AdminHeader";
+import AdminSidebar from "../../components/Admin/AdminSidebar";
 import { toast } from "react-toastify";
 
 // Add skeleton loading component for better UX

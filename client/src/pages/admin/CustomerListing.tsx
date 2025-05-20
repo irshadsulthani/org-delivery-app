@@ -23,10 +23,10 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import AdminHeader from '../../components/AdminComponents/AdminHeader';
+import AdminHeader from '../../components/Admin/AdminHeader';
 import { getAllCustomers } from '../../api/adminApi';
 import { useDispatch } from 'react-redux';
-import AdminSidebar from '../../components/AdminComponents/AdminSidebar';
+import AdminSidebar from '../../components/Admin/AdminSidebar';
 
 // TypeScript interfaces
 interface Customer {

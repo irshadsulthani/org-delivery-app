@@ -15,7 +15,7 @@ import {
   AlertCircle,
   Truck
 } from 'lucide-react';
-import DeliveryBoySideBar from '../../components/DeliveryBoyComponents/DeliveryBoySideBar';
+import DeliveryBoySideBar from '../../components/DeliveryBoy/DeliveryBoySideBar';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../app/store';
 

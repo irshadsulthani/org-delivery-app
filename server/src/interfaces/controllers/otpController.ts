@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { UserRepository } from '../../infrastructure/database/repositories/UserRepository';
 import { StatusCode } from '../../utils/statusCode';
 import { VerifyOtpAndRegisterUser } from '../../application/use-cases/auth/verifyOtpAndRegisterUser';
-import { VerifyOtpForPasswordReset } from '../../application/use-cases/auth/verifyOtpForPasswordReset';
+import { VerifyOtpForPasswordReset } from '../../application/use-cases/auth/VerifyOtpForPasswordReset';
 import { SendOtpUseCase } from '../../application/use-cases/auth/sendOtpUseCase';
 import { SendOtpForPasswordReset } from '../../application/use-cases/auth/SendOtpForPasswordReset';
 

@@ -32,8 +32,8 @@ import {
   approveRetailer,
   rejectRetailer,
 } from "../../api/adminApi";
-import AdminHeader from "../../components/AdminComponents/AdminHeader";
-import AdminSidebar from "../../components/AdminComponents/AdminSidebar";
+import AdminHeader from "../../components/Admin/AdminHeader";
+import AdminSidebar from "../../components/Admin/AdminSidebar";
 import { toast } from "react-toastify";
 
 // Skeleton loader component

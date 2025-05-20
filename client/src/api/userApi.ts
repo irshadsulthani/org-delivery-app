@@ -56,4 +56,9 @@ export const logoutUser = async () => {
     return response;
 }
 
-  
+export const getProducts = async () => {
+    const response = await publicApi('get', '/user/shop')
+    console.log(response);
+    
+    return response
+}

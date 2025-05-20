@@ -38,3 +38,24 @@ export const getRegistrationStatus = async (email: string) => {
     const response = await privateApi('get', `/retailer/register-status/${email}`)
     return response
 }
+
+export const addProduct = async (formData: FormData) =>{
+    const response = await fileUploadApi('/retailer/add-product/', formData)
+    return response
+}
+
+export const getRetailerProducts = async () => {
+    const response = await privateApi('get', '/retailer/products')
+    return response
+}
+
+export const deleteProduct = async (productId: string) => {
+    const response = privateApi('post', `/retailer/delete-product/${productId}`)
+    return response
+}
+
+export const getProductById = async (productId: string) => {
+    const response = await privateApi('get', `/retailer/detaile-view/${productId}`)
+    console.log('response',response);
+    return response
+}

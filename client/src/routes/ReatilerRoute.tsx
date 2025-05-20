@@ -6,7 +6,10 @@ import ReatilerPublicRoute from "../protectedRoutes/reatiler/ReatilerPublicRoute
 import AddProductPage from "../pages/Reatiler/AddProductPage"
 import RegisterRetailer from "../pages/Reatiler/RegisterRetailer"
 import RetailerProfileCompletion from "../pages/Reatiler/RetailerRegistrationCompletion"
-import RegistrationStatus from "../components/reatilerComponents/RegistrationStatusProps"
+import RegistrationStatus from "../components/Retailer/RegistrationStatusProps"
+import ProductListing from "../pages/Reatiler/ProductListing"
+import RetailerProductDetailPage from "../pages/Reatiler/ProductDeatileView"
+
 
 function ReatilerRoute() {
   return (
@@ -17,6 +20,8 @@ function ReatilerRoute() {
            <Route path="/add-product" element={<AddProductPage />} />
            <Route path="/complete-registration" element={<RetailerProfileCompletion />} />
            <Route path="/registration-status" element={<RegistrationStatus />} />
+           <Route path='/products' element={<ProductListing/>} />
+           <Route path='/products/view/:productId' element={<RetailerProductDetailPage />} />
         </Route>
         <Route element={<ReatilerPublicRoute />}>
           <Route path="/sign-up" element={<ReatilerSignUp />} />

@@ -1,584 +1,467 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Package, 
-  Tag, 
-  DollarSign, 
-  Percent, 
-  FileText, 
-  AlertCircle, 
-  Image as ImageIcon,
-  Save,
-  Plus,
-  X,
-  ArrowLeft,
-  Home,
-  ShoppingBag,
-  Users,
-  BarChart2,
-  Settings,
-  LogOut,
-  Menu,
-  Search
-} from 'lucide-react';
-import RetailerSidebar from '../../components/reatilerComponents/ReatilerSidebar';
-import { To } from 'react-router-dom';
+import { useState, useEffect, FormEvent, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { FiUpload, FiX, FiCheck, FiShoppingBag, FiDollarSign, FiBox, FiTag, FiAlignLeft } from "react-icons/fi";
+import { addProduct } from "../../api/reatilerApi";
+import RetailerSidebar from "../../components/Retailer/ReatilerSidebar";
 
-// Define TypeScript interfaces
-interface ProductFormData {
-  name: string;
-  category: string;
-  price: string;
-  discountPrice: string;
-  quantity: string;
-  description: string;
-  tags: string[];
-}
-
-interface FormErrors {
-  name?: string;
-  category?: string;
-  price?: string;
-  quantity?: string;
-  description?: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-}
-
-// API service for product operations
-const productService = {
-  // Get all categories
-  // getCategories: async (): Promise<Category[]> => {
-  //   try {
-  //     const response = await fetch('/api/categories');
-  //     if (!response.ok) throw new Error('Failed to fetch categories');
-  //     return await response.json();
-  //   } catch (error) {
-  //     console.error('Error fetching categories:', error);
-  //     return [];
-  //   }
-  // },
-
-  // Add new product
-  addProduct: async (productData: FormData): Promise<any> => {
-    try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        body: productData, // Using FormData to handle file uploads
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add product');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error adding product:', error);
-      throw error;
-    }
-  }
-};
-
-const AddProductPage: React.FC = () => {
-  const [formData, setFormData] = useState<ProductFormData>({
-    name: '',
-    category: '',
-    price: '',
-    discountPrice: '',
-    quantity: '',
-    description: '',
-    tags: []
-  });
-  
-  const [images, setImages] = useState<(string | null)[]>([null, null, null, null]);
-  const [imageFiles, setImageFiles] = useState<(File | null)[]>([null, null, null, null]);
-  const [currentTag, setCurrentTag] = useState<string>('');
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [success, setSuccess] = useState<boolean>(false);
+function AddProductPage() {
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
 
-  // Fetch categories on component mount
-  // useEffect(() => {
-  //   const fetchCategories = async () => {
-  //     const categoriesData = await productService.getCategories();
-  //     setCategories(categoriesData.length > 0 ? categoriesData : [
-  //       { id: "1", name: "Fruits" },
-  //       { id: "2", name: "Vegetables" },
-  //       { id: "3", name: "Dairy" },
-  //       { id: "4", name: "Bakery" },
-  //       { id: "5", name: "Meat" },
-  //       { id: "6", name: "Beverages" }
-  //     ]);
-  //   };
-    
-  //   fetchCategories();
-  // }, []);
+  const [product, setProduct] = useState({
+    name: "",
+    category: "",
+    price: 0,
+    quantity: 0,
+    description: "",
+    unit: "kg" as const,
+  });
 
-  // Handle form input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
+  const [images, setImages] = useState<{
+    file: File;
+    preview: string;
+    uploaded?: { url: string; publicId: string };
+  }[]>([]);
 
-  // Handle image selection
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const newImages = [...images];
-      const newImageFiles = [...imageFiles];
-      
-      newImages[index] = URL.createObjectURL(file);
-      newImageFiles[index] = file;
-      
-      setImages(newImages);
-      setImageFiles(newImageFiles);
-    }
-  };
-
-  // Remove an image
-  const removeImage = (index: number) => {
-    const newImages = [...images];
-    const newImageFiles = [...imageFiles];
-    
-    newImages[index] = null;
-    newImageFiles[index] = null;
-    
-    setImages(newImages);
-    setImageFiles(newImageFiles);
-  };
-
-  // Add a tag
-  const addTag = () => {
-    if (currentTag.trim() !== '' && !formData.tags.includes(currentTag.trim())) {
-      setFormData({
-        ...formData,
-        tags: [...formData.tags, currentTag.trim()]
-      });
-      setCurrentTag('');
-    }
-  };
-
-  // Remove a tag
-  const removeTag = (tagToRemove: string) => {
-    setFormData({
-      ...formData,
-      tags: formData.tags.filter(tag => tag !== tagToRemove)
-    });
-  };
-
-  // Validate form
-  const validateForm = (): boolean => {
-    const errors: FormErrors = {};
-    
-    if (!formData.name.trim()) errors.name = "Product name is required";
-    if (!formData.category) errors.category = "Category is required";
-    if (!formData.price) errors.price = "Price is required";
-    if (parseFloat(formData.price) <= 0) errors.price = "Price must be greater than zero";
-    if (!formData.quantity) errors.quantity = "Quantity is required";
-    if (parseInt(formData.quantity) < 0) errors.quantity = "Quantity cannot be negative";
-    if (!formData.description.trim()) errors.description = "Description is required";
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    if (!validateForm()) return;
-    
-    // Create FormData object for API submission
-    const apiFormData = new FormData();
-    
-    // Append text data
-    apiFormData.append('name', formData.name);
-    apiFormData.append('category', formData.category);
-    apiFormData.append('price', formData.price);
-    apiFormData.append('quantity', formData.quantity);
-    apiFormData.append('description', formData.description);
-    
-    if (formData.discountPrice) {
-      apiFormData.append('discountPrice', formData.discountPrice);
-    }
-    
-    // Append tags as JSON string
-    apiFormData.append('tags', JSON.stringify(formData.tags));
-    
-    // Append images
-    imageFiles.forEach((file, index) => {
-      if (file) {
-        apiFormData.append(`image${index + 1}`, file);
-      }
-    });
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Send data to API
-      const response = await productService.addProduct(apiFormData);
-      console.log('Product added successfully:', response);
-      setSuccess(true);
-      
-      // Reset form after success
-      setTimeout(() => {
-        setFormData({
-          name: '',
-          category: '',
-          price: '',
-          discountPrice: '',
-          quantity: '',
-          description: '',
-          tags: []
-        });
-        setImages([null, null, null, null]);
-        setImageFiles([null, null, null, null]);
-        setSuccess(false);
-      }, 3000);
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add product');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Image upload component
-  const ImageUpload: React.FC<{ index: number, image: string | null }> = ({ index, image }) => (
-    <div className="relative border border-dashed border-gray-300 bg-gray-50 rounded-xl overflow-hidden h-36 flex items-center justify-center group">
-      {image ? (
-        <>
-          <img 
-            src={image} 
-            alt={`Product ${index + 1}`} 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <button 
-              type="button"
-              onClick={() => removeImage(index)} 
-              className="bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </>
-      ) : (
-        <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full hover:bg-gray-100 transition-colors">
-          <ImageIcon size={32} className="text-gray-400 mb-2" />
-          <span className="text-sm text-gray-500">Add Image</span>
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            onChange={(e) => handleImageChange(e, index)} 
-          />
-        </label>
-      )}
-      {index === 0 && image && (
-        <div className="absolute top-0 left-0 bg-blue-600 text-white text-xs px-2 py-1">
-          Main
-        </div>
-      )}
-    </div>
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
+    images.length > 0 ? 0 : null
   );
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setProduct((prev) => ({
+      ...prev,
+      [name]: name === "price" || name === "quantity" ? parseFloat(value) || 0 : value,
+    }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newImages = Array.from(e.target.files)
+        .slice(0, 3 - images.length) // Limit to 3 images
+        .map((file) => ({
+          file,
+          preview: URL.createObjectURL(file),
+        }));
+
+      setImages((prev) => [...prev, ...newImages]);
+      
+      // If this is the first image, select it
+      if (images.length === 0 && newImages.length > 0) {
+        setSelectedImageIndex(0);
+      }
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => {
+      const newImages = [...prev];
+      newImages.splice(index, 1);
+      
+      // Adjust selected image index if necessary
+      if (newImages.length === 0) {
+        setSelectedImageIndex(null);
+      } else if (selectedImageIndex === index) {
+        setSelectedImageIndex(0);
+      } else if (selectedImageIndex !== null && selectedImageIndex > index) {
+        setSelectedImageIndex(selectedImageIndex - 1);
+      }
+      
+      return newImages;
+    });
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("name", product.name);
+      formData.append("category", product.category);
+      formData.append("price", product.price.toString());
+      formData.append("quantity", product.quantity.toString());
+      formData.append("description", product.description);
+      formData.append("unit", product.unit);
+
+      // Append all images
+      images.forEach((image) => {
+        formData.append("images", image.file);
+      });
+
+      await addProduct(formData);
+      setSuccess(true);
+      setTimeout(() => navigate("/retailer/products"), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add product");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      // Clean up object URLs
+      images.forEach((image) => URL.revokeObjectURL(image.preview));
+    };
+  }, [images]);
+
+  const tabs = ["Basic Info", "Description", "Images"];
+
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <RetailerSidebar retailerName={''} storeName={''} onNavigate={(path: To) => {
-        console.log('Navigating to:', path);
-      }} activePage={''} />
-        
-        <main className="container mx-auto px-4 py-8">
-          {/* Status alerts */}
-          {success && (
-            <div className="mb-6 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md flex items-center">
-              <span className="mr-2">✓</span>
-              Product added successfully!
-            </div>
-          )}
+    <div className="flex min-h-screen bg-gray-50">
+      <RetailerSidebar collapsed={false} setCollapsed={function (collapsed: boolean): void {
+        throw new Error("Function not implemented.");
+      }} />
+      
+      <div className="flex-1 p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold text-gray-800">Add New Product</h1>
+            <button
+              type="button"
+              onClick={() => navigate("/retailer/products")}
+              className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          </div>
           
           {error && (
-            <div className="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md flex items-center">
-              <AlertCircle size={20} className="mr-2" />
-              {error}
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md flex items-center shadow-sm">
+              <FiX className="mr-3 flex-shrink-0" size={20} />
+              <span>{error}</span>
             </div>
           )}
           
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="px-6 py-8">
-              <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  {/* Left Column - Product Details */}
-                  <div className="space-y-6">
-                    <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 flex items-center">
-                      <Package size={18} className="mr-2 text-blue-600" />
-                      Product Details
-                    </h2>
-                    
-                    {/* Product Name */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Product Name
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Package size={18} className="text-gray-400" />
-                        </div>
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-md flex items-center shadow-sm">
+              <FiCheck className="mr-3 flex-shrink-0" size={20} />
+              <span>Product added successfully! Redirecting...</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+              <div className="flex border-b border-gray-200">
+                {tabs.map((tab, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`px-6 py-4 font-medium text-sm ${
+                      activeTab === index
+                        ? "text-green-600 border-b-2 border-green-500 bg-green-50"
+                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setActiveTab(index)}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-6">
+                {activeTab === 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <div className="mb-5">
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                          <FiShoppingBag className="mr-2" size={16} />
+                          Product Name
+                        </label>
                         <input
                           type="text"
                           name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          className={`w-full pl-10 pr-4 py-2 border ${formErrors.name ? 'border-red-300 ring-1 ring-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                          value={product.name}
+                          onChange={handleInputChange}
                           placeholder="Enter product name"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          required
                         />
                       </div>
-                      {formErrors.name && (
-                        <p className="text-red-500 text-xs mt-1 flex items-center">
-                          <AlertCircle size={14} className="mr-1" /> {formErrors.name}
-                        </p>
-                      )}
-                    </div>
 
-                    {/* Category */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Category
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Tag size={18} className="text-gray-400" />
-                        </div>
-                        <select
-                          name="category"
-                          value={formData.category}
-                          onChange={handleChange}
-                          className={`w-full pl-10 pr-4 py-2 border ${formErrors.category ? 'border-red-300 ring-1 ring-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white`}
-                        >
-                          <option value="">Select a category</option>
-                          {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      {formErrors.category && (
-                        <p className="text-red-500 text-xs mt-1 flex items-center">
-                          <AlertCircle size={14} className="mr-1" /> {formErrors.category}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Price and Discount */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Price
+                      <div className="mb-5">
+                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                          <FiTag className="mr-2" size={16} />
+                          Category
                         </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <DollarSign size={18} className="text-gray-400" />
-                          </div>
-                          <input
-                            type="number"
-                            name="price"
-                            value={formData.price}
-                            onChange={handleChange}
-                            className={`w-full pl-10 pr-4 py-2 border ${formErrors.price ? 'border-red-300 ring-1 ring-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                            placeholder="0.00"
-                            step="0.01"
-                            min="0"
-                          />
-                        </div>
-                        {formErrors.price && (
-                          <p className="text-red-500 text-xs mt-1 flex items-center">
-                            <AlertCircle size={14} className="mr-1" /> {formErrors.price}
-                          </p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Discount Price (Optional)
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Percent size={18} className="text-gray-400" />
-                          </div>
-                          <input
-                            type="number"
-                            name="discountPrice"
-                            value={formData.discountPrice}
-                            onChange={handleChange}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="0.00"
-                            step="0.01"
-                            min="0"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Quantity */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Quantity in Stock
-                      </label>
-                      <input
-                        type="number"
-                        name="quantity"
-                        value={formData.quantity}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-2 border ${formErrors.quantity ? 'border-red-300 ring-1 ring-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                        placeholder="Enter quantity"
-                        min="0"
-                      />
-                      {formErrors.quantity && (
-                        <p className="text-red-500 text-xs mt-1 flex items-center">
-                          <AlertCircle size={14} className="mr-1" /> {formErrors.quantity}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Tags */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Tags (Optional)
-                      </label>
-                      <div className="flex">
                         <input
                           type="text"
-                          value={currentTag}
-                          onChange={(e) => setCurrentTag(e.target.value)}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Add tags"
-                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                          name="category"
+                          value={product.category}
+                          onChange={handleInputChange}
+                          placeholder="Product category"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          required
                         />
-                        <button
-                          type="button"
-                          onClick={addTag}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <Plus size={18} />
-                        </button>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {formData.tags.map((tag, index) => (
-                          <span 
-                            key={index} 
-                            className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm flex items-center"
-                          >
-                            {tag}
-                            <button
-                              type="button"
-                              onClick={() => removeTag(tag)}
-                              className="ml-1 text-blue-600 hover:text-blue-800"
-                            >
-                              <X size={14} />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Right Column - Images and Description */}
-                  <div className="space-y-6">
-                    <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 flex items-center">
-                      <ImageIcon size={18} className="mr-2 text-blue-600" />
-                      Product Images & Description
-                    </h2>
-
-                    {/* Image Upload */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Product Images (Up to 4)
-                      </label>
-                      <div className="grid grid-cols-2 gap-4">
-                        {[0, 1, 2, 3].map((index) => (
-                          <ImageUpload 
-                            key={index} 
-                            index={index} 
-                            image={images[index]} 
-                          />
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1 flex items-center">
-                        <AlertCircle size={14} className="mr-1 text-blue-500" />
-                        First image will be used as the product thumbnail
-                      </p>
-                    </div>
-
-                    {/* Description */}
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Product Description
-                      </label>
-                      <div className="relative">
-                        <div className="absolute top-3 left-3 flex items-start pointer-events-none">
-                          <FileText size={18} className="text-gray-400" />
+                      <div className="grid grid-cols-2 gap-5 mb-5">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                            <FiDollarSign className="mr-2" size={16} />
+                            Price
+                          </label>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                              $
+                            </span>
+                            <input
+                              type="number"
+                              name="price"
+                              min="0"
+                              step="0.01"
+                              value={product.price}
+                              onChange={handleInputChange}
+                              placeholder="0.00"
+                              className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                              required
+                            />
+                          </div>
                         </div>
-                        <textarea
-                          name="description"
-                          value={formData.description}
-                          onChange={handleChange}
-                          rows={6}
-                          className={`w-full pl-10 pr-4 py-2 border ${formErrors.description ? 'border-red-300 ring-1 ring-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                          placeholder="Enter product description..."
-                        />
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                            <FiBox className="mr-2" size={16} />
+                            Quantity
+                          </label>
+                          <input
+                            type="number"
+                            name="quantity"
+                            min="0"
+                            value={product.quantity}
+                            onChange={handleInputChange}
+                            placeholder="0"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            required
+                          />
+                        </div>
                       </div>
-                      {formErrors.description && (
-                        <p className="text-red-500 text-xs mt-1 flex items-center">
-                          <AlertCircle size={14} className="mr-1" /> {formErrors.description}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Unit of Measurement
+                        </label>
+                        <select
+                          name="unit"
+                          value={product.unit}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          required
+                        >
+                          <option value="kg">Kilogram (kg)</option>
+                          <option value="g">Gram (g)</option>
+                          <option value="lb">Pound (lb)</option>
+                          <option value="piece">Piece</option>
+                          <option value="bunch">Bunch</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-center">
+                      <div className="text-center p-8 bg-gray-50 rounded-lg border border-dashed border-gray-300 w-full">
+                        <div className="text-gray-400 mb-3">
+                          <FiShoppingBag size={48} className="mx-auto" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-700 mb-1">
+                          {product.name || "New Product"}
+                        </h3>
+                        <p className="text-gray-500 mb-2">
+                          {product.category || "Category"}
                         </p>
-                      )}
+                        <div className="text-lg font-semibold text-green-600">
+                          ${product.price.toFixed(2)}
+                        </div>
+                        <div className="text-sm text-gray-500 mt-1">
+                          {product.quantity} {product.unit}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
-                {/* Submit Button */}
-                <div className="flex justify-end space-x-4 mt-8 border-t border-gray-200 pt-6">
-                  <button
-                    type="button"
-                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`
-                      px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 
-                      rounded-lg text-white font-medium shadow-md 
-                      flex items-center justify-center min-w-32
-                      ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-700 hover:to-indigo-700'}
-                      transition-all
-                    `}
-                  >
-                    {loading ? (
-                      <span className="inline-block h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    ) : (
-                      <Save size={18} className="mr-2" />
-                    )}
-                    {loading ? 'Saving...' : 'Save Product'}
-                  </button>
+                {activeTab === 1 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                      <FiAlignLeft className="mr-2" size={16} />
+                      Product Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={product.description}
+                      onChange={handleInputChange}
+                      placeholder="Describe your product in detail. Include features, benefits, and any other information customers should know."
+                      rows={8}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                    <div className="mt-3 flex items-center text-sm text-gray-500">
+                      <span>
+                        {product.description.length} characters
+                        {product.description.length < 100 && product.description.length > 0 && (
+                          <span className="text-amber-500 ml-2">
+                            (Consider adding more details)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 2 && (
+                  <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-700 mb-4">Product Images</h3>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="grid grid-cols-3 gap-3 mb-4">
+                            {images.map((image, index) => (
+                              <div 
+                                key={index} 
+                                className={`relative group cursor-pointer ${
+                                  selectedImageIndex === index ? "ring-2 ring-green-500" : ""
+                                }`}
+                                onClick={() => setSelectedImageIndex(index)}
+                              >
+                                <div className="aspect-w-1 aspect-h-1">
+                                  <img
+                                    src={image.preview}
+                                    alt={`Preview ${index + 1}`}
+                                    className="w-full h-24 object-cover rounded-md"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeImage(index);
+                                  }}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <FiX size={14} />
+                                </button>
+                              </div>
+                            ))}
+                            
+                            {images.length < 3 && (
+                              <div
+                                className="border-2 border-dashed border-gray-300 rounded-md flex flex-col items-center justify-center cursor-pointer h-24 hover:bg-gray-100 transition-colors"
+                                onClick={() => fileInputRef.current?.click()}
+                              >
+                                <FiUpload className="text-gray-400 mb-1" size={20} />
+                                <span className="text-xs text-gray-500">Upload</span>
+                                <input
+                                  type="file"
+                                  ref={fileInputRef}
+                                  onChange={handleImageChange}
+                                  className="hidden"
+                                  accept="image/*"
+                                  multiple
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Upload up to 3 high-quality images of your product. First image will be used as the main image.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-700 mb-4">Image Preview</h3>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-center">
+                          {selectedImageIndex !== null && images[selectedImageIndex] ? (
+                            <div className="relative">
+                              <img
+                                src={images[selectedImageIndex].preview}
+                                alt="Selected preview"
+                                className="rounded-lg max-h-72 max-w-full object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-center p-8">
+                              <FiUpload className="text-gray-400 mb-2 mx-auto" size={32} />
+                              <p className="text-gray-500">No images selected</p>
+                              <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="mt-3 px-3 py-1 text-sm text-green-600 border border-green-500 rounded-md hover:bg-green-50"
+                              >
+                                Upload Images
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+                <div className="text-sm text-gray-500">
+                  {activeTab < 2 ? (
+                    <span>All fields marked with * are required</span>
+                  ) : (
+                    <span>At least one product image is required</span>
+                  )}
                 </div>
-              </form>
+                <div className="flex space-x-3">
+                  {activeTab > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab(activeTab - 1)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Previous
+                    </button>
+                  )}
+                  {activeTab < 2 ? (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab(activeTab + 1)}
+                      className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+                    >
+                      Next
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || images.length === 0}
+                      className={`px-5 py-2 rounded-md text-white font-medium ${
+                        isSubmitting || images.length === 0
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-green-600 hover:bg-green-700"
+                      } flex items-center`}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <FiCheck className="mr-2" />
+                          Add Product
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </main>
-
+          </form>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 export default AddProductPage;

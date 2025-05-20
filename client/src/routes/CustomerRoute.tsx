@@ -1,9 +1,10 @@
 import { Route, Routes, useLocation } from "react-router-dom";
 import CustomerSignUp from "../pages/customer/CustomerSignUp";
 import CustomerHome from "../pages/customer/CustomerHome";
-import Navbar from "../components/CustomerComponents/Navbar";
+import Navbar from "../components/Customer/Navbar";
 import UserProtectedRoutes from "../protectedRoutes/user/UserProtectedRoutes";
 import UserPublicRoute from "../protectedRoutes/user/UserPublicRoute";
+import Shop from "../pages/customer/Shop";
 
 function CustomerRoute() {
   const location = useLocation();
@@ -19,7 +20,7 @@ function CustomerRoute() {
       <Routes>
         {/* Always accessible home route */}
         <Route path="/" element={<CustomerHome />} />
-
+        <Route path='/shop' element={<Shop />} />
         {/* Protected routes */}
         <Route element={<UserProtectedRoutes />}>
           {/* Add any additional protected routes here */}

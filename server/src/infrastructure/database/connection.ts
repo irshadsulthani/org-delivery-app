@@ -8,7 +8,7 @@ export const connectDB = async () => {
       if (!config.mongoUri) {
         throw new Error('MongoDB URI is not defined in the configuration');
       }
-      await mongoose.connect(config.mongoUri);
+      await mongoose.connect(config.clusterUri as string);
       console.log('✅ Connected to MongoDB');
     } catch (err) {
       console.error('❌ MongoDB connection error:', err);

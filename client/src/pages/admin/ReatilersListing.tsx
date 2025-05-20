@@ -26,8 +26,8 @@ import {
   Calendar,
   ArrowUpDown,
 } from "lucide-react";
-import AdminSidebar from "../../components/AdminComponents/AdminSidebar";
-import AdminHeader from "../../components/AdminComponents/AdminHeader";
+import AdminSidebar from "../../components/Admin/AdminSidebar";
+import AdminHeader from "../../components/Admin/AdminHeader";
 import { toast } from "react-toastify";
 import { blockRetailer, getAllRetailers, unblockRetailer, updateRetailerStatus } from "../../api/adminApi";
 import { useNavigate } from "react-router-dom";

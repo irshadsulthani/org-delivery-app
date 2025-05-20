@@ -1,9 +1,13 @@
-import express from 'express'
-import multer from 'multer'
+// src/interfaces/routes/RetailerRoute.ts
+import express, { NextFunction, Request, Response } from 'express';
+import multer from 'multer';
 import { RetailerController } from '../controllers/RetailerController';
+import { verifyToken } from '../../infrastructure/middlewares/verifyToken';
+import { checkUserStatus } from '../../infrastructure/middlewares/checkUserStatus';
+import { ProductController } from '../controllers/ProductController';
+import { UserRepository } from '../../infrastructure/database/repositories/UserRepository';
 
-
-const router = express.Router()
+const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -11,6 +15,10 @@ const upload = multer({
     }
 });
 
+// Initialize middleware with repository
+const userStatusCheck = checkUserStatus(new UserRepository());
+
+// Retailer registration routes (public)
 router.post(
     '/register-retailer',
     upload.fields([
@@ -20,8 +28,28 @@ router.post(
     RetailerController.register
 );
 
-router.get('/register-status/:email', RetailerController.getRegisterStatus)
+router.get('/register-status/:email', RetailerController.getRegisterStatus);
 
+router.post(
+  "/add-product",
+  upload.fields([{ name: "images", maxCount: 3 }]),
+  verifyToken,
+  userStatusCheck,
+  (req: Request, res: Response, next: NextFunction) => ProductController.addProduct(req, res, next)
+);
+
+router.get(
+  "/products",
+  verifyToken,
+  userStatusCheck,
+  (req: Request, res: Response, next: NextFunction) => ProductController.getRetailerProducts(req, res, next)
+);
+
+router.get(
+  "/products/:productId",
+  verifyToken,
+  userStatusCheck,
+  (req: Request, res: Response, next: NextFunction) => ProductController.getProductDetails(req, res, next)
+);
 
 export default router;
-  

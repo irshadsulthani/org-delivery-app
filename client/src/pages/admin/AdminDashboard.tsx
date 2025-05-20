@@ -21,8 +21,8 @@ import {
 import { getAllUsers } from '../../api/adminApi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import AdminHeader from '../../components/AdminComponents/AdminHeader';
-import AdminSidebar from '../../components/AdminComponents/AdminSidebar';
+import AdminHeader from '../../components/Admin/AdminHeader';
+import AdminSidebar from '../../components/Admin/AdminSidebar';
 
 // TypeScript interfaces
 interface StatCard {

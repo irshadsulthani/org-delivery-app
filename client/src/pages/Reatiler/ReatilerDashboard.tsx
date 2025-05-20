@@ -16,9 +16,11 @@ import {
   X,
   Store
 } from 'lucide-react';
-import RetailerSidebar from '../../components/reatilerComponents/ReatilerSidebar';
+
 import { getRegistrationStatus } from '../../api/reatilerApi';
-import RegistrationStatus from '../../components/reatilerComponents/RegistrationStatusProps';
+import RegistrationStatus from '../../components/Retailer/RegistrationStatusProps';
+import RetailerSidebar from '../../components/Retailer/ReatilerSidebar';
+
 
 // Dashboard Card Component
 interface DashboardCardProps {
