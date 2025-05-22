@@ -30,8 +30,7 @@ export const getAllCustomers = async () => {
     return response;
 };
 
-// src/api/adminApi.ts
-// api/adminApi.ts
+
 export const getAllDeliveryBoys = async (params: {
     page: number;
     limit: number;
@@ -118,7 +117,90 @@ export const getAllDeliveryBoys = async (params: {
     }
 };
 
-export const getAllRetailers = async () => {
+export const getAllRetailers = async (params: {
+    page: number;
+    limit: number;
+    search?: string;
+    filters?: Record<string, any>;
+    sortField?: string;
+    sortDirection?: 'asc' | 'desc';
+}) => {
+    try {
+        const queryParams = new URLSearchParams();
+        
+        // Add pagination params
+        queryParams.append('page', params.page.toString());
+        queryParams.append('limit', params.limit.toString());
+        
+        // Add search param
+        if (params.search && params.search.trim() !== '') {
+            queryParams.append('search', params.search.trim());
+        }
+        
+        // Add filter params - flatten nested filters
+        if (params.filters && Object.keys(params.filters).length > 0) {
+            Object.entries(params.filters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    // Convert boolean values to strings
+                    const stringValue = typeof value === 'boolean' ? value.toString() : value;
+                    queryParams.append(key, stringValue);
+                }
+            });
+        }
+        
+        // Add sorting params
+        if (params.sortField) {
+            queryParams.append('sortField', params.sortField);
+        }
+        
+        if (params.sortDirection) {
+            queryParams.append('sortDirection', params.sortDirection);
+        }
+
+        console.log('API Call URL:', `/admin/retailers?${queryParams.toString()}`);
+        console.log('API Call Params:', {
+            page: params.page,
+            limit: params.limit,
+            search: params.search,
+            filters: params.filters,
+            sortField: params.sortField,
+            sortDirection: params.sortDirection,
+        });
+
+        const response = await privateApi('get', `/admin/get-allReatilers?${queryParams.toString()}`);
+        
+        if (!response || typeof response !== 'object') {
+            throw new Error('Invalid response format');
+        }
+
+        // Normalize response structure
+        return {
+            success: response.success ?? true,
+            data: response.data || [],
+            total: response.total || 0,
+            page: response.page || params.page,
+            limit: response.limit || params.limit,
+            totalPages: response.totalPages || Math.ceil((response.total || 0) / params.limit),
+            message: response.message || null,
+        };
+        
+    } catch (error: any) {
+        console.error('API Error:', error);
+        
+        // Return a consistent error structure
+        return {
+            success: false,
+            data: [],
+            total: 0,
+            page: params.page,
+            limit: params.limit,
+            totalPages: 0,
+            message: error.message || 'Failed to fetch retailers',
+        };
+    }
+};
+
+export const getAllRetailersLegacy = async () => {
     const response = await privateApi('get', '/admin/get-allReatilers');
     return response;
 };

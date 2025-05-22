@@ -1,5 +1,7 @@
 import { DeliveryBoyListingRequest } from "../../../../domain/dtos/DeliveryBoyListingRequest";
 import { DeliveryBoyResponse } from "../../../../domain/dtos/DeliveryBoyResponse";
+import { RetailerListingRequest } from "../../../../domain/dtos/RetailerListingRequest";
+import { RetailerResponse } from "../../../../domain/dtos/RetailerResponse";
 import { User } from "../../../../domain/entities/User";
 
 
@@ -14,7 +16,10 @@ export interface IUserRepository {
         total: number;
     }>;
 
-    getAllRetailers(): Promise<User[]>
+    getAllRetailersPaginated(params: RetailerListingRequest): Promise<{
+        data:RetailerResponse[];
+        total:number
+    }>
     blockUser(userId: string): Promise<User>;
     unblockUser(userId: string): Promise<User>;
 }

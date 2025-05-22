@@ -18,6 +18,7 @@ import { BlockRetailerUseCase } from "../../application/use-cases/retailers/Bloc
 import { UnBlockRetailerUseCase } from "../../application/use-cases/retailers/UnBlockRetailerUseCase";
 import { BlockDeliveryBoyUseCase } from "../../application/use-cases/deliveryBoy/BlockDeliveryBoyUseCase";
 import { UnBlockDeliveryBoyUseCase } from "../../application/use-cases/deliveryBoy/UnBlockDeliveryBoyUseCase";
+import { RetailerListingRequest } from "../../domain/dtos/RetailerListingRequest";
 
 const userRepo = new UserRepository();
 const deliveryBoyRepo = new DeliveryBoyRepository();
@@ -126,37 +127,31 @@ export class AdminController {
   };
 
   static getAllRetailers = async (req: Request, res: Response) => {
-    try {
-      const useCase = new GetUsers(userRepo);
-      const retailers = await useCase.executeRetailers();
-      const transformedData = retailers.map((retailer: any) => ({
-        _id: retailer._id,
-        userId: retailer.shopId,
-        shopName: retailer.shopName,
-        name: retailer.name,
-        email: retailer.email,
-        phone: retailer.phone || "",
-        status: retailer.isBlocked ? "Blocked" : "Active",
-        joinDate: retailer.createdAt,
-        totalOrders: 0,
-        rating: retailer.shopRating || 0,
-        address: {
-          street: retailer.address?.street || "",
-          city: retailer.address?.city || "",
-          state: retailer.address?.state || "",
-        },
-        shopImageUrl: retailer.shopImageUrl,
-        licenseStatus: retailer.shopLicenseUrl ? "uploaded" : "pending",
-        isBlocked: retailer.isBlocked || false,
-        isVerified: retailer.shopIsVerified || false,
-        createdAt: retailer.createdAt,
-        updatedAt: retailer.updatedAt,
-      }));
-      res.status(StatusCode.OK).json(transformedData);
-    } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
-    }
-  };
+  try {
+    const params: RetailerListingRequest = {
+      page: parseInt(req.query.page as string) || 1,
+      limit: parseInt(req.query.limit as string) || 10,
+      search: req.query.search as string,
+      filters: {
+        verificationStatus: req.query.verificationStatus as string,
+        isBlocked: req.query.isBlocked ? 
+          req.query.isBlocked === 'true' : undefined,
+        status: req.query.status as string,
+      },
+      sort: req.query.sortField ? {
+        field: req.query.sortField as string,
+        direction: req.query.sortDirection as 'asc' | 'desc',
+      } : undefined,
+    };
+
+    const useCase = new GetUsers(userRepo);
+    const result = await useCase.executeRetailersPaginated(params);
+    res.status(StatusCode.OK).json(result);
+  } catch (err: any) {
+    res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+  }
+};
+
   static getPendingDeliveryBoys = async (req: Request, res: Response) => {
     try {
       const useCase = new GetPendingDeliveryBoys(deliveryBoyRepo);

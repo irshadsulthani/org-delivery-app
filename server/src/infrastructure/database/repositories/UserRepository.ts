@@ -6,6 +6,8 @@ import { PasswordService } from "../../../domain/services/PasswordService";
 import { IUserRepository } from "./interface/IUserRepository";
 import { DeliveryBoyListingRequest } from "../../../domain/dtos/DeliveryBoyListingRequest";
 import { DeliveryBoyResponse } from "../../../domain/dtos/DeliveryBoyResponse";
+import { RetailerListingRequest } from "../../../domain/dtos/RetailerListingRequest";
+import { RetailerResponse } from "../../../domain/dtos/RetailerResponse";
 
 export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
@@ -166,50 +168,129 @@ export class UserRepository implements IUserRepository {
     };
   }
 
-  async getAllRetailers(): Promise<any[]> {
-    return await UserModel.aggregate([
-      { $match: { role: "retailer" } },
-      {
-        $lookup: {
-          from: "retailershops",
-          localField: "_id",
-          foreignField: "userId",
-          as: "shopDetails",
-        },
-      },
-      {
-        $unwind: {
-          path: "$shopDetails",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          email: 1,
-          phone: "$shopDetails.phone",
-          role: 1,
-          isBlocked: 1,
-          isVerified: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          // Shop details
-          shopName: "$shopDetails.shopName",
-          description: "$shopDetails.description",
-          shopImageUrl: "$shopDetails.shopImageUrl",
-          shopLicenseUrl: "$shopDetails.shopLicenseUrl",
-          address: "$shopDetails.address",
-          rating: "$shopDetails.rating",
-          reviews: "$shopDetails.reviews",
-          shopIsVerified: "$shopDetails.isVerified",
-          shopCreatedAt: "$shopDetails.createdAt",
-          shopUpdatedAt: "$shopDetails.updatedAt",
-          shopId: "$shopDetails._id",
-        },
-      },
-    ]);
+ async getAllRetailersPaginated(
+  params: RetailerListingRequest
+): Promise<{
+  data: RetailerResponse[];
+  total: number;
+}> {
+  const { page = 1, limit = 10, search = "", filters = {}, sort } = params;
+  const skip = (page - 1) * limit;
+
+  // Build the match query
+  const matchQuery: any = { role: "retailer" };
+
+  if (search) {
+    matchQuery.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+      { "shopDetails.shopName": { $regex: search, $options: "i" } },
+      { "shopDetails.phone": { $regex: search, $options: "i" } },
+      { "shopDetails.address.city": { $regex: search, $options: "i" } },
+      { "shopDetails.address.state": { $regex: search, $options: "i" } },
+    ];
   }
+
+  // Apply filters
+  if (filters.verificationStatus) {
+    matchQuery["shopDetails.isVerified"] = 
+      filters.verificationStatus === "Verified" ? true : false;
+  }
+  if (filters.isBlocked !== undefined) {
+    matchQuery.isBlocked = filters.isBlocked;
+  }
+  if (filters.status) {
+    if (filters.status === "Blocked") {
+      matchQuery.isBlocked = true;
+    } else if (filters.status === "Active") {
+      matchQuery.isBlocked = false;
+    }
+  }
+
+  // Build sort
+  let sortQuery: any = { createdAt: -1 };
+  if (sort) {
+    const sortFieldMap: Record<string, string> = {
+      shopName: "shopDetails.shopName",
+      name: "name",
+      email: "email",
+      createdAt: "createdAt",
+      rating: "shopDetails.rating",
+      orderCount: "shopDetails.orderCount",
+      totalRevenue: "shopDetails.totalRevenue",
+    };
+    const dbField = sortFieldMap[sort.field] || sort.field;
+    sortQuery = { [dbField]: sort.direction === "asc" ? 1 : -1 };
+  }
+
+  // Main aggregation pipeline
+  const pipeline = [
+    { $match: { role: "retailer" } },
+    {
+      $lookup: {
+        from: "retailershops",
+        localField: "_id",
+        foreignField: "userId",
+        as: "shopDetails",
+      },
+    },
+    { $unwind: "$shopDetails" },
+    { $match: matchQuery },
+    {
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [
+          { $sort: sortQuery },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              _id: 1,
+              userId: "$_id",
+              shopId: "$shopDetails._id",
+              shopName: "$shopDetails.shopName",
+              name: 1,
+              email: 1,
+              phone: "$shopDetails.phone",
+              description: "$shopDetails.description",
+              shopImageUrl: "$shopDetails.shopImageUrl",
+              shopLicenseUrl: "$shopDetails.shopLicenseUrl",
+              address: "$shopDetails.address",
+              rating: "$shopDetails.rating",
+              reviews: "$shopDetails.reviews",
+              isVerified: "$shopDetails.isVerified",
+              status: { $cond: ["$isBlocked", "Blocked", "Active"] },
+              orderCount: "$shopDetails.orderCount",
+              totalRevenue: "$shopDetails.totalRevenue",
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        data: "$data",
+        total: { $arrayElemAt: ["$metadata.total", 0] },
+      },
+    },
+  ];
+
+  const result = await UserModel.aggregate(pipeline);
+  const data = result[0]?.data || [];
+  const total = result[0]?.total || 0;
+
+  return {
+    data: data.map((item: { _id: { toString: () => any; }; userId: { toString: () => any; }; shopId: { toString: () => any; }; }) => ({
+      ...item,
+      _id: item._id.toString(),
+      userId: item.userId.toString(),
+      shopId: item.shopId.toString(),
+    })),
+    total,
+  };
+}
   async blockUser(userId: string): Promise<User> {
     const user = await UserModel.findByIdAndUpdate(
       userId,

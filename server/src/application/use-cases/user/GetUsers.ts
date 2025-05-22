@@ -1,5 +1,7 @@
 import { DeliveryBoyListingRequest } from "../../../domain/dtos/DeliveryBoyListingRequest";
 import { DeliveryBoyResponse } from "../../../domain/dtos/DeliveryBoyResponse";
+import { RetailerListingRequest } from "../../../domain/dtos/RetailerListingRequest";
+import { RetailerResponse } from "../../../domain/dtos/RetailerResponse";
 import { User } from "../../../domain/entities/User";
 import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
 import { IGetUsers } from "./interface/IGetUsers";
@@ -7,6 +9,9 @@ import { IGetUsers } from "./interface/IGetUsers";
 
 export class GetUsers implements IGetUsers {
   constructor(private readonly userRepo: IUserRepository) {}
+  executeRetailers(): Promise<Omit<User, "password">[]> {
+    throw new Error("Method not implemented.");
+  }
 
   async execute(): Promise<Omit<User, 'password'>[]> {
     return this.handleUserFetch(() => this.userRepo.getAllUsers());
@@ -31,9 +36,20 @@ export class GetUsers implements IGetUsers {
     }
 
 
-  async executeRetailers(): Promise<Omit<User, 'password'>[]> {
-    return this.handleUserFetch(() => this.userRepo.getAllRetailers());
-  }
+ async executeRetailersPaginated(params: RetailerListingRequest): Promise<{
+    data: RetailerResponse[];
+    total: number;
+}> {
+    try {
+        return await this.userRepo.getAllRetailersPaginated(params);
+    } catch (error) {
+        if (error instanceof Error) {
+            throw new Error(`Error fetching retailers: ${error.message}`);
+        }
+        throw new Error("Error fetching retailers: Unknown error");
+    }
+}
+
 
   private async handleUserFetch(
     fetchFn: () => Promise<User[]>
