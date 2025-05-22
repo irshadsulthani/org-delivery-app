@@ -387,10 +387,6 @@ export const Table = ({
                   <span className="sr-only">First</span>
                   <ChevronsLeft className="h-5 w-5" />
                 </button>
-
-
-                
-                
                 <button
                   onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
