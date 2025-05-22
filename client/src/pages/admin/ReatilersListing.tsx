@@ -20,7 +20,7 @@ import {
 import AdminSidebar from "../../components/Admin/AdminSidebar";
 import AdminHeader from "../../components/Admin/AdminHeader";
 import { toast } from "react-toastify";
-import { blockRetailer, getAllRetailers, unblockRetailer, updateRetailerStatus } from "../../api/adminApi";
+import { blockRetailer, getAllRetailers, unblockRetailer } from "../../api/adminApi";
 import { useNavigate } from "react-router-dom";
 import { Table } from "../../components/Admin/Table";
 
@@ -122,26 +122,6 @@ const RetailerListing = () => {
     toast.success("Retailer data refreshed!");
   };
 
-  const handleStatusUpdate = async (
-    retailerId: string,
-    newStatus: "Active" | "Blocked"
-  ) => {
-    try {
-      setIsUpdatingStatus((prev) => ({ ...prev, [retailerId]: true }));
-      await updateRetailerStatus(retailerId, newStatus);
-      
-      // Refresh the data after status update
-      await fetchRetailers();
-      
-      toast.success(
-        `Retailer ${newStatus === "Active" ? "unblocked" : "blocked"} successfully`
-      );
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update status");
-    } finally {
-      setIsUpdatingStatus((prev) => ({ ...prev, [retailerId]: false }));
-    }
-  };
 
   const handleBlockRetailer = async (retailerId: string) => {
     try {

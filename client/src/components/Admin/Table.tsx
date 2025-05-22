@@ -7,7 +7,6 @@ import {
   Search,
   Filter,
   X,
-  ChevronDown,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -399,7 +398,7 @@ export const Table = ({
                   <ChevronLeft className="h-5 w-5" />
                 </button>
                 
-                {generatePageNumbers().map((page, index) => (
+                {generatePageNumbers().map((page) => (
                   <button
                     key={page}
                     onClick={() => onPageChange(page)}
