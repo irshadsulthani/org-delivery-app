@@ -47,59 +47,81 @@ export class AdminController {
 
   static getAllDeliveryBoys = async (req: Request, res: Response) => {
     try {
+      const {
+        page = 1,
+        limit = 5,
+        search = "",
+        verificationStatus,
+        isBlocked,
+        vehicleType,
+        currentlyAvailable,
+        sortField = "createdAt",
+        sortDirection = "desc",
+      } = req.query;
+      console.log(req.query);
+      
       const useCase = new GetUsers(userRepo);
-      const deliveryBoys = await useCase.executeDeliveryBoys();
-      const transformedData = deliveryBoys.map((boy: any) => ({
-        _id: boy._id,
-        userId: boy.userId,
-        name: boy.name,
-        email: boy.email,
-        phone: boy.phone,
-        status: boy.status || "Active",
-        joinDate: boy.createdAt,
-        deliveries: boy.totalDeliveredOrders || 0,
-        rating: ratingService.calculateAverageRating(boy),
-        area: `${boy.city}, ${boy.state}`,
-        vehicleType: boy.vehicleType || "Bike",
-        isBlocked: boy.isBlocked || false,
-        isVerified: boy.verificationStatus === "approved",
-        createdAt: boy.createdAt,
-      }));
-
-      res.status(StatusCode.OK).json(transformedData);
+      const result = await useCase.executeDeliveryBoysPaginated({
+        page: Number(page),
+        limit: Number(limit),
+        search: search as string,
+        filters: {
+          verificationStatus: verificationStatus as string,
+          isBlocked: isBlocked ? isBlocked === "true" : undefined,
+          vehicleType: vehicleType as string,
+          currentlyAvailable: currentlyAvailable
+            ? currentlyAvailable === "true"
+            : undefined,
+        },
+        sort: {
+          field: sortField as string,
+          direction: sortDirection as "asc" | "desc",
+        },
+      });
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: result.data,
+        total: result.total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(result.total / Number(limit)),
+      });
     } catch (err: any) {
-      res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
+      res.status(StatusCode.BAD_REQUEST).json({
+        success: false,
+        message: err.message,
+      });
     }
   };
 
   static blockDelveryBoy = async (req: Request, res: Response) => {
     try {
       const { deliveryBoyId } = req.params;
-      
-      const useCase = new BlockDeliveryBoyUseCase(userRepo, deliveryBoyRepo)
-      await useCase.execute(deliveryBoyId)
+
+      const useCase = new BlockDeliveryBoyUseCase(userRepo, deliveryBoyRepo);
+      await useCase.execute(deliveryBoyId);
 
       res.status(StatusCode.OK).json({
-        message:'Delivery Boy Blocked Success'
-      })
-    } catch (error:any) {
+        message: "Delivery Boy Blocked Success",
+      });
+    } catch (error: any) {
       res.status(StatusCode.BAD_REQUEST).json({
-        message: error.message || 'Failed to block Delivery Boy'
-      })
+        message: error.message || "Failed to block Delivery Boy",
+      });
     }
   };
   static UnblockDelveryBoy = async (req: Request, res: Response) => {
     try {
       const { deliveryBoyId } = req.params;
-      const useCase = new UnBlockDeliveryBoyUseCase(userRepo, deliveryBoyRepo)
-      await useCase.execute(deliveryBoyId)
+      const useCase = new UnBlockDeliveryBoyUseCase(userRepo, deliveryBoyRepo);
+      await useCase.execute(deliveryBoyId);
       res.status(StatusCode.OK).json({
-        message:'Delivery Boy Un Blocked Success'
-      })
-    } catch (error:any) {
+        message: "Delivery Boy Un Blocked Success",
+      });
+    } catch (error: any) {
       res.status(StatusCode.BAD_REQUEST).json({
-        message: error.message || 'Failed to un block Delivery Boy'
-      })
+        message: error.message || "Failed to un block Delivery Boy",
+      });
     }
   };
 
@@ -188,12 +210,10 @@ export class AdminController {
   static getDeliveryBoyById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-
+      
       const useCase = new GetDeliveryBoyById(deliveryBoyRepo);
 
       const deliveryBoy = await useCase.execute(id);
-
-      // Return the delivery boy data
       res.status(StatusCode.OK).json(deliveryBoy);
     } catch (err: any) {
       console.error("Error fetching delivery boy:", err);

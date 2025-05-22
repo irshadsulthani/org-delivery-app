@@ -2,75 +2,107 @@ import { uploadProductImageToCloudinary, deleteImageFromCloudinary } from "../..
 import { IProductRepository } from "../../../infrastructure/database/repositories/interface/IProductRepository";
 import { VegetableProduct, ProductUnit } from "../../../domain/entities/Product";
 import { UpdateProductDto } from "../../../domain/dtos/UpdateProductDto";
+import { IUpdateProductUseCase } from "./interface/IUpdateProductUseCase";
 
-export class UpdateProductUseCase {
+export class UpdateProductUseCase implements IUpdateProductUseCase {
   constructor(private productRepository: IProductRepository) {}
 
   async execute(dto: UpdateProductDto): Promise<VegetableProduct> {
+    // Validate DTO
+    if (!dto.productId) {
+      throw new Error('Product ID is required');
+    }
+
     const existingProduct = await this.productRepository.getProductDetails(dto.productId);
     if (!existingProduct) {
       throw new Error('Product not found');
     }
 
-    // 1. Handle existing images to keep
-    let imagesToKeep: { url: string; publicId: string }[] = [];
-    if (dto.existingImages && dto.existingImages.length > 0) {
-      imagesToKeep = existingProduct.images.filter(img => 
-        dto.existingImages!.some(existingId => existingId === img.publicId)
+    // Image handling
+    const { imagesToKeep, imagesToDelete } = this.processImageUpdates(existingProduct, dto);
+    const newUploadedImages = await this.handleNewImageUploads(dto);
+    await this.handleImageDeletions(imagesToDelete);
+
+    // Prepare and validate update data
+    const updateData = this.prepareUpdateData(dto, [...imagesToKeep, ...newUploadedImages]);
+    
+    // Perform update
+    const updatedProduct = await this.productRepository.updateProduct(dto.productId, updateData);
+    if (!updatedProduct) {
+      // Cleanup newly uploaded images if update fails
+      await this.rollbackImageUploads(newUploadedImages);
+      throw new Error('Failed to update product');
+    }
+
+    return updatedProduct;
+  }
+
+  private processImageUpdates(existingProduct: VegetableProduct, dto: UpdateProductDto) {
+    const imagesToKeep = dto.existingImages?.length 
+      ? existingProduct.images.filter(img => 
+          dto.existingImages!.includes(img.publicId)
+        )
+      : [];
+
+    const imagesToDelete = existingProduct.images.filter(img => 
+      !dto.existingImages?.includes(img.publicId)
+    );
+
+    return { imagesToKeep, imagesToDelete };
+  }
+
+  private async handleNewImageUploads(dto: UpdateProductDto) {
+    if (!dto.newImages?.length) return [];
+
+    try {
+      return await Promise.all(
+        dto.newImages.map(file => uploadProductImageToCloudinary(file))
       );
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      throw new Error('Failed to upload new images');
     }
+  }
 
-    // 2. Handle new image uploads
-    let newUploadedImages: { url: string; publicId: string }[] = [];
-    if (dto.newImages && dto.newImages.length > 0) {
-      try {
-        newUploadedImages = await Promise.all(
-          dto.newImages.map(file => {
-            return uploadProductImageToCloudinary(file);
-          })
-        );
-      } catch (uploadError) {
-        console.error('Error uploading new images:', uploadError);
-        throw new Error('Failed to upload new images');
-      }
+  private async handleImageDeletions(imagesToDelete: { publicId: string }[]) {
+    if (!imagesToDelete.length) return;
+
+    try {
+      await Promise.all(
+        imagesToDelete.map(img => deleteImageFromCloudinary(img.publicId))
+      );
+    } catch (error) {
+      console.error('Image deletion failed:', error);
+      // Continue with update even if deletion fails
     }
-    const updatedImages = [...imagesToKeep, ...newUploadedImages];
-    const imagesToDelete = existingProduct.images.filter(img => {
-      return !dto.existingImages?.includes(img.publicId);
-    });
+  }
 
-    if (imagesToDelete.length > 0) {
-      try {
-        await Promise.all(
-          imagesToDelete.map(img => deleteImageFromCloudinary(img.publicId))
-        );
-      } catch (deleteError) {
-        console.error('Error deleting images:', deleteError);
-        // Continue with update even if deletion fails
-      }
+  private async rollbackImageUploads(images: { publicId: string }[]) {
+    if (!images.length) return;
+
+    try {
+      await Promise.all(
+        images.map(img => deleteImageFromCloudinary(img.publicId))
+      );
+    } catch (error) {
+      console.error('Failed to cleanup uploaded images:', error);
     }
+  }
 
-    // Prepare update data
+  private prepareUpdateData(dto: UpdateProductDto, images: { url: string; publicId: string }[]): Partial<VegetableProduct> {
     const updateData: Partial<VegetableProduct> = {
-      name: dto.name,
-      category: dto.category,
-      price: dto.price,
-      quantity: dto.quantity,
-      description: dto.description,
+      ...(dto.name && { name: dto.name }),
+      ...(dto.category && { category: dto.category }),
+      ...(dto.price && { price: dto.price }),
+      ...(dto.quantity && { quantity: dto.quantity }),
+      ...(dto.description && { description: dto.description }),
       ...(dto.unit && { unit: dto.unit as ProductUnit }),
-      images: updatedImages,
+      images
     };
 
     // Remove undefined values
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key as keyof VegetableProduct] === undefined) {
-        delete updateData[key as keyof VegetableProduct];
-      }
-    });
-    const updatedProduct = await this.productRepository.updateProduct(dto.productId, updateData);
-    if (!updatedProduct) {
-      throw new Error('Failed to update product');
-    }
-    return updatedProduct;
+    return Object.fromEntries(
+      Object.entries(updateData).filter(([_, value]) => value !== undefined)
+    ) as Partial<VegetableProduct>;
   }
 }

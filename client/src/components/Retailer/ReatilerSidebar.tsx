@@ -97,7 +97,7 @@ const RetailerSidebar: React.FC<RetailerSidebarProps> = ({
       subItems: [
         { title: 'Products', path: '/retailer/products' },
         { title: 'Add Products', path: '/retailer/add-product' },
-        { title: 'Categories', path: '/retailer/categories' }
+        // { title: 'Categories', path: '/retailer/categories' }
       ]
     },
     { 

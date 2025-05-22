@@ -1,5 +1,10 @@
 // src/interface/product/product.ts
 export interface Product {
+  origin: string;
+  weight: string;
+  stock: ReactNode;
+  stock: number;
+  reviews: any;
   isFavorite: any;
   discount: number;
   _id: string;

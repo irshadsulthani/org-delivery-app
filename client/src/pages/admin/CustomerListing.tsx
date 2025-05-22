@@ -24,7 +24,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AdminHeader from '../../components/Admin/AdminHeader';
-import { getAllCustomers } from '../../api/adminApi';
+import { blockCustomer, getAllCustomers, unBlockCustomer } from '../../api/adminApi';
 import { useDispatch } from 'react-redux';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
 
@@ -107,31 +107,23 @@ const CustomerListing = () => {
   };
 
   // Update customer block status
-  const handleBlockStatusChange = async (customerId: string, isBlocked: boolean) => {
-    try {
-      setUpdatingStatus(customerId);
-      
-      // Call the API to update the customer status
-      // await updateCustomerBlockStatus(customerId, isBlocked);
-      
-      // Update the local state with the new status
-      setCustomers(prevCustomers => 
-        prevCustomers.map(customer => 
-          customer._id === customerId 
-            ? { ...customer, isBlocked } 
-            : customer
-        )
-      );
-      
-      toast.success(`Customer ${isBlocked ? 'blocked' : 'unblocked'} successfully`);
-    } catch (error: any) {
-      const errorMessage = 
-        error.response?.data?.message || "Failed to update customer status";
-      toast.error(errorMessage);
-    } finally {
-      setUpdatingStatus(null);
-    }
-  };
+   const handleBlock = async (customerId: string) => {
+     try {
+       await blockCustomer(customerId);
+       toast.success("Customer blocked successfully");
+     } catch (error) {
+       toast.error("Failed to block Customer");
+     }
+   };
+ 
+   const handleUnblock = async (customerId: string) => {
+     try {
+       await unBlockCustomer(customerId);
+       toast.success("Customer unblocked successfully");
+     } catch (error) {
+       toast.error("Failed to unblock Customer");
+     }
+   };
 
   // Update customer verification status
   const handleVerificationStatusChange = async (customerId: string, isVerified: boolean) => {
@@ -230,7 +222,7 @@ const CustomerListing = () => {
       <div className="relative">
         <button 
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses} cursor-pointer`}
-          onClick={() => handleBlockStatusChange(customer._id, !isBlocked)}
+          onClick={() => handleBlock(customer._id)}
           disabled={updatingStatus === customer._id}
         >
           <Icon size={12} className="mr-1" />
@@ -668,7 +660,7 @@ const CustomerListing = () => {
                                 <Edit size={18} />
                               </button>
                               <button
-                                onClick={() => handleBlockStatusChange(customer._id, !customer.isBlocked)}
+                                onClick={() => handleUnblock(customer._id)}
                                 className={customer.isBlocked ? "text-emerald-600 hover:text-emerald-900 p-1 rounded hover:bg-emerald-50" : "text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"}
                                 title={customer.isBlocked ? "Unblock" : "Block"}
                                 disabled={updatingStatus === customer._id}
@@ -759,7 +751,7 @@ const CustomerListing = () => {
                           <Edit size={16} />
                         </button>
                         <button
-                          onClick={() => handleBlockStatusChange(customer._id, !customer.isBlocked)}
+                          onClick={() => handleUnblock(customer._id)}
                           className={customer.isBlocked ? "text-emerald-500 hover:text-emerald-700 p-1 rounded hover:bg-emerald-100" : "text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-100"}
                           title={customer.isBlocked ? "Unblock" : "Block"}
                           disabled={updatingStatus === customer._id}

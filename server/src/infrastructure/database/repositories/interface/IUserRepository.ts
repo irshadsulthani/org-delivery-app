@@ -1,4 +1,6 @@
-import { User } from "../../entities/User";
+import { DeliveryBoyListingRequest } from "../../../../domain/dtos/DeliveryBoyListingRequest";
+import { DeliveryBoyResponse } from "../../../../domain/dtos/DeliveryBoyResponse";
+import { User } from "../../../../domain/entities/User";
 
 
 export interface IUserRepository {
@@ -7,7 +9,11 @@ export interface IUserRepository {
     comparePassword(inputPassword: string, storedHash: string): Promise<boolean>;
     getAllUsers(): Promise<User[]>;
     getAllCustomers(): Promise<User[]>;
-    getAllDeliveryBoys(): Promise<User[]>;
+    getAllDeliveryBoysPaginated(params: DeliveryBoyListingRequest): Promise<{
+        data: DeliveryBoyResponse[];
+        total: number;
+    }>;
+
     getAllRetailers(): Promise<User[]>
     blockUser(userId: string): Promise<User>;
     unblockUser(userId: string): Promise<User>;

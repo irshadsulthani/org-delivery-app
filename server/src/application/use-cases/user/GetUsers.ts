@@ -1,3 +1,5 @@
+import { DeliveryBoyListingRequest } from "../../../domain/dtos/DeliveryBoyListingRequest";
+import { DeliveryBoyResponse } from "../../../domain/dtos/DeliveryBoyResponse";
 import { User } from "../../../domain/entities/User";
 import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
 import { IGetUsers } from "./interface/IGetUsers";
@@ -14,9 +16,20 @@ export class GetUsers implements IGetUsers {
     return this.handleUserFetch(() => this.userRepo.getAllCustomers());
   }
 
-  async executeDeliveryBoys(): Promise<Omit<User, 'password'>[]> {
-    return this.handleUserFetch(() => this.userRepo.getAllDeliveryBoys());
-  }
+  async executeDeliveryBoysPaginated(params: DeliveryBoyListingRequest): Promise<{
+        data: DeliveryBoyResponse[];
+        total: number;
+    }> {
+        try {
+            return await this.userRepo.getAllDeliveryBoysPaginated(params);
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error fetching delivery boys: ${error.message}`);
+            }
+            throw new Error("Error fetching delivery boys: Unknown error");
+        }
+    }
+
 
   async executeRetailers(): Promise<Omit<User, 'password'>[]> {
     return this.handleUserFetch(() => this.userRepo.getAllRetailers());

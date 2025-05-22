@@ -1,4 +1,5 @@
-import { RetailerShop } from "../../entities/RetailerShop";
+import { RetailerShop } from "../../../../domain/entities/RetailerShop";
+
 
 export interface IRetailersRepository {
   register(retailer: RetailerShop): Promise<RetailerShop>;

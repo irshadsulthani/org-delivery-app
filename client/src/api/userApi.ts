@@ -62,3 +62,7 @@ export const getProducts = async () => {
     
     return response
 }
+
+export const getProductById = async () => {
+    
+}

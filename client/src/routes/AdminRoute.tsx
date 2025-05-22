@@ -4,10 +4,10 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminPublicRoute from '../protectedRoutes/admin/AdminPublicRoute';
 import AdminProtectedRoutes from '../protectedRoutes/admin/AdminProtectedRoutes';
 import CustomerListing from '../pages/admin/CustomerListing';
-import DeliveryBoyListing from '../pages/admin/DeliveryBoyListing';
 import RetailerListing from '../pages/admin/ReatilersListing';
 import DeliveryBoyDetailsPage from '../pages/admin/DeliveryBoyDetails';
 import RetailerDeatiles from '../pages/admin/RetailerDeatiles';
+import { DeliveryBoyListing } from '../pages/admin/DeliveryBoyListing';
 
 
 function AdminRoutes() {

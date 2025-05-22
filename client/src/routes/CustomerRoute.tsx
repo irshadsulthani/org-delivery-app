@@ -5,6 +5,7 @@ import Navbar from "../components/Customer/Navbar";
 import UserProtectedRoutes from "../protectedRoutes/user/UserProtectedRoutes";
 import UserPublicRoute from "../protectedRoutes/user/UserPublicRoute";
 import Shop from "../pages/customer/Shop";
+import ProductDetail from "../pages/customer/ProductDetail";
 
 function CustomerRoute() {
   const location = useLocation();
@@ -21,6 +22,7 @@ function CustomerRoute() {
         {/* Always accessible home route */}
         <Route path="/" element={<CustomerHome />} />
         <Route path='/shop' element={<Shop />} />
+        <Route path='/products/:productId' element={<ProductDetail />} />
         {/* Protected routes */}
         <Route element={<UserProtectedRoutes />}>
           {/* Add any additional protected routes here */}
