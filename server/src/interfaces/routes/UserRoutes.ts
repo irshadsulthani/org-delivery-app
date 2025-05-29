@@ -2,8 +2,11 @@ import express, { NextFunction, Request, Response } from 'express';
 import { UserController } from '../controllers/UserController';
 import { ProductController } from '../controllers/ProductController';
 import { verifyToken } from '../../infrastructure/middlewares/verifyToken';
+<<<<<<< HEAD
 import multer from 'multer';
 import { createPaymentIntentHandler } from '../controllers/PaymentContoller';
+=======
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
 
 const router = express.Router();
 
@@ -26,6 +29,7 @@ router.get(
   '/dashboard',verifyToken, UserController.getDashboardData
 )
 
+<<<<<<< HEAD
 router.get('/profile', verifyToken, UserController.getProfile);
 
 
@@ -52,4 +56,6 @@ router.post(
 
 router.post('/payment/create-intent', createPaymentIntentHandler)
 
+=======
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
 export default router;

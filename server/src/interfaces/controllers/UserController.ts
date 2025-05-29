@@ -3,6 +3,7 @@ import { UserRepository } from "../../infrastructure/database/repositories/UserR
 import { StatusCode } from "../../utils/statusCode";
 import { GetCustomerDashboardUseCase } from "../../application/use-cases/customer/GetCustomerDashboardUseCase";
 import { CustomerRepository } from "../../infrastructure/database/repositories/CustomerRepository";
+<<<<<<< HEAD
 import { GetProfileUseCase } from "../../application/use-cases/customer/GetProfileUseCase";
 import { uploadToCloudinary } from "../../infrastructure/cloudinary/cloudinary";
 import { UpdateProfileDTO } from "../../domain/dtos/customer/ProfileDTOs";
@@ -20,6 +21,12 @@ const addAddressUseCase = new AddAddressUseCase(customerRepo);
 const updateAddressUsecase = new UpdateAddressUseCase(customerRepo);
 const deleteAddressUseCase = new DeleteAddressUseCase(customerRepo);
 const setDefaultAddress = new SetDefaultAddressUseCase(customerRepo);
+=======
+
+const userRepo = new UserRepository();
+const customerRepo = new CustomerRepository()
+const getDashboardUseCase = new GetCustomerDashboardUseCase(customerRepo)
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
 
 export class UserController {
   private static getUserId(req: Request): string {
@@ -38,6 +45,7 @@ export class UserController {
       res.status(StatusCode.BAD_REQUEST).json({ message });
     }
   };
+<<<<<<< HEAD
   static getDashboardData = async (
     req: Request,
     res: Response
@@ -160,4 +168,20 @@ export class UserController {
       res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message });
     }
   };
+=======
+ // src/infrastructure/controllers/UserController.ts
+static getDashboardData = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = (req.user as any).id;
+        const customerData = await getDashboardUseCase.execute(userId);
+        res.status(StatusCode.OK).json(customerData);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unexpected error';
+        const statusCode = message.includes('not found') 
+            ? StatusCode.NOT_FOUND 
+            : StatusCode.BAD_REQUEST;
+        res.status(statusCode).json({ message });
+    }
+};
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
 }

@@ -9,6 +9,7 @@ export const getDashboardData = async () => {
 
 export const getCustomerProfile = async () => {
   const response = await privateApi('get', '/user/profile');
+<<<<<<< HEAD
   return response;
 };
 
@@ -20,6 +21,14 @@ export const updateCustomerProfile = async (formData: FormData) => {
     }
   });
   return response;
+=======
+  return response.data;
+};
+
+export const updateCustomerProfile = async (formData: FormData) => {
+  const response = await fileUploadApi('/user/profile', formData);
+  return response.data;
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
 };
 
 export const addCustomerAddress = async (address: any) => {

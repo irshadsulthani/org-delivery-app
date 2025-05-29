@@ -8,10 +8,15 @@ import { DeliveryBoyListingRequest } from "../../../domain/dtos/DeliveryBoyListi
 import { DeliveryBoyResponse } from "../../../domain/dtos/DeliveryBoyResponse";
 import { RetailerListingRequest } from "../../../domain/dtos/RetailerListingRequest";
 import { RetailerResponse } from "../../../domain/dtos/RetailerResponse";
+<<<<<<< HEAD
 import { CustomerRequestDto } from "../../../domain/dtos/customer/CustomerRequestDto";
 import { CustomerResponseDto } from "../../../domain/dtos/customer/CustomerResponseDto";
 import { CustomerModel } from "../schemas/customerModel";
 import { PipelineStage } from "mongoose";
+=======
+import { CustomerRequestDto } from "../../../domain/dtos/CustomerRequestDto";
+import { CustomerResponseDto } from "../../../domain/dtos/CustomerResponseDto";
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
 
 export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
@@ -48,6 +53,7 @@ export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<any> {
     return await UserModel.findById(id);
   }
+<<<<<<< HEAD
 
   async getAllCustomersPaginated(params: CustomerRequestDto): Promise<{
     data: CustomerResponseDto[];
@@ -76,6 +82,50 @@ export class UserRepository implements IUserRepository {
     // Simplified pipeline for initial debugging
     const pipeline: PipelineStage[] = [
       { $match: matchQuery },
+=======
+ async getAllCustomersPaginated(
+    params: CustomerRequestDto
+ ): Promise<{
+    data: CustomerResponseDto[];
+    total: number;
+  }> {
+    const {page = 1 , limit = 5, search = '', filters = {}, sort} = params;
+    const skip = (page - 1) * limit;
+    // mathc query
+    const matchQuery: any = { role: "customer" };
+    if (search) {
+      matchQuery.$or = [
+        {name: { $regex: search, $options: "i" }},
+        {email: { $regex: search, $options: "i" }},
+        { "customerDetails.phone": { $regex: search, $options: "i" }},
+      ]
+    }
+    if(filters.verificationStatus) {
+      matchQuery["customerDetails.verificationStatus"] = filters.verificationStatus;
+    }
+    if (filters.isBlocked !== undefined) {
+      matchQuery.isBlocked = filters.isBlocked;
+    }
+    if (filters.currentlyAvailable !== undefined) {
+      matchQuery["customerDetails.currentlyAvailable"] = filters.currentlyAvailable;
+    }
+
+    let sortQuery: any = { createdAt: -1 };
+    if (sort) {
+      const sortFieldMap: Record<string, string> = {
+        "userId.name": "name",
+        verificationStatus: "customerDetails.verificationStatus",
+        vehicleType: "customerDetails.vehicleType",
+        totalDeliveredOrders: "customerDetails.totalDeliveredOrders",
+        createdAt: "createdAt",
+      };
+      const dbField = sortFieldMap[sort.field] || sort.field;
+      sortQuery = { [dbField]: sort.direction === "asc" ? 1 : -1 };
+    }
+    // Main aggregation pipeline
+    const pipeline = [
+      { $match: { role: "customer" } },
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
       {
         $lookup: {
           from: "customers",
@@ -84,17 +134,26 @@ export class UserRepository implements IUserRepository {
           as: "customerDetails",
         },
       },
+<<<<<<< HEAD
       {
         $unwind: {
           path: "$customerDetails",
           preserveNullAndEmptyArrays: true,
         },
       },
+=======
+      { $unwind: "$customerDetails" },
+      { $match: matchQuery }, // Apply filters after lookup
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
       {
         $facet: {
           metadata: [{ $count: "total" }],
           data: [
+<<<<<<< HEAD
             { $sort: { createdAt: -1 } },
+=======
+            { $sort: sortQuery },
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
             { $skip: skip },
             { $limit: limit },
             {
@@ -108,9 +167,18 @@ export class UserRepository implements IUserRepository {
                 },
                 phone: "$customerDetails.phone",
                 profileImageUrl: "$customerDetails.profileImageUrl",
+<<<<<<< HEAD
                 addresses: "$customerDetails.addresses",
                 walletBalance: "$customerDetails.walletBalance",
                 createdAt: "$createdAt",
+=======
+                verificationStatus: "$customerDetails.verificationStatus",
+                currentlyAvailable: "$customerDetails.currentlyAvailable",
+                vehicleType: "$customerDetails.vehicleType",
+                totalDeliveredOrders: "$customerDetails.totalDeliveredOrders",
+                createdAt: "$createdAt",
+                updatedAt: "$updatedAt",
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
               },
             },
           ],
@@ -123,6 +191,7 @@ export class UserRepository implements IUserRepository {
         },
       },
     ];
+<<<<<<< HEAD
     try {
       const result = await UserModel.aggregate(pipeline);
 
@@ -173,6 +242,24 @@ export class UserRepository implements IUserRepository {
       console.error("Aggregation error:", error);
       throw error;
     }
+=======
+    console.log("Aggregation Pipeline:", JSON.stringify(pipeline, null, 2));
+    const result = await UserModel.aggregate(pipeline);
+    console.log("Aggregation Result:", JSON.stringify(result, null, 2));
+    const data = result[0]?.data || [];
+    const total = result[0]?.total || 0;
+    return {
+      data: data.map((item: { _id: { toString: () => any; }; userId: { _id: { toString: () => any; }; }; }) => ({
+        ...item,
+        _id: item._id.toString(),
+        userId: {
+          ...item.userId,
+          _id: item.userId._id.toString(),
+        },
+      })),
+      total,
+    };
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
   }
 
   async getAllDeliveryBoysPaginated(

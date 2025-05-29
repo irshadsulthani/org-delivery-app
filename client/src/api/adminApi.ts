@@ -68,10 +68,33 @@ export const getAllCustomers = async (params: {
     if (params.sortDirection) {
       queryParams.append("sortDirection", params.sortDirection);
     }
+<<<<<<< HEAD
+=======
+
+    console.log("API Call URL:", `/admin/customers?${queryParams.toString()}`);
+    console.log("API Call Params:", {
+      page: params.page,
+      limit: params.limit,
+      search: params.search,
+      filters: params.filters,
+      sortField: params.sortField,
+      sortDirection: params.sortDirection,
+    });
+
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
     const response = await privateApi(
       "get",
       `/admin/getallcustomers?${queryParams.toString()}`
     );
+<<<<<<< HEAD
+=======
+    console.log("API Response:", response);
+    if (!response || typeof response !== "object") {
+      throw new Error("Invalid response format");
+    }
+
+    // Normalize response structure
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
     return {
       success: response.success ?? true,
       data: response.data || [],
@@ -139,6 +162,20 @@ export const getAllRetailers = async (params: {
     if (params.sortDirection) {
       queryParams.append("sortDirection", params.sortDirection);
     }
+<<<<<<< HEAD
+=======
+
+    console.log("API Call URL:", `/admin/retailers?${queryParams.toString()}`);
+    console.log("API Call Params:", {
+      page: params.page,
+      limit: params.limit,
+      search: params.search,
+      filters: params.filters,
+      sortField: params.sortField,
+      sortDirection: params.sortDirection,
+    });
+
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
     const response = await privateApi(
       "get",
       `/admin/get-allReatilers?${queryParams.toString()}`
@@ -215,11 +252,34 @@ export const getAllDeliveryBoys = async (params: {
     if (params.sortDirection) {
       queryParams.append("sortDirection", params.sortDirection);
     }
+<<<<<<< HEAD
+=======
+
+    console.log(
+      "API Call URL:",
+      `/admin/delivery-boys?${queryParams.toString()}`
+    );
+    console.log("API Call Params:", {
+      page: params.page,
+      limit: params.limit,
+      search: params.search,
+      filters: params.filters,
+      sortField: params.sortField,
+      sortDirection: params.sortDirection,
+    });
+
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
     const response = await privateApi(
       "get",
       `/admin/delivery-boys?${queryParams.toString()}`
     );
 
+<<<<<<< HEAD
+=======
+    console.log("API Response:", response);
+
+    // Ensure response has the expected structure
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
     if (!response || typeof response !== "object") {
       throw new Error("Invalid response format");
     }

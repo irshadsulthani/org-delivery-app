@@ -40,7 +40,11 @@ export const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+<<<<<<< HEAD
 const [sidebarOpen, setSidebarOpen] = useState(false);
+=======
+
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -58,6 +62,7 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
     fetchDashboardData();
   }, []);
 
+<<<<<<< HEAD
   const handleCloseSidebar = () => {
     setSidebarOpen(false);
   };
@@ -78,6 +83,9 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
       </Box>
     </>
   );
+=======
+  if (loading) return <LoadingSpinner />;
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
   if (error) return <Typography color="error">{error}</Typography>;
 
   const getStatusColor = (status: string) => {
@@ -90,12 +98,20 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
     }
   };
 
+<<<<<<< HEAD
  return (
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       <DashboardSidebar 
         isOpen={sidebarOpen} 
         onClose={handleCloseSidebar} 
       />
+=======
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      <DashboardSidebar isOpen={false} onClose={function (): void {
+        throw new Error('Function not implemented.');
+      } } />
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
       <Box 
         component="main" 
         sx={{ 
@@ -104,6 +120,7 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
           ml: { xs: 0, md: '40px' }
         }}
       >
+<<<<<<< HEAD
         {/* Add a mobile menu button if needed */}
         <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 2 }}>
           <Button onClick={handleOpenSidebar}>
@@ -111,6 +128,8 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
           </Button>
         </Box>
 
+=======
+>>>>>>> d387b79 (feat:- now doing the customer address adding)
         {/* Header Section */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
