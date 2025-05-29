@@ -43,6 +43,9 @@ export class UserController {
       res.status(statusCode).json({ message });
     }
   };
+
+
+  
   static  getProfile = async(req: Request, res: Response): Promise<void>=> {
     try {
       console.log("its getting here in getProfile");
