@@ -9,7 +9,8 @@ export const getDashboardData = async () => {
 
 export const getCustomerProfile = async () => {
   const response = await privateApi('get', '/user/profile');
-  return response.data;
+  console.log('Customer Profile:', response);
+  return response;
 };
 
 export const updateCustomerProfile = async (formData: FormData) => {

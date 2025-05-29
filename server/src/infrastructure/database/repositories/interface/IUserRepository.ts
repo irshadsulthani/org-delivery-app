@@ -27,4 +27,6 @@ export interface IUserRepository {
     }>
     blockUser(userId: string): Promise<User>;
     unblockUser(userId: string): Promise<User>;
+    findById(id: string): Promise<User | null>;
+    update(id: string, updates: Partial<User>): Promise<void>;
 }

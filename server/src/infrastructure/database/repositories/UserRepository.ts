@@ -418,4 +418,7 @@ export class UserRepository implements IUserRepository {
       _id: userObj._id.toString(),
     };
   }
+  async update(id: string, updates: Partial<User>): Promise<void> {
+    await UserModel.findByIdAndUpdate(id, updates, { new: true });
+  }
 }

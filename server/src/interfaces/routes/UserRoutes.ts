@@ -15,4 +15,7 @@ router.get(
   '/dashboard',verifyToken, UserController.getDashboardData
 )
 
+router.get('/profile', verifyToken, UserController.getProfile);
+
+
 export default router;
