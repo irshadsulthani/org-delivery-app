@@ -1,5 +1,5 @@
-import { CustomerRequestDto } from "../../../../domain/dtos/CustomerRequestDto";
-import { CustomerResponseDto } from "../../../../domain/dtos/CustomerResponseDto";
+import { CustomerRequestDto } from "../../../../domain/dtos/customer/CustomerRequestDto";
+import { CustomerResponseDto } from "../../../../domain/dtos/customer/CustomerResponseDto";
 import { DeliveryBoyListingRequest } from "../../../../domain/dtos/DeliveryBoyListingRequest";
 import { DeliveryBoyResponse } from "../../../../domain/dtos/DeliveryBoyResponse";
 import { RetailerListingRequest } from "../../../../domain/dtos/RetailerListingRequest";

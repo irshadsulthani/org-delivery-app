@@ -8,8 +8,8 @@ import { DeliveryBoyListingRequest } from "../../../domain/dtos/DeliveryBoyListi
 import { DeliveryBoyResponse } from "../../../domain/dtos/DeliveryBoyResponse";
 import { RetailerListingRequest } from "../../../domain/dtos/RetailerListingRequest";
 import { RetailerResponse } from "../../../domain/dtos/RetailerResponse";
-import { CustomerRequestDto } from "../../../domain/dtos/CustomerRequestDto";
-import { CustomerResponseDto } from "../../../domain/dtos/CustomerResponseDto";
+import { CustomerRequestDto } from "../../../domain/dtos/customer/CustomerRequestDto";
+import { CustomerResponseDto } from "../../../domain/dtos/customer/CustomerResponseDto";
 
 export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
