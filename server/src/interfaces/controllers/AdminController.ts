@@ -38,8 +38,38 @@ export class AdminController {
 
   static getAllCustomers = async (req: Request, res: Response) => {
     try {
+      console.log('its here getting');
+      const {
+        page = 1,
+        limit = 5,
+        search = "",
+        verificationStatus,
+        isBlocked,
+        vehicleType,
+        currentlyAvailable,
+        sortField = "createdAt",
+        sortDirection = "desc",
+      } = req.query;
+      console.log(req.query);
       const useCase = new GetUsers(userRepo);
-      const customers = await useCase.executeCustomers();
+      const customers = await useCase.executeCustomerPaginated({
+        page: Number(page),
+        limit: Number(limit),
+        search: search as string,
+        filters: {
+          verificationStatus: verificationStatus as string,
+          isBlocked: isBlocked ? isBlocked === "true" : undefined,
+          vehicleType: vehicleType as string,
+          currentlyAvailable: currentlyAvailable
+            ? currentlyAvailable === "true"
+            : undefined,
+        },
+        sort: {
+          field: sortField as string,
+          direction: sortDirection as "asc" | "desc",
+        },
+      });
+      console.log(customers);
       res.status(StatusCode.OK).json(customers);
     } catch (err: any) {
       res.status(StatusCode.BAD_REQUEST).json({ message: err.message });

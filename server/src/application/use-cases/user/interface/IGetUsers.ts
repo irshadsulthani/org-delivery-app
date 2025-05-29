@@ -1,3 +1,5 @@
+import { CustomerRequestDto } from "../../../../domain/dtos/CustomerRequestDto";
+import { CustomerResponseDto } from "../../../../domain/dtos/CustomerResponseDto";
 import { DeliveryBoyListingRequest } from "../../../../domain/dtos/DeliveryBoyListingRequest";
 import { DeliveryBoyResponse } from "../../../../domain/dtos/DeliveryBoyResponse";
 import { RetailerListingRequest } from "../../../../domain/dtos/RetailerListingRequest";
@@ -17,6 +19,9 @@ export interface IGetUsers {
     total: number;
 }>
 
-    executeRetailers(): Promise<Omit<User, 'password'>[]>;
+    executeCustomerPaginated(params: CustomerRequestDto): Promise<{
+    data: CustomerResponseDto[];
+    total: number;
+}>
 }
 

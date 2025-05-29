@@ -6,6 +6,9 @@ import UserProtectedRoutes from "../protectedRoutes/user/UserProtectedRoutes";
 import UserPublicRoute from "../protectedRoutes/user/UserPublicRoute";
 import Shop from "../pages/customer/Shop";
 import ProductDetail from "../pages/customer/ProductDetail";
+import { Dashboard } from "../pages/customer/Dashboard";
+import ProfilePage from "../pages/customer/ProfilePage";
+
 
 function CustomerRoute() {
   const location = useLocation();
@@ -25,7 +28,10 @@ function CustomerRoute() {
         <Route path='/products/:productId' element={<ProductDetail />} />
         {/* Protected routes */}
         <Route element={<UserProtectedRoutes />}>
-          {/* Add any additional protected routes here */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/orders" element={<CustomerHome />} />
+          <Route path="/wallet" element={<CustomerHome />} />
         </Route>
 
         {/* Public-only routes */}

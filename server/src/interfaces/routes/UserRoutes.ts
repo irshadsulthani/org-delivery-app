@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { UserController } from '../controllers/UserController';
 import { ProductController } from '../controllers/ProductController';
+import { verifyToken } from '../../infrastructure/middlewares/verifyToken';
 
 const router = express.Router();
 
@@ -9,5 +10,9 @@ router.get(
   "/shop",
   (req: Request, res: Response, next: NextFunction) => ProductController.getAllProducts(req, res, next)
 );
+
+router.get(
+  '/dashboard',verifyToken, UserController.getDashboardData
+)
 
 export default router;

@@ -8,6 +8,8 @@ import { DeliveryBoyListingRequest } from "../../../domain/dtos/DeliveryBoyListi
 import { DeliveryBoyResponse } from "../../../domain/dtos/DeliveryBoyResponse";
 import { RetailerListingRequest } from "../../../domain/dtos/RetailerListingRequest";
 import { RetailerResponse } from "../../../domain/dtos/RetailerResponse";
+import { CustomerRequestDto } from "../../../domain/dtos/CustomerRequestDto";
+import { CustomerResponseDto } from "../../../domain/dtos/CustomerResponseDto";
 
 export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
@@ -44,12 +46,110 @@ export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<any> {
     return await UserModel.findById(id);
   }
-  async getAllCustomers(): Promise<User[]> {
-    const customers = await UserModel.find({ role: "customer" }).lean();
-    return customers.map((customer) => ({
-      ...customer,
-      _id: customer._id.toString(),
-    }));
+ async getAllCustomersPaginated(
+    params: CustomerRequestDto
+ ): Promise<{
+    data: CustomerResponseDto[];
+    total: number;
+  }> {
+    const {page = 1 , limit = 5, search = '', filters = {}, sort} = params;
+    const skip = (page - 1) * limit;
+    // mathc query
+    const matchQuery: any = { role: "customer" };
+    if (search) {
+      matchQuery.$or = [
+        {name: { $regex: search, $options: "i" }},
+        {email: { $regex: search, $options: "i" }},
+        { "customerDetails.phone": { $regex: search, $options: "i" }},
+      ]
+    }
+    if(filters.verificationStatus) {
+      matchQuery["customerDetails.verificationStatus"] = filters.verificationStatus;
+    }
+    if (filters.isBlocked !== undefined) {
+      matchQuery.isBlocked = filters.isBlocked;
+    }
+    if (filters.currentlyAvailable !== undefined) {
+      matchQuery["customerDetails.currentlyAvailable"] = filters.currentlyAvailable;
+    }
+
+    let sortQuery: any = { createdAt: -1 };
+    if (sort) {
+      const sortFieldMap: Record<string, string> = {
+        "userId.name": "name",
+        verificationStatus: "customerDetails.verificationStatus",
+        vehicleType: "customerDetails.vehicleType",
+        totalDeliveredOrders: "customerDetails.totalDeliveredOrders",
+        createdAt: "createdAt",
+      };
+      const dbField = sortFieldMap[sort.field] || sort.field;
+      sortQuery = { [dbField]: sort.direction === "asc" ? 1 : -1 };
+    }
+    // Main aggregation pipeline
+    const pipeline = [
+      { $match: { role: "customer" } },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "_id",
+          foreignField: "userId",
+          as: "customerDetails",
+        },
+      },
+      { $unwind: "$customerDetails" },
+      { $match: matchQuery }, // Apply filters after lookup
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [
+            { $sort: sortQuery },
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $project: {
+                _id: "$customerDetails._id",
+                userId: {
+                  _id: "$_id",
+                  name: "$name",
+                  email: "$email",
+                  isBlocked: "$isBlocked",
+                },
+                phone: "$customerDetails.phone",
+                profileImageUrl: "$customerDetails.profileImageUrl",
+                verificationStatus: "$customerDetails.verificationStatus",
+                currentlyAvailable: "$customerDetails.currentlyAvailable",
+                vehicleType: "$customerDetails.vehicleType",
+                totalDeliveredOrders: "$customerDetails.totalDeliveredOrders",
+                createdAt: "$createdAt",
+                updatedAt: "$updatedAt",
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          data: "$data",
+          total: { $arrayElemAt: ["$metadata.total", 0] },
+        },
+      },
+    ];
+    console.log("Aggregation Pipeline:", JSON.stringify(pipeline, null, 2));
+    const result = await UserModel.aggregate(pipeline);
+    console.log("Aggregation Result:", JSON.stringify(result, null, 2));
+    const data = result[0]?.data || [];
+    const total = result[0]?.total || 0;
+    return {
+      data: data.map((item: { _id: { toString: () => any; }; userId: { _id: { toString: () => any; }; }; }) => ({
+        ...item,
+        _id: item._id.toString(),
+        userId: {
+          ...item.userId,
+          _id: item.userId._id.toString(),
+        },
+      })),
+      total,
+    };
   }
   async getAllDeliveryBoysPaginated(
     params: DeliveryBoyListingRequest

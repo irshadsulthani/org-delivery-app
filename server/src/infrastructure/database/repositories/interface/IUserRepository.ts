@@ -1,3 +1,5 @@
+import { CustomerRequestDto } from "../../../../domain/dtos/CustomerRequestDto";
+import { CustomerResponseDto } from "../../../../domain/dtos/CustomerResponseDto";
 import { DeliveryBoyListingRequest } from "../../../../domain/dtos/DeliveryBoyListingRequest";
 import { DeliveryBoyResponse } from "../../../../domain/dtos/DeliveryBoyResponse";
 import { RetailerListingRequest } from "../../../../domain/dtos/RetailerListingRequest";
@@ -10,7 +12,10 @@ export interface IUserRepository {
     createUser(user: User): Promise<User>;
     comparePassword(inputPassword: string, storedHash: string): Promise<boolean>;
     getAllUsers(): Promise<User[]>;
-    getAllCustomers(): Promise<User[]>;
+    getAllCustomersPaginated(params: CustomerRequestDto): Promise<{
+        data: CustomerResponseDto[];
+        total: number;
+    }>;
     getAllDeliveryBoysPaginated(params: DeliveryBoyListingRequest): Promise<{
         data: DeliveryBoyResponse[];
         total: number;

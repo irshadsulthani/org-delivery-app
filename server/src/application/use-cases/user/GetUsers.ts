@@ -1,3 +1,5 @@
+import { CustomerRequestDto } from "../../../domain/dtos/CustomerRequestDto";
+import { CustomerResponseDto } from "../../../domain/dtos/CustomerResponseDto";
 import { DeliveryBoyListingRequest } from "../../../domain/dtos/DeliveryBoyListingRequest";
 import { DeliveryBoyResponse } from "../../../domain/dtos/DeliveryBoyResponse";
 import { RetailerListingRequest } from "../../../domain/dtos/RetailerListingRequest";
@@ -17,8 +19,21 @@ export class GetUsers implements IGetUsers {
     return this.handleUserFetch(() => this.userRepo.getAllUsers());
   }
 
-  async executeCustomers(): Promise<Omit<User, 'password'>[]> {
-    return this.handleUserFetch(() => this.userRepo.getAllCustomers());
+  async executeCustomerPaginated(params: CustomerRequestDto): Promise<{
+    data: CustomerResponseDto[];
+    total: number;
+  }> {
+    try {
+      console.log('its getting here in GetUsers');
+      console.log('params:', params);
+      
+      return await this.userRepo.getAllCustomersPaginated(params);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Error fetching customers: ${error.message}`);
+      }
+      throw new Error("Error fetching customers: Unknown error");
+    }
   }
 
   async executeDeliveryBoysPaginated(params: DeliveryBoyListingRequest): Promise<{
