@@ -10,14 +10,15 @@ export class CustomerRepository implements ICustomerRepository {
     return customer ? this.mapToEntity(customer) : null;
   }
 
-  async updateProfile(userId: string, profileData: Partial<Customer>): Promise<Customer> {
-    const customer = await CustomerModel.findOneAndUpdate(
-      { userId: new Types.ObjectId(userId) },
-      { $set: profileData },
-      { new: true, upsert: true }
-    ).lean();
-    return this.mapToEntity(customer);
-  }
+ async updateProfile(userId: string, profileData: Partial<Customer>): Promise<Customer> {
+  const customer = await CustomerModel.findOneAndUpdate(
+    { userId: new Types.ObjectId(userId) },
+    { $set: profileData },
+    { new: true, upsert: true }
+  ).lean();
+  return this.mapToEntity(customer);
+}
+
 
   async addAddress(userId: string, address: Address): Promise<Customer> {
     const customer = await CustomerModel.findOneAndUpdate(

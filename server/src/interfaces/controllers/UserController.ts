@@ -4,6 +4,9 @@ import { StatusCode } from "../../utils/statusCode";
 import { GetCustomerDashboardUseCase } from "../../application/use-cases/customer/GetCustomerDashboardUseCase";
 import { CustomerRepository } from "../../infrastructure/database/repositories/CustomerRepository";
 import { GetProfileUseCase } from "../../application/use-cases/customer/GetProfileUseCase";
+import { uploadToCloudinary } from "../../infrastructure/cloudinary/cloudinary";
+import { UpdateProfileDTO } from "../../domain/dtos/customer/ProfileDTOs";
+import { UpdateProfileUseCase } from "../../application/use-cases/customer/UpdateProfileUseCase";
 
 const userRepo = new UserRepository();
 const customerRepo = new CustomerRepository();
@@ -43,11 +46,9 @@ export class UserController {
       res.status(statusCode).json({ message });
     }
   };
-  static  getProfile = async(req: Request, res: Response): Promise<void>=> {
+  static getProfile = async (req: Request, res: Response): Promise<void> => {
     try {
-      console.log("its getting here in getProfile");
       const userId = this.getUserId(req);
-      console.log("Fetching profile for userId:", userId);
       const useCase = await getProfileUseCase.execute(userId);
       res.status(StatusCode.OK).json(useCase);
     } catch (error: unknown) {
@@ -55,5 +56,37 @@ export class UserController {
         error instanceof Error ? error.message : "Unexpected error";
       res.status(StatusCode.BAD_REQUEST).json({ message });
     }
-  }
+  };
+  static updateProfile = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = this.getUserId(req);
+      const { name, phone } = req.body;
+      let profileImageUrl: string | undefined;
+      if (req.file) {
+        const fileBuffer = req.file.buffer;
+        const filename = `profile_${userId}_${Date.now()}`;
+        profileImageUrl = await uploadToCloudinary(fileBuffer, filename);
+      }
+      const updateData: UpdateProfileDTO = {
+        name,
+        phone,
+        profileImageUrl: profileImageUrl ?? "",
+      };
+
+      // Create use case instance if not already done
+      const updateProfileUseCase = new UpdateProfileUseCase(
+        userRepo,
+        customerRepo
+      );
+      await updateProfileUseCase.execute(userId, updateData);
+
+      res
+        .status(StatusCode.OK)
+        .json({ message: "Profile updated successfully" });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unexpected error";
+      res.status(StatusCode.BAD_REQUEST).json({ message });
+    }
+  };
 }

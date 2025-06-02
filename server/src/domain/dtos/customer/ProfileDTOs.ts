@@ -10,6 +10,7 @@ export interface ProfileResponseDTO {
 }
 
 export interface UpdateProfileDTO {
+  profileImageUrl: string | undefined;
   name?: string;
   phone?: string;
 }

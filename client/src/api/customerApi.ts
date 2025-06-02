@@ -9,13 +9,17 @@ export const getDashboardData = async () => {
 
 export const getCustomerProfile = async () => {
   const response = await privateApi('get', '/user/profile');
-  console.log('Customer Profile:', response);
   return response;
 };
 
 export const updateCustomerProfile = async (formData: FormData) => {
-  const response = await fileUploadApi('/user/profile', formData);
-  return response.data;
+  const response = await fileUploadApi('/user/profile', formData, { 
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response;
 };
 
 export const addCustomerAddress = async (address: any) => {

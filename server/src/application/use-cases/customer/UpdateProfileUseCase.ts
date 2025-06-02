@@ -5,7 +5,7 @@ import { ICustomerRepository } from "../../../infrastructure/database/repositori
 import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
 
 export class UpdateProfileUseCase {
-    constructor(
+  constructor(
     private _userRepo: IUserRepository,
     private _customerRepo: ICustomerRepository
   ) {}
@@ -17,8 +17,11 @@ export class UpdateProfileUseCase {
       updates.user = { name: data.name };
     }
 
-    if (data.phone) {
-      updates.customer = { phone: data.phone };
+    if (data.phone || data.profileImageUrl) {
+      updates.customer = {
+        ...(data.phone && { phone: data.phone }),
+        ...(data.profileImageUrl && { profileImageUrl: data.profileImageUrl })
+      };
     }
 
     if (updates.user) {
@@ -29,5 +32,4 @@ export class UpdateProfileUseCase {
       await this._customerRepo.updateProfile(userId, updates.customer);
     }
   }
-
 }

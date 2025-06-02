@@ -113,7 +113,6 @@ const handleBlock = async (id: string) => {
   try {
     await blockDeliveryBoy(id);
     toast.success("Delivery boy blocked successfully");
-    window.location.reload(); // Reload the page after success
   } catch (error) {
     toast.error("Failed to block delivery boy");
   }
@@ -123,7 +122,6 @@ const handleUnblock = async (id: string) => {
   try {
     await unblockDeliveryBoy(id);
     toast.success("Delivery boy unblocked successfully");
-    window.location.reload(); // Reload the page after success
   } catch (error) {
     toast.error("Failed to unblock delivery boy");
   }

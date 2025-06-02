@@ -25,8 +25,6 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
       throw new Error('JWT access secret is not defined');
     }
     const decoded = jwt.verify(token, ACCESS_SECRET) as JwtPayload;
-    console.log('Token decoded successfully:', decoded);
-    
     req.user = decoded;
     next();
   } catch (err) {
