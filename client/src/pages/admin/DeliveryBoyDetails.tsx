@@ -111,21 +111,46 @@ function DeliveryBoyDetailsPage() {
 
 const handleBlock = async (id: string) => {
   try {
+    setProcessingAction(true);
     await blockDeliveryBoy(id);
+    
+    setDeliveryBoy(prev => prev && ({
+      ...prev,
+      userId: {
+        ...prev.userId,
+        isBlocked: true
+      }
+    }));
+    
     toast.success("Delivery boy blocked successfully");
   } catch (error) {
     toast.error("Failed to block delivery boy");
+  } finally {
+    setProcessingAction(false);
   }
 };
 
 const handleUnblock = async (id: string) => {
   try {
+    setProcessingAction(true);
     await unblockDeliveryBoy(id);
+    
+    setDeliveryBoy(prev => prev && ({
+      ...prev,
+      userId: {
+        ...prev.userId,
+        isBlocked: false
+      }
+    }));
+    
     toast.success("Delivery boy unblocked successfully");
   } catch (error) {
     toast.error("Failed to unblock delivery boy");
+  } finally {
+    setProcessingAction(false);
   }
 };
+
 
   useEffect(() => {
     const fetchDeliveryBoyDetails = async () => {

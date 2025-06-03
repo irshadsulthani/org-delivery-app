@@ -10,12 +10,11 @@ import { SendOtpForPasswordReset } from '../../application/use-cases/auth/SendOt
 export const handleOtpRequest = async (req: Request, res: Response): Promise<void> => {
   const { email } = req.body;
   try {
-    const sendOtpUseCase = new SendOtpUseCase();
+    const sendOtpUseCase = new SendOtpUseCase(userRepo);
     const { otp, expiresAt } = await sendOtpUseCase.execute(email);
     res.status(StatusCode.OK).json({ message: 'OTP sent successfully', otp, expiresAt });
-  } catch (err) {
-    console.error(err);
-    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: 'Failed to send OTP' });
+  } catch (err:any) {
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message: err.message });
   }
 };
 

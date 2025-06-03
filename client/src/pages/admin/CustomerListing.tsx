@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Download,
   RefreshCw,
   Lock,
   Unlock,
@@ -8,10 +7,8 @@ import {
   Phone,
   AlertCircle,
   ShoppingBag,
-  ShieldCheck,
   ShieldX,
-  Check,
-  X,
+  ShieldCheck,
   Users,
   UserCheck,
   UserX,
@@ -22,7 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AdminHeader from '../../components/Admin/AdminHeader';
 import { blockCustomer, getAllCustomers, unBlockCustomer } from '../../api/adminApi';
-import { useDispatch } from 'react-redux';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
 import { Table } from "../../components/Admin/Table";
 
@@ -58,7 +54,6 @@ const CustomerListing = () => {
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<Record<string, boolean>>({});
 
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const toggleMobileSidebar = () => {
