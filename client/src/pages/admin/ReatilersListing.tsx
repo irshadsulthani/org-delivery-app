@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  Download,
   RefreshCw,
   Lock,
   Unlock,
@@ -10,12 +9,16 @@ import {
   Package,
   Star,
   ShieldCheck,
+  ShieldX,
   FileText,
   Check,
   X,
   AlertCircle,
   User,
   Phone,
+  Calendar,
+  DollarSign,
+  Mail
 } from "lucide-react";
 import AdminSidebar from "../../components/Admin/AdminSidebar";
 import AdminHeader from "../../components/Admin/AdminHeader";
@@ -122,118 +125,146 @@ const RetailerListing = () => {
     toast.success("Retailer data refreshed!");
   };
 
+const handleBlockRetailer = async (retailerId: string) => {
+  try {
+    setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: true }));
+    
+    // Call API to block retailer
+    await blockRetailer(retailerId);
+    
+    // Update local state instead of refetching all data
+    setRetailers(prevRetailers => 
+      prevRetailers.map(retailer => 
+        retailer._id === retailerId 
+          ? { ...retailer, status: "Blocked" as const }
+          : retailer
+      )
+    );
+    
+    toast.success("Retailer blocked successfully");
+  } catch (error) {
+    console.error("Error blocking retailer:", error);
+    toast.error("Failed to block retailer");
+  } finally {
+    setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: false }));
+  }
+};
 
-  const handleBlockRetailer = async (retailerId: string) => {
-    try {
-      setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: true }));
-      await blockRetailer(retailerId);
-      toast.success("Retailer blocked successfully");
-      fetchRetailers();
-    } catch (error) {
-      console.error("Error blocking retailer:", error);
-      toast.error("Failed to block retailer");
-    } finally {
-      setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: false }));
-    }
-  };
+// Optimized handleUnblockRetailer function
+const handleUnblockRetailer = async (retailerId: string) => {
+  try {
+    setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: true }));
+    
+    // Call API to unblock retailer
+    await unblockRetailer(retailerId);
+    
+    // Update local state instead of refetching all data
+    setRetailers(prevRetailers => 
+      prevRetailers.map(retailer => 
+        retailer._id === retailerId 
+          ? { ...retailer, status: "Active" as const }
+          : retailer
+      )
+    );
+    
+    toast.success("Retailer unblocked successfully");
+  } catch (error) {
+    console.error("Error unblocking retailer:", error);
+    toast.error("Failed to unblock retailer");
+  } finally {
+    setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: false }));
+  }
+};
 
-  const handleUnblockRetailer = async (retailerId: string) => {
-    try {
-      setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: true }));
-      await unblockRetailer(retailerId);
-      toast.success("Retailer unblocked successfully");
-      fetchRetailers();
-    } catch (error) {
-      console.error("Error unblocking retailer:", error);
-      toast.error("Failed to unblock retailer");
-    } finally {
-      setIsUpdatingStatus(prev => ({ ...prev, [retailerId]: false }));
-    }
-  };
 
   const handleViewDetails = (retailerId: string) => {
     navigate(`/admin/retailer/${retailerId}`);
   };
 
-  // Apply filters and search - now handled by API
   const handleSearch = (searchQuery: string) => {
     setSearchTerm(searchQuery);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
   };
 
   const handleFilter = (filterOptions: Record<string, any>) => {
     setFilters(filterOptions);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
   };
 
   const handleSort = (field: string, direction: "asc" | "desc") => {
     setSortField(field);
     setSortDirection(direction);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Fetch data when dependencies change
   useEffect(() => {
     fetchRetailers();
   }, [currentPage, searchTerm, filters, sortField, sortDirection]);
 
-  // Status badge component
+  // Enhanced Status badge component
   const StatusBadge = ({ status }: { status: "Active" | "Inactive" | "Pending" | "Blocked" }) => {
-    let colorClasses = "";
-    let Icon = Check;
+    const statusConfig = {
+      Active: {
+        gradient: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+        icon: Check,
+        text: "Active"
+      },
+      Inactive: {
+        gradient: "bg-gradient-to-r from-red-500 to-red-600",
+        icon: X,
+        text: "Inactive"
+      },
+      Pending: {
+        gradient: "bg-gradient-to-r from-amber-500 to-orange-500",
+        icon: AlertCircle,
+        text: "Pending"
+      },
+      Blocked: {
+        gradient: "bg-gradient-to-r from-gray-500 to-gray-600",
+        icon: AlertCircle,
+        text: "Blocked"
+      }
+    };
 
-    switch (status) {
-      case "Active":
-        colorClasses = "bg-emerald-100 text-emerald-800 border border-emerald-200";
-        Icon = Check;
-        break;
-      case "Inactive":
-        colorClasses = "bg-red-100 text-red-800 border border-red-200";
-        Icon = X;
-        break;
-      case "Pending":
-        colorClasses = "bg-yellow-100 text-yellow-800 border border-yellow-200";
-        Icon = AlertCircle;
-        break;
-      case "Blocked":
-        colorClasses = "bg-gray-100 text-gray-800 border border-gray-200";
-        Icon = AlertCircle;
-        break;
-    }
+    const config = statusConfig[status];
+    const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}>
-        <Icon size={12} className="mr-1" />
-        {status}
-      </span>
+      <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-sm ${config.gradient}`}>
+        <Icon size={12} className="mr-1.5" />
+        {config.text}
+      </div>
     );
   };
 
-  // Verification badge component
+  // Enhanced Verification badge component
   const VerificationBadge = ({ verified }: { verified: boolean }) => {
+    if (verified) {
+      return (
+        <div className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm">
+          <ShieldCheck size={12} className="mr-1.5" />
+          Verified
+        </div>
+      );
+    }
+    
     return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          verified
-            ? "bg-blue-100 text-blue-800 border border-blue-200"
-            : "bg-gray-100 text-gray-800 border border-gray-200"
-        }`}
-      >
-        <ShieldCheck size={12} className="mr-1" />
-        {verified ? "Verified" : "Unverified"}
-      </span>
+      <div className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm">
+        <ShieldX size={12} className="mr-1.5" />
+        Unverified
+      </div>
     );
   };
 
-  // Generate avatar placeholder or use shop image
+  // Enhanced Retailer avatar component
   const RetailerAvatar = ({ retailer }: { retailer: Retailer }) => {
     if (retailer.shopImageUrl) {
       return (
-        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden border-2 border-white shadow-lg">
           <img
             src={retailer.shopImageUrl}
             alt={retailer.shopName}
@@ -253,32 +284,88 @@ const RetailerListing = () => {
       : "NA";
 
     const colorIndex = parseInt(retailer._id.replace(/\D/g, "")) % 5;
-    const bgColors = [
-      "bg-blue-500",
-      "bg-purple-500",
-      "bg-emerald-500",
-      "bg-amber-500",
-      "bg-indigo-500",
+    const gradients = [
+      "bg-gradient-to-br from-blue-500 to-blue-600",
+      "bg-gradient-to-br from-purple-500 to-purple-600",
+      "bg-gradient-to-br from-emerald-500 to-emerald-600",
+      "bg-gradient-to-br from-amber-500 to-orange-500",
+      "bg-gradient-to-br from-indigo-500 to-indigo-600",
     ];
 
     return (
       <div
-        className={`w-10 h-10 rounded-full ${bgColors[colorIndex]} flex items-center justify-center text-white font-medium shadow-sm`}
+        className={`w-12 h-12 rounded-full ${gradients[colorIndex]} flex items-center justify-center text-white font-bold shadow-lg border-2 border-white`}
       >
         {initials}
       </div>
     );
   };
 
-  // Rating component
-  const RatingDisplay = ({ rating }: { rating: number | undefined }) => {
-    if (!rating) return <span className="text-gray-400">N/A</span>;
+  // Enhanced Action Buttons
+  const ActionButton = ({ 
+    onClick, 
+    disabled, 
+    isLoading, 
+    variant, 
+    icon: Icon, 
+    title 
+  }: {
+    onClick: () => void;
+    disabled?: boolean;
+    isLoading?: boolean;
+    variant: 'view' | 'license' | 'block' | 'unblock';
+    icon: any;
+    title: string;
+  }) => {
+    const variants = {
+      view: "bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white",
+      license: "bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white",
+      block: "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white",
+      unblock: "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white"
+    };
+
+    return (
+      <button
+        className={`inline-flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-sm ${variants[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={onClick}
+        disabled={disabled}
+        title={title}
+      >
+        {isLoading ? (
+          <RefreshCw size={14} className="animate-spin" />
+        ) : (
+          <Icon size={14} />
+        )}
+      </button>
+    );
+  };
+
+  // Enhanced Rating component
+  const RatingDisplay = ({ rating, reviewCount }: { rating: number | undefined; reviewCount: number }) => {
+    if (!rating) {
+      return (
+        <div className="flex items-center">
+          <div className="p-2 bg-gray-100 rounded-lg mr-2">
+            <Star size={14} className="text-gray-400" />
+          </div>
+          <div>
+            <span className="text-sm text-gray-400 font-medium">No Rating</span>
+            <div className="text-xs text-gray-400">No reviews</div>
+          </div>
+        </div>
+      );
+    }
 
     const displayRating = typeof rating === "number" ? rating.toFixed(1) : "N/A";
     return (
       <div className="flex items-center">
-        <Star size={14} className="text-amber-500 mr-1" />
-        <span>{displayRating}</span>
+        <div className="p-2 bg-amber-100 rounded-lg mr-2">
+          <Star size={14} className="text-amber-600" />
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-gray-900">{displayRating}</div>
+          <div className="text-xs text-gray-500">{reviewCount} reviews</div>
+        </div>
       </div>
     );
   };
@@ -303,12 +390,16 @@ const RetailerListing = () => {
             <RetailerAvatar retailer={retailer} />
           </div>
           <div className="ml-4">
-            <div className="text-sm font-medium text-gray-900">
+            <div className="text-sm font-semibold text-gray-900">
               {retailer.shopName}
             </div>
-            <div className="text-xs text-gray-500 flex items-center mt-1">
+            <div className="flex items-center text-sm text-gray-500 mt-1">
               <User size={12} className="mr-1" />
               {retailer.name}
+            </div>
+            <div className="flex items-center text-xs text-gray-400 mt-1">
+              <Mail size={10} className="mr-1" />
+              {retailer.email}
             </div>
           </div>
         </div>
@@ -319,73 +410,78 @@ const RetailerListing = () => {
       accessor: "createdAt",
       sortable: true,
       render: (retailer: Retailer) => (
-        <div>
-          <div className="text-sm text-gray-900">
-            {new Date(retailer.createdAt).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
+        <div className="flex items-center">
+          <div className="p-2 bg-blue-100 rounded-lg mr-2">
+            <Calendar size={14} className="text-blue-600" />
           </div>
-          <div className="text-xs text-gray-500">
-            {new Date(retailer.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+          <div>
+            <div className="text-sm font-medium text-gray-900">
+              {new Date(retailer.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </div>
+            <div className="text-xs text-gray-500">
+              {new Date(retailer.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </div>
           </div>
         </div>
       ),
     },
     {
-      header: "Orders",
+      header: "Orders & Revenue",
       accessor: "orderCount",
       sortable: true,
       render: (retailer: Retailer) => (
-        <div>
-          <div className="flex items-center">
-            <Package size={14} className="text-gray-400 mr-1" />
-            <span className="text-sm text-gray-900">
-              {retailer.orderCount || 0}
-            </span>
+        <div className="flex items-center">
+          <div className="p-2 bg-purple-100 rounded-lg mr-2">
+            <Package size={14} className="text-purple-600" />
           </div>
-          {retailer.totalRevenue && (
-            <div className="text-xs text-gray-500 mt-1">
-              ₹{retailer.totalRevenue.toLocaleString("en-IN")}
+          <div>
+            <div className="text-sm font-semibold text-gray-900">
+              {retailer.orderCount || 0} orders
             </div>
-          )}
+            {retailer.totalRevenue && (
+              <div className="text-xs text-green-600 font-medium flex items-center">
+                <DollarSign size={10} className="mr-1" />
+                ₹{retailer.totalRevenue.toLocaleString("en-IN")}
+              </div>
+            )}
+          </div>
         </div>
       ),
     },
     {
-      header: "Location",
+      header: "Location & Contact",
       accessor: "city",
       filterable: true,
       render: (retailer: Retailer) => (
-        <div>
-          <div className="flex items-center">
-            <MapPin size={14} className="text-gray-400 mr-1" />
-            <span className="text-sm text-gray-900">
-              {formatAddress(retailer.address)}
-            </span>
+        <div className="flex items-center">
+          <div className="p-2 bg-green-100 rounded-lg mr-2">
+            <MapPin size={14} className="text-green-600" />
           </div>
-          <div className="text-xs text-gray-500 mt-1 flex items-center">
-            <Phone size={12} className="mr-1" />
-            {retailer.phone}
+          <div>
+            <div className="text-sm font-medium text-gray-900">
+              {formatAddress(retailer.address)}
+            </div>
+            <div className="text-xs text-gray-500 flex items-center mt-1">
+              <Phone size={10} className="mr-1" />
+              {retailer.phone}
+            </div>
           </div>
         </div>
       ),
     },
     {
-      header: "Rating",
+      header: "Rating & Reviews",
       accessor: "rating",
       sortable: true,
       render: (retailer: Retailer) => (
-        <div>
-          <RatingDisplay rating={retailer.rating} />
-          <div className="text-xs text-gray-500 mt-1">
-            {retailer.reviews?.length || 0} reviews
-          </div>
-        </div>
+        <RatingDisplay rating={retailer.rating} reviewCount={retailer.reviews?.length || 0} />
       ),
     },
     {
@@ -407,7 +503,7 @@ const RetailerListing = () => {
       filterable: true,
       filterOptions: [
         { label: "All Status", value: "" },
-        { label: "active", value: "Active" },
+        { label: "Active", value: "Active" },
         { label: "Pending", value: "Pending" },
         { label: "Blocked", value: "Blocked" },
       ],
@@ -417,49 +513,37 @@ const RetailerListing = () => {
       header: "Actions",
       accessor: "actions",
       render: (retailer: Retailer) => (
-        <div className="flex items-center justify-end space-x-3">
-          <button
-            className="text-indigo-600 hover:text-indigo-900"
+        <div className="flex items-center justify-end space-x-2">
+          <ActionButton
             onClick={() => handleViewDetails(retailer._id)}
-            title="View details"
-          >
-            <Eye size={16} />
-          </button>
-          <button
-            className="text-gray-600 hover:text-gray-900"
-            onClick={() =>
-              toast.info(`View license for ${retailer.shopName}`)
-            }
-            title="View license"
-          >
-            <FileText size={16} />
-          </button>
+            variant="view"
+            icon={Eye}
+            title="View retailer details"
+          />
+          <ActionButton
+            onClick={() => toast.info(`View license for ${retailer.shopName}`)}
+            variant="license"
+            icon={FileText}
+            title="View license document"
+          />
           {retailer.status === "Active" ? (
-            <button
-              className="text-red-600 hover:text-red-900"
+            <ActionButton
               onClick={() => handleBlockRetailer(retailer._id)}
               disabled={isUpdatingStatus[retailer._id]}
+              isLoading={isUpdatingStatus[retailer._id]}
+              variant="block"
+              icon={Lock}
               title="Block retailer"
-            >
-              {isUpdatingStatus[retailer._id] ? (
-                <RefreshCw size={16} className="animate-spin" />
-              ) : (
-                <Lock size={16} />
-              )}
-            </button>
+            />
           ) : (
-            <button
-              className="text-emerald-600 hover:text-emerald-900"
+            <ActionButton
               onClick={() => handleUnblockRetailer(retailer._id)}
               disabled={isUpdatingStatus[retailer._id]}
+              isLoading={isUpdatingStatus[retailer._id]}
+              variant="unblock"
+              icon={Unlock}
               title="Unblock retailer"
-            >
-              {isUpdatingStatus[retailer._id] ? (
-                <RefreshCw size={16} className="animate-spin" />
-              ) : (
-                <Unlock size={16} />
-              )}
-            </button>
+            />
           )}
         </div>
       ),
@@ -467,17 +551,19 @@ const RetailerListing = () => {
   ];
 
   const emptyState = (
-    <div className="text-center py-12">
-      <Store className="mx-auto h-12 w-12 text-gray-400" />
-      <h3 className="mt-2 text-sm font-medium text-gray-900">No retailers found</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        Try adjusting your search or filter criteria
+    <div className="text-center py-16">
+      <div className="w-24 h-24 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-4">
+        <Store className="h-12 w-12 text-gray-400" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">No retailers found</h3>
+      <p className="text-sm text-gray-500 max-w-sm mx-auto">
+        Try adjusting your search or filter criteria to find what you're looking for
       </p>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
@@ -486,7 +572,7 @@ const RetailerListing = () => {
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden backdrop-blur-sm"
           onClick={toggleMobileSidebar}
         >
           <div
@@ -509,20 +595,20 @@ const RetailerListing = () => {
         <AdminHeader />
 
         {/* Retailer Listing Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
+        <main className="flex-1 overflow-y-auto p-6">
+          {/* Enhanced Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 space-y-4 sm:space-y-0">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Retailer Management
               </h2>
-              <p className="text-gray-500 text-sm mt-1">
-                Manage all registered retailer shops
+              <p className="text-gray-500 text-sm mt-2">
+                Manage and monitor all registered retailer shops with advanced controls
               </p>
             </div>
             <div className="flex items-center space-x-3">
               <button
-                className={`inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                className={`inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition-all duration-200 hover:scale-105 ${
                   loading ? "opacity-80" : ""
                 }`}
                 onClick={refreshData}
@@ -532,73 +618,53 @@ const RetailerListing = () => {
                   size={16}
                   className={`mr-2 ${loading ? "animate-spin" : ""}`}
                 />
-                Refresh
-              </button>
-
-              <button
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={() =>
-                  toast.info("Export functionality would be implemented here")
-                }
-              >
-                <Download size={16} className="mr-2" />
-                Export
-              </button>
-
-              <button
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={() => navigate("/admin/retailers/add")}
-              >
-                <Store size={16} className="mr-2" />
-                Add Retailer
+                Refresh Data
               </button>
             </div>
           </div>
 
-          {/* Error State */}
+          {/* Enhanced Error State */}
           {error && !loading && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl p-6 mb-6 shadow-sm">
               <div className="flex">
-                <AlertCircle
-                  className="h-5 w-5 text-red-500"
-                  aria-hidden="true"
-                />
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Error loading retailers
+                <div className="p-2 bg-red-200 rounded-lg mr-4">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-red-800 mb-2">
+                    Error Loading Retailers
                   </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>{error}</p>
-                  </div>
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      onClick={fetchRetailers}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                      Try again
-                    </button>
-                  </div>
+                  <p className="text-sm text-red-700 mb-4">{error}</p>
+                  <button
+                    type="button"
+                    onClick={fetchRetailers}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
+                  >
+                    <RefreshCw size={14} className="mr-2" />
+                    Try Again
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Table Component */}
+          {/* Enhanced Table Component */}
           {!error && (
-            <Table
-              columns={columns}
-              data={paginatedRetailers}
-              totalItems={totalRetailers}
-              itemsPerPage={ITEMS_PER_PAGE}
-              currentPage={currentPage}
-              onPageChange={handlePageChange}
-              onSortChange={handleSort}
-              onSearch={handleSearch}
-              onFilter={handleFilter}
-              loading={loading}
-              emptyState={emptyState}
-            />
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <Table
+                columns={columns}
+                data={paginatedRetailers}
+                totalItems={totalRetailers}
+                itemsPerPage={ITEMS_PER_PAGE}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+                onSortChange={handleSort}
+                onSearch={handleSearch}
+                onFilter={handleFilter}
+                loading={loading}
+                emptyState={emptyState}
+              />
+            </div>
           )}
         </main>
       </div>
