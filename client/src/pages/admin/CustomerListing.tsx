@@ -109,7 +109,6 @@ const CustomerListing = () => {
       const response = await blockCustomer(customerId);
       console.log("Blocking customer:", customerId, response);
       if (response.message === "Customer blocked successfully") {
-        // Update the customer status locally for immediate UI feedback
         setCustomers(prevCustomers => 
           prevCustomers.map(customer => 
             customer.userId._id === customerId || customer._id === customerId
