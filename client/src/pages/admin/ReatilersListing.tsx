@@ -605,4 +605,6 @@ const RetailerListing = () => {
     </div>
   );
 };
+
+
 export default RetailerListing;
