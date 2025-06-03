@@ -10,9 +10,9 @@ import {
   ChevronRight,
   Package,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { adminLogout } from '../../slice/adminSlice';
 import { logoutAdmin } from '../../api/adminApi';
@@ -43,27 +43,9 @@ const AdminSidebar: React.FC<SidebarProps> = ({
   const navigate = useNavigate();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const selector = useSelector((state : RootState) => state.admin.admin)
+  const selector = useSelector((state: RootState) => state.admin.admin);
 
-
-  // Handle window resize for responsive behavior
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      // Auto-collapse sidebar on small screens
-      if (window.innerWidth < 768 && !isMobile && !collapsed) {
-        setCollapsed(true);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [setCollapsed, isMobile, collapsed]);
-
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
-  };
-
+  // Memoized menu items to prevent unnecessary re-renders
   const menuItems: MenuItem[] = [
     { icon: <Home size={20} />, title: 'Dashboard', path: '/admin/dashboard' },
     { icon: <Users size={20} />, title: 'Customers', path: '/admin/customers' },
@@ -73,8 +55,27 @@ const AdminSidebar: React.FC<SidebarProps> = ({
     { icon: <BarChart2 size={20} />, title: 'Analytics', path: '/admin/analytics' },
     { icon: <Settings size={20} />, title: 'Settings', path: '/admin/settings' },
   ];
+  console.log(windowWidth)
+  // Optimized resize handler with useCallback
+  const handleResize = useCallback(() => {
+    setWindowWidth(window.innerWidth);
+    // Auto-collapse sidebar on small screens
+    if (window.innerWidth < 768 && !isMobile && !collapsed) {
+      setCollapsed(true);
+    }
+  }, [setCollapsed, isMobile, collapsed]);
 
-  const handleLogout = async () => {
+  // Handle window resize for responsive behavior
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [handleResize]);
+
+  const toggleSidebar = useCallback(() => {
+    setCollapsed(!collapsed);
+  }, [collapsed, setCollapsed]);
+
+  const handleLogout = useCallback(async () => {
     try {
       await logoutAdmin();
       dispatch(adminLogout());
@@ -83,7 +84,14 @@ const AdminSidebar: React.FC<SidebarProps> = ({
     } catch (error: any) {
       toast.error('Logout failed: ' + (error.message || 'Unknown error'));
     }
-  };
+  }, [dispatch, navigate]);
+
+  // Handle navigation click for mobile
+  const handleNavClick = useCallback(() => {
+    if (isMobile && onCloseMobile) {
+      onCloseMobile();
+    }
+  }, [isMobile, onCloseMobile]);
 
   return (
     <div 
@@ -132,10 +140,10 @@ const AdminSidebar: React.FC<SidebarProps> = ({
       {(!collapsed || isMobile) && (
         <div className="mt-6 px-5 flex items-center relative z-10">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-medium shadow-md">
-            JD
+            {selector?.name?.charAt(0)?.toUpperCase() || 'A'}
           </div>
           <div className="ml-3">
-            <p className="font-medium text-sm">{selector?.name}</p>
+            <p className="font-medium text-sm">{selector?.name || 'Admin'}</p>
             <p className="text-xs text-white/70">Admin</p>
           </div>
           {/* Status indicator */}
@@ -147,15 +155,16 @@ const AdminSidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Navigation Menu - Improved */}
+      {/* Navigation Menu - Improved with React Router Link */}
       <div className="mt-6 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-700 scrollbar-track-transparent relative z-10 px-3">
         <nav>
           {menuItems.map((item, index) => {
             const isActive = location.pathname === item.path;
             return (
-              <a
+              <Link
                 key={index}
-                href={item.path}
+                to={item.path}
+                onClick={handleNavClick}
                 onMouseEnter={() => setHoveredItem(item.path)}
                 onMouseLeave={() => setHoveredItem(null)}
                 className={`flex items-center rounded-xl py-3 px-4 mb-2.5 group relative
@@ -193,7 +202,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({
                     {item.title}
                   </div>
                 )}
-              </a>
+              </Link>
             );
           })}
         </nav>
@@ -211,7 +220,7 @@ const AdminSidebar: React.FC<SidebarProps> = ({
           onClick={handleLogout}
           onMouseEnter={() => setHoveredItem('logout')}
           onMouseLeave={() => setHoveredItem(null)}
-          >
+        >
           <LogOut size={20} />
           {(!collapsed || isMobile) && <span className="ml-3 font-medium">Logout</span>}
           
