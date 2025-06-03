@@ -594,10 +594,4 @@ const CustomerListing = () => {
     </div>
   );
 };
-
-
-
-
-
-
 export default CustomerListing;
