@@ -24,8 +24,8 @@ export class GetUsers implements IGetUsers {
     total: number;
   }> {
     try {
-      console.log('its getting here in GetUsers');
-      console.log('params:', params);
+      // console.log('its getting here in GetUsers');
+      // console.log('params:', params);
       
       return await this.userRepo.getAllCustomersPaginated(params);
     } catch (error) {

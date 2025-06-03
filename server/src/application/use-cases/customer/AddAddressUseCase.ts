@@ -10,12 +10,9 @@ export class AddAddressUseCase {
   async execute(userId: string, address: AddressDTO): Promise<Address> {
     const newAddress = {
       ...address,
-      isDefault: false, // New addresses are not default by default
-      _id: new Types.ObjectId(),
-      createdAt: new Date(),
-      updatedAt: new Date()
+      isDefault: false,
+      _id: new Types.ObjectId()
     };
-
     const customer = await this.customerRepository.addAddress(userId, newAddress);
     return customer.addresses.find(a => a._id?.equals(newAddress._id))!;
   }

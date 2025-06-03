@@ -7,11 +7,13 @@ import { GetProfileUseCase } from "../../application/use-cases/customer/GetProfi
 import { uploadToCloudinary } from "../../infrastructure/cloudinary/cloudinary";
 import { UpdateProfileDTO } from "../../domain/dtos/customer/ProfileDTOs";
 import { UpdateProfileUseCase } from "../../application/use-cases/customer/UpdateProfileUseCase";
+import { AddAddressUseCase } from "../../application/use-cases/customer/AddAddressUseCase";
 
 const userRepo = new UserRepository();
 const customerRepo = new CustomerRepository();
 const getDashboardUseCase = new GetCustomerDashboardUseCase(customerRepo);
 const getProfileUseCase = new GetProfileUseCase(customerRepo, userRepo);
+const addAddressUseCase = new AddAddressUseCase(customerRepo)
 export class UserController {
   private static getUserId(req: Request): string {
     return (req.user as any).id;
@@ -35,7 +37,6 @@ export class UserController {
   ): Promise<void> => {
     try {
       const userId = this.getUserId(req);
-      console.log("Fetching dashboard data for userId:", userId);
       const customerData = await getDashboardUseCase.execute(userId);
       res.status(StatusCode.OK).json(customerData);
     } catch (err: unknown) {
@@ -72,8 +73,6 @@ export class UserController {
         phone,
         profileImageUrl: profileImageUrl ?? "",
       };
-
-      // Create use case instance if not already done
       const updateProfileUseCase = new UpdateProfileUseCase(
         userRepo,
         customerRepo
@@ -89,4 +88,15 @@ export class UserController {
       res.status(StatusCode.BAD_REQUEST).json({ message });
     }
   };
+  static addCustomerAddress = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = this.getUserId(req);
+      const address = req.body;
+      const useCase = await addAddressUseCase.execute(userId, address);
+      res.status(StatusCode.CREATED).json(useCase);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unexpected error";
+      res.status(StatusCode.BAD_REQUEST).json({ message });
+    }
+  }
 }

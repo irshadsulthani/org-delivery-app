@@ -1,23 +1,23 @@
-// // BlockCustomer.ts
-// import { User } from "../../../domain/entities/User";
-// import { userM } from "../../../infrastructure/database/schemas/userModel"; // <- add this export
-// import { IBaseRepository } from "../../../infrastructure/database/repositories/interface/IBaseRepository";
-// import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
-// import { IBlockCustomer } from "./interface/IBlockCustomer";
+// BlockCustomer.ts
+import { User } from "../../../domain/entities/User";
+import { IUserRepository } from "../../../infrastructure/database/repositories/interface/IUserRepository";
+import { IBlockCustomer } from "./interface/IBlockCustomer";
+import { ICustomerRepository } from "../../../infrastructure/database/repositories/interface/ICustomerRepository";
 
-// export class BlockCustomer implements IBlockCustomer {
-//   constructor(
-//     private readonly _userRepo: IUserRepository,
-//     private readonly _baseRepo: IBaseRepository<User, userM>
-//   ) {}
+export class BlockCustomer implements IBlockCustomer {
+  constructor(
+    private readonly _userRepo: IUserRepository,
+    private readonly _customerRepo: ICustomerRepository
+  ) {}
 
-//   async execute(customerId: string): Promise<void> {
-//     const customer = await this._baseRepo.findById(customerId);
-//     if (!customer) {
-//       throw new Error("Customer not found");
-//     }
+  async execute(customerId: string): Promise<void> {
+    // First find the customer by userId
+    const customer = await this._customerRepo.findByUserId(customerId);
+    if (!customer) {
+      throw new Error("Customer not found");
+    }
 
-//     await this._baseRepo.update(customerId, { isBlocked: true });
-//   }
-// }
-
+    // Then block the user in the User repository
+    await this._userRepo.blockUser(customerId);
+  }
+}

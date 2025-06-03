@@ -1,3 +1,4 @@
+import { blockCustomer, unBlockCustomer } from './../../../../client/src/api/adminApi';
 // src/infrastructure/controllers/AdminController.ts
 import { Request, Response } from "express";
 import { StatusCode } from "../../utils/statusCode";
@@ -19,11 +20,15 @@ import { UnBlockRetailerUseCase } from "../../application/use-cases/retailers/Un
 import { BlockDeliveryBoyUseCase } from "../../application/use-cases/deliveryBoy/BlockDeliveryBoyUseCase";
 import { UnBlockDeliveryBoyUseCase } from "../../application/use-cases/deliveryBoy/UnBlockDeliveryBoyUseCase";
 import { RetailerListingRequest } from "../../domain/dtos/RetailerListingRequest";
+import { BlockCustomer } from '../../application/use-cases/customer/BlockCustomer';
+import { CustomerRepository } from '../../infrastructure/database/repositories/CustomerRepository';
+import { UnBlockCustomer } from '../../application/use-cases/customer/UnBlockCustomer';
 
 const userRepo = new UserRepository();
 const deliveryBoyRepo = new DeliveryBoyRepository();
 const ratingService = new RatingService();
 const retailerRepo = new RetailersRepository();
+const customerRepo = new CustomerRepository();
 
 export class AdminController {
   static getUsers = async (req: Request, res: Response) => {
@@ -38,7 +43,6 @@ export class AdminController {
 
   static getAllCustomers = async (req: Request, res: Response) => {
     try {
-      console.log('its here getting');
       const {
         page = 1,
         limit = 5,
@@ -50,7 +54,6 @@ export class AdminController {
         sortField = "createdAt",
         sortDirection = "desc",
       } = req.query;
-      console.log(req.query);
       const useCase = new GetUsers(userRepo);
       const customers = await useCase.executeCustomerPaginated({
         page: Number(page),
@@ -69,7 +72,6 @@ export class AdminController {
           direction: sortDirection as "asc" | "desc",
         },
       });
-      console.log(customers);
       res.status(StatusCode.OK).json(customers);
     } catch (err: any) {
       res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
@@ -89,7 +91,7 @@ export class AdminController {
         sortField = "createdAt",
         sortDirection = "desc",
       } = req.query;
-      console.log(req.query);
+      // console.log(req.query);
       
       const useCase = new GetUsers(userRepo);
       const result = await useCase.executeDeliveryBoysPaginated({
@@ -339,4 +341,34 @@ export class AdminController {
       });
     }
   };
+  static blockCustomer = async (req: Request, res: Response) => {
+    try {
+      const { customerId } = req.params;
+      const useCase = new BlockCustomer(userRepo, customerRepo)
+      await useCase.execute(customerId);
+      res.status(StatusCode.OK).json({
+        message: "Customer blocked successfully",
+      });
+    } catch (error:any) {
+      res.status(StatusCode.BAD_REQUEST).json({
+        message: error.message || "Failed to block customer",
+      });
+    }
+  }
+  static unblockCustomer = async (req: Request, res: Response) => {
+    try {
+      console.log('Unblocking customer...');
+      
+      const { customerId } = req.params;
+      const useCase = new UnBlockCustomer(userRepo, customerRepo);
+      await useCase.execute(customerId);
+      res.status(StatusCode.OK).json({success: true,
+        message: "Customer unblocked successfully",
+      });
+    } catch (error:any) {
+      res.status(StatusCode.BAD_REQUEST).json({success: false,
+        message: error.message || "Failed to unblock customer",
+      });
+    }
+  }
 }

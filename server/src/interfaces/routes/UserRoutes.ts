@@ -35,5 +35,10 @@ router.patch(
   UserController.updateProfile
 );
 
+router.post(
+  '/addresses',
+  verifyToken,
+  UserController.addCustomerAddress
+);
 
 export default router;

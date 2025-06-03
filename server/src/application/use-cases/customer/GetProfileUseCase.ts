@@ -20,6 +20,9 @@ export class GetProfileUseCase {
             phone:'',
             profileImageUrl: '',
         }
+        // console.log("**************************************************");
+        // console.log("Fetched customer profile:", customer);
+        // console.log("**************************************************");
         return {
             name: user.name,
             email: user.email,

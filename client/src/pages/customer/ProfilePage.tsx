@@ -26,7 +26,7 @@ import {
 } from "../../api/customerApi";
 
 interface Address {
-  id: string;
+  _id: string;
   street: string;
   city: string;
   state: string;
@@ -52,6 +52,11 @@ const ProfilePage = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [cities, setCities] = useState<
+    { name: string; state: string; country: string }[]
+  >([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profile, setProfile] = useState<ProfileData>({
@@ -87,7 +92,6 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setProfileImageFile(e.target.files[0]);
@@ -134,6 +138,7 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
+
   const handleAddAddress = async () => {
     if (
       !newAddress.street ||
@@ -170,12 +175,52 @@ const ProfilePage = () => {
     }
   };
 
+  useEffect(() => {
+    const searchCities = async () => {
+      if (searchTerm.length < 2) {
+        setCities([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const apiUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          searchTerm
+        )}&format=json&limit=10`;
+
+        const response = await fetch(apiUrl, {
+          headers: {
+            "User-Agent": "RetailerRegistration/1.0",
+          },
+        });
+
+        const data = await response.json();
+        setCities(
+          Array.isArray(data)
+            ? data.map((result: any) => ({
+                name: result.display_name.split(",")[0]?.trim() || "",
+                state: result.address?.state || "",
+                country: result.address?.country || "",
+              }))
+            : []
+        );
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timer = setTimeout(searchCities, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const handleEditAddress = async () => {
     if (!editingAddress) return;
 
     try {
       setLoading(true);
-      const updatedAddress = await updateCustomerAddress(editingAddress.id, {
+      const updatedAddress = await updateCustomerAddress(editingAddress._id, {
         street: editingAddress.street,
         city: editingAddress.city,
         state: editingAddress.state,
@@ -186,7 +231,7 @@ const ProfilePage = () => {
       setProfile((prev) => ({
         ...prev,
         addresses: prev.addresses.map((addr) =>
-          addr.id === editingAddress.id ? updatedAddress : addr
+          addr._id === editingAddress._id ? updatedAddress : addr
         ),
       }));
 
@@ -207,7 +252,7 @@ const ProfilePage = () => {
 
       setProfile((prev) => ({
         ...prev,
-        addresses: prev.addresses.filter((addr) => addr.id !== addressId),
+        addresses: prev.addresses.filter((addr) => addr._id !== addressId),
       }));
 
       showSuccess("Address deleted successfully!");
@@ -221,14 +266,13 @@ const ProfilePage = () => {
   const handleSetDefault = async (addressId: string) => {
     try {
       setLoading(true);
-      // Assuming your API supports setting default address
       await updateCustomerAddress(addressId, { isDefault: true });
 
       setProfile((prev) => ({
         ...prev,
         addresses: prev.addresses.map((addr) => ({
           ...addr,
-          isDefault: addr.id === addressId,
+          isDefault: addr._id === addressId,
         })),
       }));
 
@@ -298,20 +342,20 @@ const ProfilePage = () => {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
               {/* Profile Card */}
               <div className="xl:col-span-1">
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200 transition-all hover:shadow-lg">
                   <div className="h-32 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
                   <div className="relative px-6 pb-6">
                     <div className="flex justify-center -mt-16">
-                      <div className="relative">
+                      <div className="relative group">
                         <img
                           src={
                             profile.profileImageUrl ||
                             "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face"
                           }
                           alt={profile.name}
-                          className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                          className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover transition-transform group-hover:scale-105"
                         />
-                        <label className="absolute bottom-2 right-2 p-2 bg-emerald-500 text-white rounded-full shadow-lg hover:bg-emerald-600 transition-colors cursor-pointer">
+                        <label className="absolute bottom-2 right-2 p-2 bg-emerald-500 text-white rounded-full shadow-lg hover:bg-emerald-600 transition-all cursor-pointer transform hover:scale-110">
                           <Camera size={16} />
                           <input
                             type="file"
@@ -363,7 +407,7 @@ const ProfilePage = () => {
               {/* Main Content */}
               <div className="xl:col-span-2 space-y-8">
                 {/* Personal Information */}
-                <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden transition-all hover:shadow-md">
                   <div className="border-b border-slate-200 p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -379,7 +423,7 @@ const ProfilePage = () => {
                         <button
                           onClick={handleSaveProfile}
                           disabled={loading}
-                          className="flex items-center px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors font-medium"
+                          className="flex items-center px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-medium shadow-sm"
                         >
                           {loading ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -391,7 +435,7 @@ const ProfilePage = () => {
                       ) : (
                         <button
                           onClick={() => setEditMode(true)}
-                          className="flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+                          className="flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all font-medium shadow-sm"
                         >
                           <Edit3 size={16} className="mr-2" />
                           Edit
@@ -424,7 +468,7 @@ const ProfilePage = () => {
                           type="email"
                           value={profile.email}
                           disabled
-                          className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-black-50 text-slate-800"
+                          className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-800"
                         />
                       </div>
                       <div className="md:col-span-2">
@@ -446,7 +490,7 @@ const ProfilePage = () => {
                 </div>
 
                 {/* Addresses */}
-                <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden transition-all hover:shadow-md">
                   <div className="border-b border-slate-200 p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -481,63 +525,85 @@ const ProfilePage = () => {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {profile.addresses.map((address) => (
-                          <div
-                            key={address.id}
-                            className={`relative p-6 rounded-xl border-2 transition-all hover:shadow-md ${
-                              address.isDefault
-                                ? "border-emerald-300 bg-emerald-50"
-                                : "border-slate-200 bg-white hover:border-slate-300"
-                            }`}
-                          >
-                            {address.isDefault && (
-                              <div className="absolute top-4 right-4">
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                  <Star size={12} className="mr-1" />
-                                  Default
-                                </span>
-                              </div>
-                            )}
+                        {profile.addresses?.length ? (
+                          profile.addresses.map((address) => {
+                            if (!address) return null;
+                            const addressId = address._id || address._id;
 
-                            <div className="space-y-2 mb-4">
-                              <p className="font-medium text-slate-800">
-                                {address.street}
-                              </p>
-                              <p className="text-slate-600">
-                                {address.city}, {address.state}{" "}
-                                {address.zipCode}
-                              </p>
-                              <p className="text-slate-500 text-sm">
-                                {address.country}
-                              </p>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-                              <div className="flex space-x-3">
-                                {!address.isDefault && (
-                                  <button
-                                    onClick={() => handleSetDefault(address.id)}
-                                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-                                  >
-                                    Set as Default
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => openEditDialog(address)}
-                                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                                >
-                                  Edit
-                                </button>
-                              </div>
-                              <button
-                                onClick={() => handleDeleteAddress(address.id)}
-                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-auto"
+                            return (
+                              <div
+                                key={addressId}
+                                className={`relative p-6 rounded-xl border-2 transition-all hover:shadow-md ${
+                                  address.isDefault
+                                    ? "border-emerald-300 bg-emerald-50"
+                                    : "border-slate-200 bg-white hover:border-slate-300"
+                                }`}
                               >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                                {address.isDefault && (
+                                  <div className="absolute top-4 right-4">
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                      <Star size={12} className="mr-1" />
+                                      Default
+                                    </span>
+                                  </div>
+                                )}
+
+                                <div className="space-y-2 mb-4">
+                                  <p className="font-medium text-slate-800">
+                                    {address.street || "No street address"}
+                                  </p>
+                                  <p className="text-slate-600">
+                                    {address.city || "Unknown city"},{" "}
+                                    {address.state || ""}{" "}
+                                    {address.zipCode || ""}
+                                  </p>
+                                  <p className="text-slate-500 text-sm">
+                                    {address.country || "No country specified"}
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                                  <div className="flex space-x-3">
+                                    {!address.isDefault && (
+                                      <button
+                                        onClick={() =>
+                                          handleSetDefault(addressId)
+                                        }
+                                        className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+                                      >
+                                        Set as Default
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => openEditDialog(address)}
+                                      className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                                    >
+                                      Edit
+                                    </button>
+                                  </div>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteAddress(addressId)
+                                    }
+                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-auto"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="col-span-full text-center py-12">
+                            <MapPin className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                            <h4 className="text-lg font-medium text-slate-600 mb-2">
+                              No addresses saved
+                            </h4>
+                            <p className="text-slate-500">
+                              Add your first delivery address to get started
+                            </p>
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
                   </div>
@@ -550,8 +616,8 @@ const ProfilePage = () => {
 
       {/* Add Address Modal */}
       {showAddDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 hover:scale-100">
             <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-slate-800">
@@ -577,7 +643,7 @@ const ProfilePage = () => {
                   onChange={(e) =>
                     setNewAddress({ ...newAddress, street: e.target.value })
                   }
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                   placeholder="123 Main Street, Apt 4B"
                 />
               </div>
@@ -587,15 +653,49 @@ const ProfilePage = () => {
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     City
                   </label>
-                  <input
-                    type="text"
-                    value={newAddress.city}
-                    onChange={(e) =>
-                      setNewAddress({ ...newAddress, city: e.target.value })
-                    }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    placeholder="New York"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={newAddress.city}
+                      onChange={(e) => {
+                        setNewAddress({ ...newAddress, city: e.target.value });
+                        setSearchTerm(e.target.value);
+                      }}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                      placeholder="New York"
+                    />
+                    {isSearching && (
+                      <div className="absolute right-3 top-3.5">
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                      </div>
+                    )}
+                    {cities.length > 0 && searchTerm.length >= 2 && (
+                      <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-lg border border-slate-200 max-h-60 overflow-auto">
+                        {cities.map((city, index) => (
+                          <div
+                            key={`${city.name}-${city.state}-${index}`} // Unique key for each city
+                            className="px-4 py-2 hover:bg-slate-50 cursor-pointer transition-colors"
+                            onClick={() => {
+                              setNewAddress({
+                                ...newAddress,
+                                city: city.name,
+                                state: city.state,
+                                country: city.country,
+                              });
+                              setCities([]);
+                              setSearchTerm("");
+                            }}
+                          >
+                            <div className="font-medium">{city.name}</div>
+                            <div className="text-sm text-slate-500">
+                              {city.state && `${city.state}, `}
+                              {city.country}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -607,13 +707,11 @@ const ProfilePage = () => {
                     onChange={(e) =>
                       setNewAddress({ ...newAddress, state: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="NY"
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     ZIP Code
@@ -624,7 +722,7 @@ const ProfilePage = () => {
                     onChange={(e) =>
                       setNewAddress({ ...newAddress, zipCode: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="10001"
                   />
                 </div>
@@ -638,7 +736,7 @@ const ProfilePage = () => {
                     onChange={(e) =>
                       setNewAddress({ ...newAddress, country: e.target.value })
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="United States"
                   />
                 </div>
@@ -670,8 +768,8 @@ const ProfilePage = () => {
 
       {/* Edit Address Modal */}
       {showEditDialog && editingAddress && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-95 hover:scale-100">
             <div className="p-6 border-b border-slate-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-slate-800">
@@ -700,7 +798,7 @@ const ProfilePage = () => {
                       street: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                   placeholder="123 Main Street, Apt 4B"
                 />
               </div>
@@ -719,7 +817,7 @@ const ProfilePage = () => {
                         city: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="New York"
                   />
                 </div>
@@ -736,7 +834,7 @@ const ProfilePage = () => {
                         state: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="NY"
                   />
                 </div>
@@ -756,7 +854,7 @@ const ProfilePage = () => {
                         zipCode: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="10001"
                   />
                 </div>
@@ -773,7 +871,7 @@ const ProfilePage = () => {
                         country: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="United States"
                   />
                 </div>

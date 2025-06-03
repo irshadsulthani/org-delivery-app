@@ -25,10 +25,13 @@ export class LoginUser implements ILoginUser {
   }> {
     const user = await this._userRepo.findByEmail(email);
     if (!user) throw new AppError("Invalid credentials", StatusCode.UNAUTHORIZED);
-
     if (!allowedRoles.includes(user.role)) {
       throw new AppError("Access denied", StatusCode.FORBIDDEN);
     }
+
+     if (user.isBlocked) {
+        throw new AppError("Your account has been blocked. Please contact support.", StatusCode.FORBIDDEN, "info");
+      }
 
     const isMatch = await this._userRepo.comparePassword(password, user.password);
     if (!isMatch) throw new AppError("Invalid credentials", StatusCode.UNAUTHORIZED);

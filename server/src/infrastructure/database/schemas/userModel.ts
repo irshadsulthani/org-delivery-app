@@ -3,7 +3,7 @@ import mongoose, { Document, Schema, Types } from 'mongoose';
 import { User } from '../../../domain/entities/User';
 
 interface UserDoc extends Omit<User, '_id'>, Document {
-  _id: Types.ObjectId; // Mongoose expects ObjectId here
+  _id: Types.ObjectId;
 }
 
 const userSchema = new Schema<UserDoc>(

@@ -3,12 +3,15 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 import { Customer } from '../../../domain/entities/Customer';
 
 interface AddressDoc {
+  _id: Types.ObjectId;
   street: string;
   city: string;
   state: string;
   zipCode: string;
   country: string;
   isDefault: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface CustomerDoc extends Omit<Customer, '_id' | 'addresses'>, Document {
@@ -20,6 +23,7 @@ export interface CustomerDoc extends Omit<Customer, '_id' | 'addresses'>, Docume
 
 const addressSchema = new Schema<AddressDoc>(
   {
+    _id: { type: Schema.Types.ObjectId, default: () => new Types.ObjectId() },
     street: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
@@ -27,7 +31,9 @@ const addressSchema = new Schema<AddressDoc>(
     country: { type: String, required: true },
     isDefault: { type: Boolean, default: false },
   },
-  { _id: false }
+  { _id: false,
+    timestamps: true
+  }
 );
 
 const customerSchema = new Schema<CustomerDoc>(

@@ -22,5 +22,7 @@ router.patch('/retailer/:id/block', AdminController.blockRetailer)
 router.patch('/retailer/:id/unblock', AdminController.unblockRetailer)
 router.patch('/deliveryboy/:deliveryBoyId/block', AdminController.blockDelveryBoy)
 router.patch('/deliveryboy/:deliveryBoyId/unblock', AdminController.UnblockDelveryBoy)
+router.patch('/user/:customerId/block', AdminController.blockCustomer)
+router.patch('/user/:customerId/unblock', AdminController.unblockCustomer)
 
 export default router;
