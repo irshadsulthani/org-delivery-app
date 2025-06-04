@@ -24,6 +24,8 @@ import {
   updateCustomerAddress,
   deleteCustomerAddress,
 } from "../../api/customerApi";
+import { toast } from "react-toastify";
+import LoadingSpinner from "../../components/Customer/LoadinSpinner";
 
 interface Address {
   _id: string;
@@ -138,42 +140,77 @@ const ProfilePage = () => {
       setLoading(false);
     }
   };
+const validateAddress = (address: typeof newAddress): boolean => {
+  const { street, city, state, zipCode, country } = address;
 
-  const handleAddAddress = async () => {
-    if (
-      !newAddress.street ||
-      !newAddress.city ||
-      !newAddress.state ||
-      !newAddress.zipCode ||
-      !newAddress.country
-    ) {
-      return;
-    }
+  if (!street) {
+    toast.error("Street is required.");
+    return false;
+  }
+  if (!city) {
+    toast.error("City is required.");
+    return false;
+  }
+  if (!state) {
+    toast.error("State is required.");
+    return false;
+  }
+  if (!zipCode) {
+    toast.error("Zip code is required.");
+    return false;
+  }
+  if (!/^\d{6}$/.test(zipCode)) {
+    toast.error("Zip code must be 6 digits.");
+    return false;
+  }
+  if (!country) {
+    toast.error("Country is required.");
+    return false;
+  }
 
-    try {
-      setLoading(true);
-      const response = await addCustomerAddress(newAddress);
+  return true;
+};
 
-      setProfile((prev) => ({
-        ...prev,
-        addresses: [...prev.addresses, response],
-      }));
-
-      setNewAddress({
-        street: "",
-        city: "",
-        state: "",
-        zipCode: "",
-        country: "",
-      });
-      setShowAddDialog(false);
-      showSuccess("Address added successfully!");
-    } catch (error) {
-      console.error("Failed to add address:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
   };
+
+const resetAddressForm = () => {
+  setNewAddress({
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
+  });
+  setShowAddDialog(false);
+};
+
+
+const handleAddAddress = async () => {
+  if (!validateAddress(newAddress)) return;
+
+  try {
+    setLoading(true);
+    const response = await addCustomerAddress(newAddress);
+
+    // Update local state immediately instead of waiting for refresh
+    setProfile(prev => ({
+      ...prev,
+      addresses: [...prev.addresses, response],
+    }));
+
+    await fetchProfileData(); // Optionally refresh profile data
+
+    resetAddressForm();
+    toast.success("Address added successfully!");
+  } catch (error) {
+    console.error("Failed to add address:", error);
+    toast.error("Failed to add address. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     const searchCities = async () => {
@@ -215,53 +252,61 @@ const ProfilePage = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const handleEditAddress = async () => {
-    if (!editingAddress) return;
+const handleEditAddress = async () => {
+  if (!editingAddress) return;
 
-    try {
-      setLoading(true);
-      const updatedAddress = await updateCustomerAddress(editingAddress._id, {
-        street: editingAddress.street,
-        city: editingAddress.city,
-        state: editingAddress.state,
-        zipCode: editingAddress.zipCode,
-        country: editingAddress.country,
-      });
+  try {
+    setLoading(true);
+    const updatedAddress = await updateCustomerAddress(editingAddress._id, {
+      street: editingAddress.street,
+      city: editingAddress.city,
+      state: editingAddress.state,
+      zipCode: editingAddress.zipCode,
+      country: editingAddress.country,
+    });
 
-      setProfile((prev) => ({
-        ...prev,
-        addresses: prev.addresses.map((addr) =>
-          addr._id === editingAddress._id ? updatedAddress : addr
-        ),
-      }));
+    // Update local state immediately
+    setProfile(prev => ({
+      ...prev,
+      addresses: prev.addresses.map(addr => 
+        addr._id === editingAddress._id ? updatedAddress : addr
+      ),
+    }));
 
-      setShowEditDialog(false);
-      setEditingAddress(null);
-      showSuccess("Address updated successfully!");
-    } catch (error) {
-      console.error("Failed to update address:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    await fetchProfileData(); // Optionally refresh profile data
 
-  const handleDeleteAddress = async (addressId: string) => {
-    try {
-      setLoading(true);
-      await deleteCustomerAddress(addressId);
+    setShowEditDialog(false);
+    setEditingAddress(null);
+    toast.success("Address updated successfully!");
+  } catch (error) {
+    console.error("Failed to update address:", error);
+    toast.error("Failed to update address. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
-      setProfile((prev) => ({
-        ...prev,
-        addresses: prev.addresses.filter((addr) => addr._id !== addressId),
-      }));
+const handleDeleteAddress = async (addressId: string) => {
+  try {
+    setLoading(true);
+    await deleteCustomerAddress(addressId);
 
-      showSuccess("Address deleted successfully!");
-    } catch (error) {
-      console.error("Failed to delete address:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Update local state immediately
+    setProfile(prev => ({
+      ...prev,
+      addresses: prev.addresses.filter(addr => addr._id !== addressId),
+    }));
+
+    await fetchProfileData();
+
+    toast.success("Address deleted successfully!");
+  } catch (error) {
+    console.error("Failed to delete address:", error);
+    toast.error("Failed to delete address. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSetDefault = async (addressId: string) => {
     try {
@@ -275,7 +320,7 @@ const ProfilePage = () => {
           isDefault: addr._id === addressId,
         })),
       }));
-
+      await fetchProfileData();
       showSuccess("Default address updated!");
     } catch (error) {
       console.error("Failed to set default address:", error);
@@ -291,9 +336,15 @@ const ProfilePage = () => {
 
   if (loading && !profile.name) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+     <>
+     <DashboardSidebar 
+             isOpen={sidebarOpen} 
+             onClose={handleCloseSidebar} 
+           />
+           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <LoadingSpinner />
       </div>
+     </>
     );
   }
 

@@ -41,4 +41,13 @@ router.post(
   UserController.addCustomerAddress
 );
 
+router.patch('/addresses/:addressId', verifyToken, UserController.updateAddress);
+router.delete('/addresses/:addressId', verifyToken, UserController.deleteAddress);
+router.post(
+  '/addresses/:addressId/set-default',
+  verifyToken,
+  UserController.setDefaultAddress
+);
+
+
 export default router;

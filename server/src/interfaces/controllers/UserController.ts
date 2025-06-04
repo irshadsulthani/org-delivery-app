@@ -8,12 +8,19 @@ import { uploadToCloudinary } from "../../infrastructure/cloudinary/cloudinary";
 import { UpdateProfileDTO } from "../../domain/dtos/customer/ProfileDTOs";
 import { UpdateProfileUseCase } from "../../application/use-cases/customer/UpdateProfileUseCase";
 import { AddAddressUseCase } from "../../application/use-cases/customer/AddAddressUseCase";
+import { UpdateAddressUseCase } from "../../application/use-cases/customer/UpdateAddressUseCase";
+import { DeleteAddressUseCase } from "../../application/use-cases/customer/DeleteAddressUseCase";
+import { SetDefaultAddressUseCase } from "../../application/use-cases/customer/SetDefaultAddressUseCase";
 
 const userRepo = new UserRepository();
 const customerRepo = new CustomerRepository();
 const getDashboardUseCase = new GetCustomerDashboardUseCase(customerRepo);
 const getProfileUseCase = new GetProfileUseCase(customerRepo, userRepo);
-const addAddressUseCase = new AddAddressUseCase(customerRepo)
+const addAddressUseCase = new AddAddressUseCase(customerRepo);
+const updateAddressUsecase = new UpdateAddressUseCase(customerRepo);
+const deleteAddressUseCase = new DeleteAddressUseCase(customerRepo);
+const setDefaultAddress = new SetDefaultAddressUseCase(customerRepo);
+
 export class UserController {
   private static getUserId(req: Request): string {
     return (req.user as any).id;
@@ -88,15 +95,69 @@ export class UserController {
       res.status(StatusCode.BAD_REQUEST).json({ message });
     }
   };
-  static addCustomerAddress = async (req: Request, res: Response): Promise<void> => {
+  static addCustomerAddress = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
     try {
       const userId = this.getUserId(req);
       const address = req.body;
       const useCase = await addAddressUseCase.execute(userId, address);
       res.status(StatusCode.CREATED).json(useCase);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Unexpected error";
+      const message =
+        error instanceof Error ? error.message : "Unexpected error";
       res.status(StatusCode.BAD_REQUEST).json({ message });
     }
-  }
+  };
+  static updateAddress = async (req: Request, res: Response): Promise<void> => {
+    try {
+      console.log("updateAddress called");
+      const userId = this.getUserId(req);
+      const addressId = req.params.addressId;
+      const addressData = req.body;
+      const useCase = await updateAddressUsecase.execute(
+        userId,
+        addressId,
+        addressData
+      );
+      res.status(StatusCode.OK).json(useCase);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unexpected error";
+      res.status(StatusCode.BAD_REQUEST).json({ message });
+    }
+  };
+  static deleteAddress = async (req: Request, res: Response): Promise<void> => {
+    try {
+      console.log("deleteAddress called");
+      const userId = this.getUserId(req);
+      const addressId = req.params.addressId;
+      await deleteAddressUseCase.execute(userId, addressId);
+      res
+        .status(StatusCode.OK)
+        .json({ message: "Address deleted successfully" });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete address";
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message });
+    }
+  };
+  static setDefaultAddress = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const userId = this.getUserId(req);
+      const addressId = req.params.addressId;
+      const useCase = await setDefaultAddress.execute(userId, addressId);
+      res.status(StatusCode.OK).json({ message: "Default address updated" });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to set default address";
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({ message });
+    }
+  };
 }

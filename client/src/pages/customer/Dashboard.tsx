@@ -40,7 +40,7 @@ export const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+const [sidebarOpen, setSidebarOpen] = useState(false);
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -58,7 +58,27 @@ export const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
+  };
+
+  // Add handler to open sidebar (you can use this for mobile menu button)
+  const handleOpenSidebar = () => {
+    setSidebarOpen(true);
+  };
+
+
+  if (loading) return (
+    <>
+      <DashboardSidebar 
+        isOpen={sidebarOpen} 
+        onClose={handleCloseSidebar} 
+      />
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <LoadingSpinner />
+      </Box>
+    </>
+  );
   if (error) return <Typography color="error">{error}</Typography>;
 
   const getStatusColor = (status: string) => {
@@ -71,11 +91,12 @@ export const Dashboard = () => {
     }
   };
 
-  return (
+ return (
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      <DashboardSidebar isOpen={false} onClose={function (): void {
-        throw new Error('Function not implemented.');
-      } } />
+      <DashboardSidebar 
+        isOpen={sidebarOpen} 
+        onClose={handleCloseSidebar} 
+      />
       <Box 
         component="main" 
         sx={{ 
@@ -84,6 +105,13 @@ export const Dashboard = () => {
           ml: { xs: 0, md: '40px' }
         }}
       >
+        {/* Add a mobile menu button if needed */}
+        <Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 2 }}>
+          <Button onClick={handleOpenSidebar}>
+            Open Menu
+          </Button>
+        </Box>
+
         {/* Header Section */}
         <Box sx={{ mb: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
