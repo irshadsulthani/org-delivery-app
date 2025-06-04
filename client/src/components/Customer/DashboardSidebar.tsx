@@ -1,12 +1,7 @@
-<<<<<<< HEAD
 import { BarChart3, CreditCard, LogOut, ShoppingBag, Truck, User, X, Heart, Star } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useLocation, Link } from "react-router-dom";
 import { RootState } from "../../app/store";
-=======
-import { BarChart3, CreditCard, LogOut, ShoppingBag, Truck, User, X } from "lucide-react";
-import { useLocation } from "react-router-dom";
->>>>>>> d387b79 (feat:- now doing the customer address adding)
 
 interface DashboardSidebarProps {
   isOpen: boolean;
@@ -15,11 +10,8 @@ interface DashboardSidebarProps {
 
 const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
   const location = useLocation();
-<<<<<<< HEAD
   const customer = useSelector((state:RootState) => state.auth.user);
   console.log(customer);
-=======
->>>>>>> d387b79 (feat:- now doing the customer address adding)
   
   const navItems = [
     { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
@@ -29,24 +21,17 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
     { icon: Truck, label: 'Addresses', path: '/addresses' },
   ];
 
-<<<<<<< HEAD
   const handleLogout = () => {
     // Add your logout logic here
     console.log('Logout clicked');
   };
 
-=======
->>>>>>> d387b79 (feat:- now doing the customer address adding)
   return (
     <>
       {/* Overlay for mobile */}
       {isOpen && (
         <div 
-<<<<<<< HEAD
           className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden"
-=======
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
->>>>>>> d387b79 (feat:- now doing the customer address adding)
           onClick={onClose}
         />
       )}
@@ -57,7 +42,6 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
         left-0 top-0 
         h-screen lg:h-auto
         w-80 
-<<<<<<< HEAD
         bg-gradient-to-br from-white via-slate-50/50 to-white
         border-r border-slate-200/60
         transform transition-all duration-500 ease-out
@@ -92,24 +76,6 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
             <button 
               onClick={onClose}
               className="lg:hidden text-slate-400 hover:text-slate-600 p-2 rounded-2xl hover:bg-slate-100/80 transition-all duration-300"
-=======
-        bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 
-        transform transition-transform duration-300 ease-in-out 
-        z-50 lg:z-auto
-        flex flex-col
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        {/* Header */}
-        <div className="flex-shrink-0 p-6 border-b border-slate-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-white">FreshMart</h2>
-              <p className="text-slate-400 text-sm">Customer Portal</p>
-            </div>
-            <button 
-              onClick={onClose}
-              className="lg:hidden text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-700 transition-colors"
->>>>>>> d387b79 (feat:- now doing the customer address adding)
             >
               <X size={20} />
             </button>
@@ -117,16 +83,11 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
         </div>
 
         {/* Navigation - Scrollable */}
-<<<<<<< HEAD
         <nav className="flex-1 p-6 space-y-3 overflow-y-auto">
-=======
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
->>>>>>> d387b79 (feat:- now doing the customer address adding)
           {navItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
-<<<<<<< HEAD
               <Link
                 key={index}
                 to={item.path}
@@ -162,25 +123,10 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
                   <div className="absolute right-4 w-2 h-2 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100" />
                 )}
               </Link>
-=======
-              <a
-                key={index}
-                href={item.path}
-                className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 group ${
-                  isActive
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg'
-                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`}
-              >
-                <Icon size={20} className={`mr-3 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-emerald-400'}`} />
-                <span className="font-medium">{item.label}</span>
-              </a>
->>>>>>> d387b79 (feat:- now doing the customer address adding)
             );
           })}
         </nav>
 
-<<<<<<< HEAD
         {/* User Info Section */}
         <div className="flex-shrink-0 p-6 border-t border-slate-200/40 bg-gradient-to-r from-slate-50/50 to-white/50 backdrop-blur-sm">
           <div className="flex items-center mb-5 p-4 rounded-3xl bg-gradient-to-r from-white to-slate-50 border border-slate-200/50 shadow-sm hover:shadow-md transition-all duration-300 group">
@@ -214,13 +160,6 @@ const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
               <LogOut size={20} className="text-slate-500 group-hover:text-red-500 transition-colors duration-300" />
             </div>
             <span className="font-semibold text-base">Logout</span>
-=======
-        {/* Logout - Fixed at bottom */}
-        <div className="flex-shrink-0 p-4 border-t border-slate-700">
-          <button className="w-full flex items-center px-4 py-3 text-slate-300 hover:bg-red-600 hover:text-white rounded-xl transition-all duration-200 group">
-            <LogOut size={20} className="mr-3 text-slate-400 group-hover:text-white" />
-            <span className="font-medium">Logout</span>
->>>>>>> d387b79 (feat:- now doing the customer address adding)
           </button>
         </div>
       </div>

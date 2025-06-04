@@ -3,21 +3,15 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 import { Customer } from '../../../domain/entities/Customer';
 
 interface AddressDoc {
-<<<<<<< HEAD
   _id: Types.ObjectId;
-=======
->>>>>>> d387b79 (feat:- now doing the customer address adding)
   street: string;
   city: string;
   state: string;
   zipCode: string;
   country: string;
   isDefault: boolean;
-<<<<<<< HEAD
   createdAt?: Date;
   updatedAt?: Date;
-=======
->>>>>>> d387b79 (feat:- now doing the customer address adding)
 }
 
 export interface CustomerDoc extends Omit<Customer, '_id' | 'addresses'>, Document {
@@ -29,10 +23,7 @@ export interface CustomerDoc extends Omit<Customer, '_id' | 'addresses'>, Docume
 
 const addressSchema = new Schema<AddressDoc>(
   {
-<<<<<<< HEAD
     _id: { type: Schema.Types.ObjectId, default: () => new Types.ObjectId() },
-=======
->>>>>>> d387b79 (feat:- now doing the customer address adding)
     street: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
@@ -40,13 +31,9 @@ const addressSchema = new Schema<AddressDoc>(
     country: { type: String, required: true },
     isDefault: { type: Boolean, default: false },
   },
-<<<<<<< HEAD
   { _id: false,
     timestamps: true
   }
-=======
-  { _id: false }
->>>>>>> d387b79 (feat:- now doing the customer address adding)
 );
 
 const customerSchema = new Schema<CustomerDoc>(

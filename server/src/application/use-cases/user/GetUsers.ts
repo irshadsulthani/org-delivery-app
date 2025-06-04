@@ -1,10 +1,6 @@
-<<<<<<< HEAD
+
 import { CustomerRequestDto } from "../../../domain/dtos/customer/CustomerRequestDto";
 import { CustomerResponseDto } from "../../../domain/dtos/customer/CustomerResponseDto";
-=======
-import { CustomerRequestDto } from "../../../domain/dtos/CustomerRequestDto";
-import { CustomerResponseDto } from "../../../domain/dtos/CustomerResponseDto";
->>>>>>> d387b79 (feat:- now doing the customer address adding)
 import { DeliveryBoyListingRequest } from "../../../domain/dtos/DeliveryBoyListingRequest";
 import { DeliveryBoyResponse } from "../../../domain/dtos/DeliveryBoyResponse";
 import { RetailerListingRequest } from "../../../domain/dtos/RetailerListingRequest";
@@ -29,13 +25,8 @@ export class GetUsers implements IGetUsers {
     total: number;
   }> {
     try {
-<<<<<<< HEAD
       // console.log('its getting here in GetUsers');
       // console.log('params:', params);
-=======
-      console.log('its getting here in GetUsers');
-      console.log('params:', params);
->>>>>>> d387b79 (feat:- now doing the customer address adding)
       
       return await this.userRepo.getAllCustomersPaginated(params);
     } catch (error) {
@@ -91,4 +82,3 @@ export class GetUsers implements IGetUsers {
     }
   }
 }
-

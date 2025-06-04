@@ -1,15 +1,9 @@
 import { useState, useEffect } from 'react';
-<<<<<<< HEAD
 import {
-=======
-import { 
-  Download,
->>>>>>> d387b79 (feat:- now doing the customer address adding)
   RefreshCw,
   Lock,
   Unlock,
   Eye,
-<<<<<<< HEAD
   Phone,
   AlertCircle,
   ShoppingBag,
@@ -20,19 +14,6 @@ import {
   UserX,
   Calendar,
   Mail
-=======
-  User,
-  Phone,
-  Calendar,
-  AlertCircle,
-  Edit,
-  ShoppingBag,
-  ShieldCheck,
-  ShieldX,
-  Check,
-  X,
-  Users
->>>>>>> d387b79 (feat:- now doing the customer address adding)
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -72,12 +53,7 @@ const CustomerListing = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<Record<string, boolean>>({});
-<<<<<<< HEAD
 
-=======
-  
-  const dispatch = useDispatch();
->>>>>>> d387b79 (feat:- now doing the customer address adding)
   const navigate = useNavigate();
 
   const toggleMobileSidebar = () => {
@@ -88,11 +64,7 @@ const CustomerListing = () => {
     try {
       setLoading(true);
       setError(null);
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> d387b79 (feat:- now doing the customer address adding)
       const response = await getAllCustomers({
         page: currentPage,
         limit: ITEMS_PER_PAGE,
@@ -102,12 +74,6 @@ const CustomerListing = () => {
         sortDirection: sortDirection,
       });
 
-<<<<<<< HEAD
-=======
-      console.log('res res',response);
-      
-      
->>>>>>> d387b79 (feat:- now doing the customer address adding)
       if (response.success) {
         setCustomers(response.data);
         setTotalCustomers(response.total);
@@ -134,7 +100,6 @@ const CustomerListing = () => {
   const handleBlockCustomer = async (customerId: string) => {
     try {
       setIsUpdatingStatus(prev => ({ ...prev, [customerId]: true }));
-<<<<<<< HEAD
       
       const response = await blockCustomer(customerId);
       console.log("Blocking customer:", customerId, response);
@@ -154,14 +119,6 @@ const CustomerListing = () => {
     } catch (error: any) {
       console.error("Error blocking customer:", error);
       toast.error(error.message || "Failed to block customer");
-=======
-      await blockCustomer(customerId);
-      toast.success("Customer blocked successfully");
-      fetchCustomers();
-    } catch (error) {
-      console.error("Error blocking customer:", error);
-      toast.error("Failed to block customer");
->>>>>>> d387b79 (feat:- now doing the customer address adding)
     } finally {
       setIsUpdatingStatus(prev => ({ ...prev, [customerId]: false }));
     }
@@ -169,7 +126,6 @@ const CustomerListing = () => {
 
   const handleUnblockCustomer = async (customerId: string) => {
     try {
-<<<<<<< HEAD
       console.log("Unblocking customer:", customerId);
       setIsUpdatingStatus(prev => ({ ...prev, [customerId]: true }));
       
@@ -191,15 +147,6 @@ const CustomerListing = () => {
     } catch (error: any) {
       console.error("Error unblocking customer:", error);
       toast.error(error.message || "Failed to unblock customer");
-=======
-      setIsUpdatingStatus(prev => ({ ...prev, [customerId]: true }));
-      await unBlockCustomer(customerId);
-      toast.success("Customer unblocked successfully");
-      fetchCustomers();
-    } catch (error) {
-      console.error("Error unblocking customer:", error);
-      toast.error("Failed to unblock customer");
->>>>>>> d387b79 (feat:- now doing the customer address adding)
     } finally {
       setIsUpdatingStatus(prev => ({ ...prev, [customerId]: false }));
     }
@@ -233,7 +180,6 @@ const CustomerListing = () => {
     fetchCustomers();
   }, [currentPage, searchTerm, filters, sortField, sortDirection]);
 
-<<<<<<< HEAD
   // Enhanced Status badge component with better styling
   const StatusBadge = ({ isBlocked }: { isBlocked: boolean }) => {
     if (isBlocked) {
@@ -277,53 +223,6 @@ const CustomerListing = () => {
     if (customer.avatar) {
       return (
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden border-2 border-white shadow-lg">
-=======
-  // Status badge component for block/unblock
-  const BlockStatusBadge = ({ status }: { status: "Active" | "Blocked" }) => {
-    let colorClasses = "";
-    let Icon = Check;
-
-    switch (status) {
-      case "Active":
-        colorClasses = "bg-emerald-100 text-emerald-800 border border-emerald-200";
-        Icon = Check;
-        break;
-      case "Blocked":
-        colorClasses = "bg-red-100 text-red-800 border border-red-200";
-        Icon = X;
-        break;
-    }
-
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses}`}>
-        <Icon size={12} className="mr-1" />
-        {status}
-      </span>
-    );
-  };
-
-  // Verification badge component
-  const VerificationBadge = ({ verified }: { verified: boolean }) => {
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          verified
-            ? "bg-blue-100 text-blue-800 border border-blue-200"
-            : "bg-yellow-100 text-yellow-800 border border-yellow-200"
-        }`}
-      >
-        {verified ? <ShieldCheck size={12} className="mr-1" /> : <ShieldX size={12} className="mr-1" />}
-        {verified ? "Verified" : "Unverified"}
-      </span>
-    );
-  };
-
-  // Customer avatar component
-  const CustomerAvatar = ({ customer }: { customer: Customer }) => {
-    if (customer.avatar) {
-      return (
-        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
->>>>>>> d387b79 (feat:- now doing the customer address adding)
           <img
             src={customer.avatar}
             alt={customer.name}
@@ -333,21 +232,15 @@ const CustomerListing = () => {
       );
     }
 
-<<<<<<< HEAD
     const fullName = customer?.userId?.name || customer.name;
     const initials =
       typeof fullName === "string" && fullName.trim()
         ? fullName
-=======
-    const initials = customer?.name
-      ? customer.name
->>>>>>> d387b79 (feat:- now doing the customer address adding)
           .split(" ")
           .map((n) => n[0])
           .join("")
           .toUpperCase()
           .substring(0, 2)
-<<<<<<< HEAD
         : "NA";
     const colorIndex = customer._id
       ? parseInt(customer._id.replace(/\D/g, "")) % 5
@@ -359,33 +252,17 @@ const CustomerListing = () => {
       "bg-gradient-to-br from-emerald-500 to-emerald-600",
       "bg-gradient-to-br from-amber-500 to-orange-500",
       "bg-gradient-to-br from-indigo-500 to-indigo-600",
-=======
-      : "NA";
-
-    const colorIndex = parseInt(customer._id.replace(/\D/g, "")) % 5;
-    const bgColors = [
-      "bg-blue-500",
-      "bg-purple-500",
-      "bg-emerald-500",
-      "bg-amber-500",
-      "bg-indigo-500",
->>>>>>> d387b79 (feat:- now doing the customer address adding)
     ];
 
     return (
       <div
-<<<<<<< HEAD
         className={`w-12 h-12 rounded-full ${gradients[colorIndex]} flex items-center justify-center text-white font-bold shadow-lg border-2 border-white`}
-=======
-        className={`w-10 h-10 rounded-full ${bgColors[colorIndex]} flex items-center justify-center text-white font-medium shadow-sm`}
->>>>>>> d387b79 (feat:- now doing the customer address adding)
       >
         {initials}
       </div>
     );
   };
 
-<<<<<<< HEAD
   // Enhanced Action Buttons
   const ActionButton = ({ 
     onClick, 
@@ -423,180 +300,6 @@ const CustomerListing = () => {
       </button>
     );
   };
-=======
-  // Table columns configuration
-  const columns = [
-    {
-      header: "Customer Details",
-      accessor: "name",
-      sortable: true,
-      render: (customer: Customer) => (
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <CustomerAvatar customer={customer} />
-          </div>
-          <div className="ml-4">
-            <div className="text-sm font-medium text-gray-900">
-              {customer.name}
-            </div>
-            <div className="text-sm text-gray-500">{customer.email}</div>
-            <div className="text-xs text-gray-400 mt-1">ID: {customer._id}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Contact",
-      accessor: "phone",
-      render: (customer: Customer) => (
-        <div>
-          <div className="flex items-center">
-            <Phone size={14} className="text-gray-400 mr-1" />
-            <span className="text-sm text-gray-900">
-              {customer.phone || 'N/A'}
-            </span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Join Date",
-      accessor: "createdAt",
-      sortable: true,
-      render: (customer: Customer) => (
-        <div>
-          <div className="text-sm text-gray-900">
-            {new Date(customer.createdAt).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </div>
-          <div className="text-xs text-gray-500">
-            {new Date(customer.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Orders",
-      accessor: "orders",
-      sortable: true,
-      render: (customer: Customer) => (
-        <div>
-          <div className="flex items-center">
-            <ShoppingBag size={14} className="text-gray-400 mr-1" />
-            <span className="text-sm text-gray-900">
-              {customer.orders || 0}
-            </span>
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            {customer.totalSpent || '$0.00'}
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Last Order",
-      accessor: "lastOrder",
-      render: (customer: Customer) => (
-        <div>
-          <div className="text-sm text-gray-900">
-            {customer.lastOrder ? new Date(customer.lastOrder).toLocaleDateString() : 'No orders yet'}
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Verification",
-      accessor: "isVerified",
-      filterable: true,
-      filterOptions: [
-        { label: "All Verification", value: "" },
-        { label: "Verified", value: "true" },
-        { label: "Unverified", value: "false" },
-      ],
-      render: (customer: Customer) => (
-        <VerificationBadge verified={customer.isVerified} />
-      ),
-    },
-    {
-      header: "Status",
-      accessor: "isBlocked",
-      filterable: true,
-      filterOptions: [
-        { label: "All Status", value: "" },
-        { label: "Active", value: "false" },
-        { label: "Blocked", value: "true" },
-      ],
-      render: (customer: Customer) => (
-        <BlockStatusBadge status={customer.isBlocked ? "Blocked" : "Active"} />
-      ),
-    },
-    {
-      header: "Actions",
-      accessor: "actions",
-      render: (customer: Customer) => (
-        <div className="flex items-center justify-end space-x-3">
-          <button
-            className="text-indigo-600 hover:text-indigo-900"
-            onClick={() => handleViewDetails(customer._id)}
-            title="View details"
-          >
-            <Eye size={16} />
-          </button>
-          <button
-            className="text-gray-600 hover:text-gray-900"
-            onClick={() => navigate(`/admin/customers/${customer._id}/edit`)}
-            title="Edit customer"
-          >
-            <Edit size={16} />
-          </button>
-          {!customer.isBlocked ? (
-            <button
-              className="text-red-600 hover:text-red-900"
-              onClick={() => handleBlockCustomer(customer._id)}
-              disabled={isUpdatingStatus[customer._id]}
-              title="Block customer"
-            >
-              {isUpdatingStatus[customer._id] ? (
-                <RefreshCw size={16} className="animate-spin" />
-              ) : (
-                <Lock size={16} />
-              )}
-            </button>
-          ) : (
-            <button
-              className="text-emerald-600 hover:text-emerald-900"
-              onClick={() => handleUnblockCustomer(customer._id)}
-              disabled={isUpdatingStatus[customer._id]}
-              title="Unblock customer"
-            >
-              {isUpdatingStatus[customer._id] ? (
-                <RefreshCw size={16} className="animate-spin" />
-              ) : (
-                <Unlock size={16} />
-              )}
-            </button>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  const emptyState = (
-    <div className="text-center py-12">
-      <Users className="mx-auto h-12 w-12 text-gray-400" />
-      <h3 className="mt-2 text-sm font-medium text-gray-900">No customers found</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        Try adjusting your search or filter criteria
-      </p>
-    </div>
-  );
->>>>>>> d387b79 (feat:- now doing the customer address adding)
 
   // Table columns configuration
   const columns = [
@@ -787,11 +490,7 @@ const CustomerListing = () => {
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div
-<<<<<<< HEAD
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden backdrop-blur-sm"
-=======
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
->>>>>>> d387b79 (feat:- now doing the customer address adding)
           onClick={toggleMobileSidebar}
         >
           <div
@@ -818,28 +517,16 @@ const CustomerListing = () => {
           {/* Enhanced Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 space-y-4 sm:space-y-0">
             <div>
-<<<<<<< HEAD
               <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Customer Management
               </h2>
               <p className="text-gray-500 text-sm mt-2">
                 Manage and monitor all registered customers with advanced controls
-=======
-              <h2 className="text-2xl font-bold text-gray-800">
-                Customer Management
-              </h2>
-              <p className="text-gray-500 text-sm mt-1">
-                Manage all registered customers
->>>>>>> d387b79 (feat:- now doing the customer address adding)
               </p>
             </div>
             <div className="flex items-center space-x-3">
               <button
-<<<<<<< HEAD
                 className={`inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition-all duration-200 hover:scale-105 ${
-=======
-                className={`inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
->>>>>>> d387b79 (feat:- now doing the customer address adding)
                   loading ? "opacity-80" : ""
                 }`}
                 onClick={refreshData}
@@ -849,42 +536,15 @@ const CustomerListing = () => {
                   size={16}
                   className={`mr-2 ${loading ? "animate-spin" : ""}`}
                 />
-<<<<<<< HEAD
                 Refresh Data
-=======
-                Refresh
-              </button>
-
-              <button
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={() =>
-                  toast.info("Export functionality would be implemented here")
-                }
-              >
-                <Download size={16} className="mr-2" />
-                Export
-              </button>
-
-              <button
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={() => navigate("/admin/customers/add")}
-              >
-                <Users size={16} className="mr-2" />
-                Add Customer
->>>>>>> d387b79 (feat:- now doing the customer address adding)
               </button>
             </div>
           </div>
 
-<<<<<<< HEAD
           {/* Enhanced Error State */}
-=======
-          {/* Error State */}
->>>>>>> d387b79 (feat:- now doing the customer address adding)
           {error && !loading && (
             <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl p-6 mb-6 shadow-sm">
               <div className="flex">
-<<<<<<< HEAD
                 <div className="p-2 bg-red-200 rounded-lg mr-4">
                   <AlertCircle className="h-5 w-5 text-red-600" />
                 </div>
@@ -901,34 +561,11 @@ const CustomerListing = () => {
                     <RefreshCw size={14} className="mr-2" />
                     Try Again
                   </button>
-=======
-                <AlertCircle
-                  className="h-5 w-5 text-red-500"
-                  aria-hidden="true"
-                />
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Error loading customers
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    <p>{error}</p>
-                  </div>
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      onClick={fetchCustomers}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                      Try again
-                    </button>
-                  </div>
->>>>>>> d387b79 (feat:- now doing the customer address adding)
                 </div>
               </div>
             </div>
           )}
 
-<<<<<<< HEAD
           {/* Enhanced Table Component */}
           {!error && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -946,23 +583,6 @@ const CustomerListing = () => {
                 emptyState={emptyState}
               />
             </div>
-=======
-          {/* Table Component */}
-          {!error && (
-            <Table
-              columns={columns}
-              data={customers}
-              totalItems={totalCustomers}
-              itemsPerPage={ITEMS_PER_PAGE}
-              currentPage={currentPage}
-              onPageChange={handlePageChange}
-              onSortChange={handleSort}
-              onSearch={handleSearch}
-              onFilter={handleFilter}
-              loading={loading}
-              emptyState={emptyState}
-            />
->>>>>>> d387b79 (feat:- now doing the customer address adding)
           )}
         </main>
       </div>

@@ -43,10 +43,6 @@ export class AdminController {
 
   static getAllCustomers = async (req: Request, res: Response) => {
     try {
-<<<<<<< HEAD
-=======
-      console.log('its here getting');
->>>>>>> d387b79 (feat:- now doing the customer address adding)
       const {
         page = 1,
         limit = 5,
@@ -58,10 +54,6 @@ export class AdminController {
         sortField = "createdAt",
         sortDirection = "desc",
       } = req.query;
-<<<<<<< HEAD
-=======
-      console.log(req.query);
->>>>>>> d387b79 (feat:- now doing the customer address adding)
       const useCase = new GetUsers(userRepo);
       const customers = await useCase.executeCustomerPaginated({
         page: Number(page),
@@ -80,10 +72,6 @@ export class AdminController {
           direction: sortDirection as "asc" | "desc",
         },
       });
-<<<<<<< HEAD
-=======
-      console.log(customers);
->>>>>>> d387b79 (feat:- now doing the customer address adding)
       res.status(StatusCode.OK).json(customers);
     } catch (err: any) {
       res.status(StatusCode.BAD_REQUEST).json({ message: err.message });
