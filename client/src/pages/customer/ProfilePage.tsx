@@ -211,12 +211,6 @@ const handleAddAddress = async () => {
     setLoading(false);
   }
 };
-
-
-
-
-
-
   useEffect(() => {
     const searchCities = async () => {
       if (searchTerm.length < 2) {
