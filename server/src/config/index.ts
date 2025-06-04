@@ -22,5 +22,6 @@ export const config = {
   awsRegion:process.env.AWS_REGION,
   awsBucket:process.env.AWS_S3_BUCKET,
   nodeEnv:process.env.ENV,
-  clusterUri:process.env.CLUSTER_URI
+  clusterUri:process.env.CLUSTER_URI,
+  stripeKey: process.env.STRIPE_SECRET_KEY,
 };

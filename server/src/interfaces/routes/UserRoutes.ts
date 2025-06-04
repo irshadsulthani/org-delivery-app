@@ -3,6 +3,7 @@ import { UserController } from '../controllers/UserController';
 import { ProductController } from '../controllers/ProductController';
 import { verifyToken } from '../../infrastructure/middlewares/verifyToken';
 import multer from 'multer';
+import { createPaymentIntentHandler } from '../controllers/PaymentContoller';
 
 const router = express.Router();
 
@@ -49,5 +50,6 @@ router.post(
   UserController.setDefaultAddress
 );
 
+router.post('/payment/create-intent', createPaymentIntentHandler)
 
 export default router;
