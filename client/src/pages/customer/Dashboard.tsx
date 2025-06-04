@@ -66,6 +66,7 @@ const [sidebarOpen, setSidebarOpen] = useState(false);
   const handleOpenSidebar = () => {
     setSidebarOpen(true);
   };
+  
   if (loading) return (
     <>
       <DashboardSidebar 
