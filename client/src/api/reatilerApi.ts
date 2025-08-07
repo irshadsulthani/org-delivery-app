@@ -41,6 +41,7 @@ export const getRegistrationStatus = async (email: string) => {
 
 export const addProduct = async (formData: FormData) =>{
     const response = await fileUploadApi('/retailer/add-product/', formData)
+    console.log('response', response);
     return response
 }
 

@@ -23,7 +23,7 @@ export class ProductController {
         });
         return;
       }
-
+      console.log('product name in controller',req.body.name)
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const images = files["images"];
 
@@ -47,8 +47,12 @@ export class ProductController {
         data: product,
       });
     } catch (error: any) {
-      console.error("Error adding product:", error);
-      next(error);
+      console.log("Error adding product:", error);
+      res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: "Failed to add product",
+        error: error.message,
+      });
     }
   }
 

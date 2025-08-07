@@ -10,6 +10,10 @@ interface AddressDoc {
   zipCode: string;
   country: string;
   isDefault: boolean;
+  location?: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -30,11 +34,21 @@ const addressSchema = new Schema<AddressDoc>(
     zipCode: { type: String, required: true },
     country: { type: String, required: true },
     isDefault: { type: Boolean, default: false },
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        required: false
+      },
+      coordinates: {
+        type: [Number],
+        required: false
+      }
+    }
   },
-  { _id: false,
-    timestamps: true
-  }
+  { _id: false, timestamps: true }
 );
+
 
 const customerSchema = new Schema<CustomerDoc>(
   {

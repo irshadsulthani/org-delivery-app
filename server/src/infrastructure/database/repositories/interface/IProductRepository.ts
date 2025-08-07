@@ -8,4 +8,6 @@ export interface IProductRepository {
   deleteProduct(id: string): Promise<boolean>;
   findProductsByRetailer(retailerId: string): Promise<VegetableProduct[]>;
   getAllProducts(): Promise<VegetableProduct[]>;
+  findByName(name: string): Promise<VegetableProduct | null>;
+  getAllProductsNearCustomer(customerLocation: [number, number], maxDistanceKm?: number): Promise<VegetableProduct[]>;
 }

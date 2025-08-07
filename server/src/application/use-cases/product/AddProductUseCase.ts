@@ -12,9 +12,13 @@ export class AddProductUseCase {
   constructor(private productRepository: IProductRepository) {}
 
   async execute(dto: AddProductDto): Promise<VegetableProduct> {
-    // Upload images to Cloudinary
     const imageUploads = dto.images.map(file => uploadProductImageToCloudinary(file));
     const uploadedImages = await Promise.all(imageUploads);
+    const existProduct = await this.productRepository.findByName(dto.name);
+    console.log("Product name in use case:", existProduct);
+    if(existProduct) {
+      throw new Error("Product with this name already exists");
+    }
 
     const product: VegetableProduct = {
       retailerId: new Types.ObjectId(dto.retailerId),

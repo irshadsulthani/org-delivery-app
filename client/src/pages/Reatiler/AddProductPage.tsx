@@ -98,6 +98,7 @@ function AddProductPage() {
       setSuccess(true);
       setTimeout(() => navigate("/retailer/products"), 2000);
     } catch (err) {
+      console.error("Error adding product:", err);
       setError(err instanceof Error ? err.message : "Failed to add product");
     } finally {
       setIsSubmitting(false);
