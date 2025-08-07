@@ -11,5 +11,9 @@ export class GetAllProductsUseCase implements IGetAllProductsUseCase {
       return this.productRepository.getAllProductsNearCustomer(customerLocation);
     }
     return this.productRepository.getAllProducts();
+
+
+
+    
   }
 }
