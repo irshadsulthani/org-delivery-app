@@ -15,6 +15,5 @@ export class GetAllProductsUseCase implements IGetAllProductsUseCase {
 
 
 
-    
   }
 }
