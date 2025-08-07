@@ -12,6 +12,5 @@ export class GetAllProductsUseCase implements IGetAllProductsUseCase {
     }
     return this.productRepository.getAllProducts(); 
 
-
   }
 }
